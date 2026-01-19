@@ -17,33 +17,28 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Tasarımı bağla
         setContentView(R.layout.activity_main)
 
-        // Alt menüyü bul (ID: bottom_navigation)
-        val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        // ViewPager2'yi bul
+        val viewPager = findViewById<androidx.viewpager2.widget.ViewPager2>(R.id.viewPagerFeatured)
 
-        bottomNavigation.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                // Menü dosyasındaki ID'ler ile birebir aynı olmalı
-                R.id.nav_books -> {
-                    true
-                }
-                R.id.nav_word -> {
-                    true
-                }
-                R.id.nav_audio -> {
-                    true
-                }
-                R.id.nav_download -> {
-                    true
-                }
-                R.id.nav_settings -> {
-                    true
-                }
-                else -> false
-            }
+        // Slider için örnek veri listesi
+        val featuredList = listOf(
+            FeaturedBook("The Adventure Begins", R.drawable.ic_launcher_background),
+            FeaturedBook("Mystery of English", R.drawable.ic_launcher_background),
+            FeaturedBook("Grammar Secrets", R.drawable.ic_launcher_background)
+        )
+
+        // Adapter'ı oluştur ve bağla
+        val adapter = FeaturedAdapter(featuredList)
+        viewPager.adapter = adapter
+
+        // Kitapların üst üste binme (Stack) efekti
+        viewPager.offscreenPageLimit = 3
+        viewPager.setPageTransformer { page, position ->
+            page.translationX = -120f * position
+            page.scaleY = 1 - (0.20f * kotlin.math.abs(position))
+            page.alpha = 0.5f + (1 - kotlin.math.abs(position))
         }
     }
 }
