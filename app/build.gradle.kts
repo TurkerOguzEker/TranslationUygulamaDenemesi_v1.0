@@ -54,5 +54,12 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("androidx.viewpager2:viewpager2:1.1.0")
-    implementation(libs.material)
+    // TOML'da 'androidx-appcompat' yazdığımız için burada 'libs.androidx.appcompat' olur
+    implementation(libs.androidx.appcompat)
+
+    // TOML'da 'google-material' yazdığımız için burada 'libs.google.material' olur
+    implementation(libs.google.material)
+
+    // ViewPager2 için de şunu ekle (eğer listede yoksa kırmızı yanabilir)
+    implementation("androidx.viewpager2:viewpager2:1.1.0")
 }
