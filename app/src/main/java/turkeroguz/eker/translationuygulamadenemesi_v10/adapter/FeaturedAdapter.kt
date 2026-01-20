@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.materialswitch.MaterialSwitch
-// Hatanın çözümü için eklenen import satırı:
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.FeaturedAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.FeaturedBook
 import kotlin.math.abs
@@ -89,12 +88,20 @@ class MainActivity : AppCompatActivity() {
             it.clipChildren = false
             it.offscreenPageLimit = 3
 
+            // Dikdörtgen kitap tasarımları için geçiş ayarları
             it.setPageTransformer { page, position ->
                 val absPos = abs(position)
+
+                // Dikdörtgen formun bozulmaması için X ve Y ölçeğini eşitliyoruz
+                // Odaktaki kitap %100, yandakiler %85 boyutunda görünür
                 val scale = 0.85f + (1 - absPos) * 0.15f
                 page.scaleY = scale
                 page.scaleX = scale
+
+                // Sayfalar arası yatay boşluğu daraltarak kitapların yan yana şık durmasını sağlar
                 page.translationX = -position * (page.width / 4)
+
+                // Uzaktaki kitapların şeffaflığını ayarlar
                 page.alpha = 0.4f + (1 - absPos) * 0.6f
             }
         }

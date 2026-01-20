@@ -3,11 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="10dp"
+    android:layout_marginHorizontal="16dp"
     android:layout_gravity="center"
     app:cardBackgroundColor="?attr/colorSurface"
-    app:cardCornerRadius="32dp"
-    app:cardElevation="24dp">
+    app:cardCornerRadius="28dp"
+    app:cardElevation="8dp"
+    app:strokeWidth="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,21 +20,26 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp">
-            <ImageButton
-                android:id="@+id/btnClose"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
-                app:tint="?attr/colorOnSurface" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
+                android:layout_centerVertical="true"
+                android:layout_alignParentStart="true"
                 android:text="Hesap Ayarları"
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClose"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                app:icon="@android:drawable/ic_menu_close_clear_cancel"
+                app:iconTint="?attr/colorOnSurfaceVariant"
+                android:background="?attr/selectableItemBackgroundBorderless" />
         </RelativeLayout>
 
         <LinearLayout
@@ -41,12 +47,14 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="32dp">
+
             <com.google.android.material.card.MaterialCardView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                app:cardCornerRadius="50dp"
-                app:strokeColor="#33888888"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                app:cardCornerRadius="48dp"
+                app:cardElevation="4dp"
+                app:strokeColor="?attr/colorPrimaryContainer"
                 app:strokeWidth="2dp">
                 <ImageView
                     android:id="@+id/profileImage"
@@ -55,11 +63,12 @@
                     android:scaleType="centerCrop"
                     android:src="@android:drawable/ic_menu_gallery" />
             </com.google.android.material.card.MaterialCardView>
+
             <TextView
                 android:id="@+id/txtUserName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="16dp"
                 android:text="Türker Oğuz Eker"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="22sp"
@@ -69,21 +78,25 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="#15888888"
+            app:cardBackgroundColor="?attr/colorSurfaceVariant"
             app:cardCornerRadius="20dp"
             app:cardElevation="0dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="24dp">
+
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="64dp"
+                android:layout_height="72dp"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="20dp"
                 android:orientation="horizontal">
+
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:id="@+id/ivThemeIcon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:src="@android:drawable/ic_menu_day"
-                    app:tint="?attr/colorOnSurface" />
+                    app:tint="?attr/colorOnSurfaceVariant" />
+
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -91,28 +104,26 @@
                     android:layout_marginStart="16dp"
                     android:text="Karanlık Tema"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="16sp" />
+                    android:textSize="16sp"
+                    android:fontFamily="sans-serif-medium" />
 
                 <com.google.android.material.materialswitch.MaterialSwitch
                     android:id="@+id/themeSwitch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=""
-                    app:showText="false" />
+                    app:thumbIcon="@android:drawable/btn_star" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSheetLogout"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="56dp"
             android:text="Güvenli Çıkış"
-            android:textColor="#FF4444"
-            android:textAllCaps="false"
-            app:strokeColor="#FF4444"
-            app:strokeWidth="1dp"
-            app:cornerRadius="20dp"
-            app:backgroundTint="@android:color/transparent" />
+            android:textColor="?attr/colorError"
+            app:strokeColor="?attr/colorError"
+            app:cornerRadius="16dp" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
