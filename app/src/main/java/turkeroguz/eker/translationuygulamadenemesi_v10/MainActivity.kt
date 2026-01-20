@@ -1,19 +1,20 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10
 
-import android.app.Dialog
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.materialswitch.MaterialSwitch
-// Hatanın çözümü için eklenen import satırı:
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.FeaturedAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.FeaturedBook
-import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,27 +36,43 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showProfileDialog() {
-        val dialog = Dialog(this)
+        val dialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.layout_profile_sheet, null)
         dialog.setContentView(view)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        dialog.setOnShowListener {
+            val bottomSheet = view.parent as? View
+            bottomSheet?.let {
+                val layoutParams = it.layoutParams
+                val windowHeight = (resources.displayMetrics.heightPixels * 0.85).toInt() // Ekranın %85'i
+                layoutParams.height = windowHeight
+                it.layoutParams = layoutParams
+
+                val behavior = BottomSheetBehavior.from(it)
+                behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            }
+        }
 
         val themeSwitch = view.findViewById<MaterialSwitch>(R.id.themeSwitch)
         val themeIcon = view.findViewById<ImageView>(R.id.ivThemeIcon)
+        val themeSwitchContainer = view.findViewById<LinearLayout>(R.id.themeSwitchContainer)
 
-        themeSwitch?.let { switch ->
+        themeSwitchContainer?.setOnClickListener {
+            themeSwitch.isChecked = !themeSwitch.isChecked
+        }
+
+        themeSwitch?.let {
             val isNightMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-            switch.isChecked = isNightMode
+            it.isChecked = isNightMode
 
             if (isNightMode) themeIcon?.setImageResource(android.R.drawable.ic_menu_recent_history)
 
-            switch.setOnCheckedChangeListener { _, isChecked ->
+            it.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
                 } else {
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
                 }
-                dialog.dismiss()
             }
         }
 
@@ -89,13 +106,22 @@ class MainActivity : AppCompatActivity() {
             it.clipChildren = false
             it.offscreenPageLimit = 3
 
+            // Kenar boşluk ayarları (Kitapların yan yana görünmesi için)
+            val marginInDp = 50
+            val px = (marginInDp * resources.displayMetrics.density).toInt()
+            it.setPadding(px, 0, px, 0)
+
             it.setPageTransformer { page, position ->
-                val absPos = abs(position)
+                val absPos = kotlin.math.abs(position)
+
+                // Dikdörtgen formu bozmayan ölçekleme
                 val scale = 0.85f + (1 - absPos) * 0.15f
                 page.scaleY = scale
                 page.scaleX = scale
-                page.translationX = -position * (page.width / 4)
-                page.alpha = 0.4f + (1 - absPos) * 0.6f
+
+                // Kitapları birbirine yaklaştıran hizalama
+                page.translationX = -position * (px * 3.2f)
+                page.alpha = 0.5f + (1 - absPos) * 0.5f
             }
         }
     }
