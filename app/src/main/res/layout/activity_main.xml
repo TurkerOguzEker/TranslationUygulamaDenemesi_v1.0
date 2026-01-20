@@ -13,34 +13,121 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingBottom="20dp"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="26dp"
+                android:paddingHorizontal="16dp"
+                android:clipToPadding="false">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/searchCard"
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_weight="1"
+                    app:cardCornerRadius="27dp"
+                    app:cardElevation="8dp"
+                    app:cardMaxElevation="10dp"
+                    app:strokeWidth="0dp">
+                    <EditText
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@android:color/transparent"
+                        android:drawableStart="@android:drawable/ic_menu_search"
+                        android:drawablePadding="12dp"
+                        android:hint="Search book, author or genre..."
+                        android:paddingStart="20dp"
+                        android:textSize="14sp" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnProfile"
+                    android:layout_width="54dp"
+                    android:layout_height="54dp"
+                    android:layout_marginStart="16dp"
+                    app:cardCornerRadius="27dp"
+                    app:cardElevation="8dp"
+                    app:cardMaxElevation="10dp"
+                    app:strokeWidth="0dp">
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@android:drawable/ic_menu_gallery" />
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardContinueReading"
                 android:layout_width="match_parent"
-                android:layout_height="54dp"
+                android:layout_height="wrap_content"
                 android:layout_margin="16dp"
-                app:cardCornerRadius="27dp"
-                app:cardElevation="3dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
                 app:strokeWidth="0dp">
-                <EditText
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@android:color/transparent"
-                    android:drawableStart="@android:drawable/ic_menu_search"
-                    android:drawablePadding="12dp"
-                    android:hint="Search book, author or genre..."
-                    android:paddingStart="20dp"
-                    android:textSize="14sp" />
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="65dp"
+                        android:layout_height="90dp"
+                        app:cardCornerRadius="8dp"
+                        app:strokeWidth="0dp">
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:src="@android:drawable/ic_menu_gallery" />
+                    </com.google.android.material.card.MaterialCardView>
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:layout_gravity="center_vertical"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="OKUMAYA DEVAM ET"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:textColor="#757575"/>
+                        <TextView
+                            android:id="@+id/txtCurrentBookTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Sherlock Holmes"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000"/>
+                        <ProgressBar
+                            android:id="@+id/progressReading"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="6dp"
+                            android:layout_marginTop="8dp"
+                            android:progress="45"
+                            android:progressTint="#2196F3" />
+                    </LinearLayout>
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <androidx.viewpager2.widget.ViewPager2
-                android:id="@+id/viewPagerFeatured"
-                android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:clipChildren="false"
-                android:clipToPadding="false"
-                android:paddingStart="60dp"
-                android:paddingEnd="60dp" />
+            <include layout="@layout/layout_book_section" android:id="@+id/sectionA1" />
+            <include layout="@layout/layout_book_section" android:id="@+id/sectionA2" />
+            <include layout="@layout/layout_book_section" android:id="@+id/sectionB1" />
+            <include layout="@layout/layout_book_section" android:id="@+id/sectionB1Plus" />
+            <include layout="@layout/layout_book_section" android:id="@+id/sectionB2" />
+            <include layout="@layout/layout_book_section" android:id="@+id/sectionC1" />
+            <include layout="@layout/layout_book_section" android:id="@+id/sectionC2" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
@@ -51,5 +138,4 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         app:menu="@menu/bottom_nav_menu" />
-
 </RelativeLayout>
