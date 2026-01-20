@@ -1,69 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="10dp"
+    android:layout_gravity="center"
+    app:cardBackgroundColor="?attr/colorSurface"
+    app:cardCornerRadius="32dp"
+    app:cardElevation="24dp">
 
-    <com.google.android.material.card.MaterialCardView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:cardCornerRadius="30dp"
-        app:cardElevation="0dp">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="24dp">
-
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp">
             <ImageButton
                 android:id="@+id/btnClose"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="end"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_close_clear_cancel" />
-
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="?attr/colorOnSurface" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Hesabım"
-                android:textSize="26sp"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:layout_marginBottom="32dp"/>
+                android:layout_centerInParent="true"
+                android:text="Hesap Ayarları"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSheetPremium"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:text="Premium Satın Al"
-                app:cornerRadius="16dp"
-                android:backgroundTint="#FFD700"
-                android:textColor="#000000"
-                app:icon="@android:drawable/star_on" />
-
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:layout_marginBottom="24dp">
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                app:cardCornerRadius="50dp"
+                app:strokeColor="#33888888"
+                app:strokeWidth="2dp">
+                <ImageView
+                    android:id="@+id/profileImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@android:drawable/ic_menu_gallery" />
+            </com.google.android.material.card.MaterialCardView>
             <TextView
-                android:layout_width="match_parent"
+                android:id="@+id/txtUserName"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="#F5F5F5"
-                android:padding="16dp"
-                android:text="Sahip Olduğum Kitaplar: 12"
-                android:textSize="16sp" />
-
-            <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
-
-            <TextView
-                android:id="@+id/btnSheetLogout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:padding="16dp"
-                android:text="Çıkış Yap"
-                android:textColor="#FF0000"
+                android:layout_marginTop="12dp"
+                android:text="Türker Oğuz Eker"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="22sp"
                 android:textStyle="bold" />
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-</LinearLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="#15888888"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            android:layout_marginBottom="16dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="20dp"
+                android:orientation="horizontal">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@android:drawable/ic_menu_day"
+                    app:tint="?attr/colorOnSurface" />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:text="Karanlık Tema"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/themeSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    app:showText="false" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSheetLogout"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="Güvenli Çıkış"
+            android:textColor="#FF4444"
+            android:textAllCaps="false"
+            app:strokeColor="#FF4444"
+            app:strokeWidth="1dp"
+            app:cornerRadius="20dp"
+            app:backgroundTint="@android:color/transparent" />
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

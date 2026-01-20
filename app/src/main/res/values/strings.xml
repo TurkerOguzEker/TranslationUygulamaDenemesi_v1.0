@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">TranslationUygulamaDenemesi_v1.0</string>
+    <string name="continue_reading">OKUMAYA DEVAM ET</string>
+    <string name="my_account">Hesabım</string>
+    <string name="premium_buy">Premium Satın Al</string>
+    <string name="logout">Çıkış Yap</string>
+    <string name="owned_books">Sahip Olduğum Kitaplar: 12</string>
 </resources>
