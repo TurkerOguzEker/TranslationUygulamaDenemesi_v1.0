@@ -5,9 +5,7 @@ plugins {
 
 android {
     namespace = "turkeroguz.eker.translationuygulamadenemesi_v10"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "turkeroguz.eker.translationuygulamadenemesi_v10"
@@ -32,8 +30,14 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    kotlinOptions {
+        jvmTarget = "11"
+    }
     buildFeatures {
         compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.1"
     }
 }
 
@@ -59,7 +63,4 @@ dependencies {
 
     // TOML'da 'google-material' yazdığımız için burada 'libs.google.material' olur
     implementation(libs.google.material)
-
-    // ViewPager2 için de şunu ekle (eğer listede yoksa kırmızı yanabilir)
-    implementation("androidx.viewpager2:viewpager2:1.1.0")
 }
