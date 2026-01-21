@@ -1,4 +1,4 @@
-package turkeroguz.eker.translationuygulamadenemesi_v10
+package turkeroguz.eker.translationuygulamadenemesi_v10.model
 
 /**
  * Slider'da görünecek kitapların verilerini tutan model sınıfı.
