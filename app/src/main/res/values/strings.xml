@@ -5,4 +5,12 @@
     <string name="premium_buy">Premium Satın Al</string>
     <string name="logout">Çıkış Yap</string>
     <string name="owned_books">Sahip Olduğum Kitaplar: 12</string>
+    <string name="profile_user_id">User ID</string>
+    <string name="profile_username">Username</string>
+    <string name="profile_dark_mode">Dark Mode</string>
+    <string name="profile_premium_button">Premiumlu olmak istiyorum</string>
+    <string name="profile_select_language">Select Language</string>
+    <string name="profile_owned_books">Sahip olunan kitap sayısı: 5</string>
+    <string name="profile_book_completion">Kitap bitirme istatistiği: 75%</string>
+    <string name="profile_logout_button">Logout</string>
 </resources>

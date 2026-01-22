@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bottom_sheet_background"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="12dp">
 
     <!-- Kapatma Butonu -->
     <ImageButton
@@ -16,57 +17,49 @@
         android:padding="12dp"
         android:src="@android:drawable/ic_menu_close_clear_cancel" />
 
-    <!-- Profil Bilgileri -->
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- Profil Resmi -->
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/ivProfileImage"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_gravity="center_horizontal"
+        android:background="#ccc"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.App.CircleImageView" />
+
+    <!-- Kullanıcı ID -->
+    <TextView
+        android:id="@+id/tvUserId"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:text="@string/profile_user_id"
+        android:textSize="16sp" />
 
-        <ImageView
-            android:id="@+id/ivProfileImage"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:background="#ccc" />
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvUsername"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Username"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvUserEmail"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="user@example.com" />
-        </LinearLayout>
-    </LinearLayout>
+    <!-- Kullanıcı Adı -->
+    <TextView
+        android:id="@+id/tvUsername"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="@string/profile_username"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <!-- Tema Ayarları -->
     <LinearLayout
         android:id="@+id/themeSwitchContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        android:orientation="horizontal">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Dark Mode" />
+            android:text="@string/profile_dark_mode" />
 
         <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/themeSwitch"
@@ -82,11 +75,87 @@
 
     </LinearLayout>
 
+    <!-- Premium Butonu -->
+    <Button
+        android:id="@+id/btnPremium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="@color/design_default_color_primary"
+        android:text="@string/profile_premium_button"
+        android:textColor="@android:color/white"
+        app:icon="@drawable/ic_crown" />
+
+    <!-- Dil Seçimi -->
+    <TextView
+        android:id="@+id/tvSelectLanguage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:drawableEnd="@android:drawable/ic_menu_send"
+        android:padding="12dp"
+        android:onClick="showLanguageSelectionDialog"
+        android:text="@string/profile_select_language" />
+
+
+    <!-- Kitap İstatistikleri -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_book"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/tvOwnedBooks"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/profile_owned_books" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_statistics"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/tvBookCompletion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/profile_book_completion" />
+        </LinearLayout>
+    </LinearLayout>
+
     <!-- Çıkış Yap Butonu -->
     <Button
         android:id="@+id/btnSheetLogout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Logout"/>
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="32dp"
+        android:text="@string/profile_logout_button"
+        app:icon="@drawable/ic_logout" />
 
 </LinearLayout>

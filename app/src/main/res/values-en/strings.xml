@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">TranslationAppDemo_v1.0</string>
+    <string name="continue_reading">CONTINUE READING</string>
+    <string name="my_account">My Account</string>
+    <string name="premium_buy">Buy Premium</string>
+    <string name="logout">Logout</string>
+    <string name="owned_books">Owned Books: 12</string>
+    <string name="profile_user_id">User ID</string>
+    <string name="profile_username">Username</string>
+    <string name="profile_dark_mode">Dark Mode</string>
+    <string name="profile_premium_button">I want to be Premium</string>
+    <string name="profile_select_language">Select Language</string>
+    <string name="profile_owned_books">Number of books owned: 5</string>
+    <string name="profile_book_completion">Book completion statistic: 75%</string>
+    <string name="profile_logout_button">Logout</string>
+</resources>

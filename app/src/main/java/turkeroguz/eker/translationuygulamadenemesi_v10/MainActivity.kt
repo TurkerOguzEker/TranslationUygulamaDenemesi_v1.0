@@ -9,12 +9,17 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.materialswitch.MaterialSwitch
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.FeaturedAdapter
+import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.LanguageAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.FeaturedBook
+import turkeroguz.eker.translationuygulamadenemesi_v10.model.Language
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -83,6 +88,37 @@ class MainActivity : AppCompatActivity() {
         }
 
         dialog.show()
+    }
+
+    fun showLanguageSelectionDialog(view: View) {
+        val dialog = BottomSheetDialog(this)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_language_selection, null)
+        dialog.setContentView(dialogView)
+
+        val languages = listOf(
+            Language("English", "en"),
+            Language("Türkçe", "tr")
+        )
+
+        val currentLanguageCode = resources.configuration.locales[0].language
+
+        val rvLanguages = dialogView.findViewById<RecyclerView>(R.id.rvLanguages)
+        rvLanguages.layoutManager = LinearLayoutManager(this)
+        rvLanguages.adapter = LanguageAdapter(languages, currentLanguageCode) { languageCode ->
+            setLocale(languageCode)
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private fun setLocale(languageCode: String) {
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+        val config = Configuration()
+        config.setLocale(locale)
+        baseContext.resources.updateConfiguration(config, baseContext.resources.displayMetrics)
+        recreate()
     }
 
     private fun setupLevelSections(featuredList: List<FeaturedBook>) {
