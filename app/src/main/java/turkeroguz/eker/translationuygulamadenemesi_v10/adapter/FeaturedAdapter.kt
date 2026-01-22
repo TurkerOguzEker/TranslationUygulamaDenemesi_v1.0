@@ -15,8 +15,8 @@ class FeaturedAdapter(private val books: List<FeaturedBook>) :
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         // XML'deki id: imgBookCover
         val imageView: ImageView = view.findViewById(R.id.imgBookCover)
-        // XML'deki id: txtBookTitle (Burayı düzelttik)
-        val titleView: TextView = view.findViewById(R.id.txtBookTitle)
+        // XML'deki id: txtBookName 
+        val titleView: TextView = view.findViewById(R.id.txtBookName)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

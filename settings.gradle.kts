@@ -21,4 +21,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "TranslationUygulamaDenemesi_v1.0"
 include(":app")
- 
