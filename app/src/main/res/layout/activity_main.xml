@@ -5,135 +5,14 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <LinearLayout
-        android:id="@+id/mainContent"
+    <FrameLayout
+        android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <!-- Arama Çubuğu -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                app:boxCornerRadiusBottomEnd="24dp"
-                app:boxCornerRadiusBottomStart="24dp"
-                app:boxCornerRadiusTopEnd="24dp"
-                app:boxCornerRadiusTopStart="24dp">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:drawableStart="@android:drawable/ic_menu_search"
-                    android:drawablePadding="8dp"
-                    android:hint="Search book, author or genre..." />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <ImageButton
-                android:id="@+id/btnProfile"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_gallery" />
-        </LinearLayout>
-
-        <!-- Okumaya Devam Et -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="12dp">
-
-                <ImageView
-                    android:layout_width="60dp"
-                    android:layout_height="80dp"
-                    android:background="#E0E0E0" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="OKUMAYA DEVAM ET"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Sherlock Holmes"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <ProgressBar
-                        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:progress="60" />
-                </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Seviye Bölümleri -->
-        <androidx.core.widget.NestedScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <include
-                    android:id="@+id/sectionA1"
-                    layout="@layout/level_section_layout" />
-
-                <include
-                    android:id="@+id/sectionA2"
-                    layout="@layout/level_section_layout" />
-
-                <include
-                    android:id="@+id/sectionB1"
-                    layout="@layout/level_section_layout" />
-                <include
-                    android:id="@+id/sectionB1Plus"
-                    layout="@layout/level_section_layout" />
-                <include
-                    android:id="@+id/sectionB2"
-                    layout="@layout/level_section_layout" />
-                <include
-                    android:id="@+id/sectionC1"
-                    layout="@layout/level_section_layout" />
-                <include
-                    android:id="@+id/sectionC2"
-                    layout="@layout/level_section_layout" />
-            </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
-    </LinearLayout>
+        android:layout_above="@+id/bottomNav" />
 
     <LinearLayout
+        android:id="@+id/bottomNav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
@@ -145,44 +24,50 @@
         android:paddingBottom="8dp">
 
         <TextView
+            android:id="@+id/btnHome"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:drawableTop="@android:drawable/ic_menu_agenda"
+            android:drawableTop="@drawable/ic_home"
             android:gravity="center"
-            android:text="Book" />
+            android:text="@string/home" />
 
         <TextView
+            android:id="@+id/btnBooks"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:drawableTop="@android:drawable/ic_menu_zoom"
+            android:drawableTop="@drawable/ic_books"
             android:gravity="center"
-            android:text="Bo2" />
+            android:text="@string/books" />
 
         <TextView
+            android:id="@+id/btnWords"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:drawableTop="@android:drawable/ic_menu_search"
+            android:drawableTop="@drawable/ic_words"
             android:gravity="center"
-            android:text="" />
+            android:text="@string/words" />
 
         <TextView
+            android:id="@+id/btnDownloads"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:drawableTop="@android:drawable/ic_menu_save"
+            android:drawableTop="@drawable/ic_downloads"
             android:gravity="center"
-            android:text="" />
+            android:text="@string/downloads" />
 
         <TextView
+            android:id="@+id/btnSettings"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:drawableTop="@android:drawable/ic_menu_preferences"
+            android:drawableTop="@drawable/ic_settings"
             android:gravity="center"
-            android:text="" />
+            android:text="@string/settings" />
+
     </LinearLayout>
 
 </RelativeLayout>

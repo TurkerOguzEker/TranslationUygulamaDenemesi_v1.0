@@ -13,4 +13,28 @@
     <string name="profile_owned_books">Sahip olunan kitap sayısı: 5</string>
     <string name="profile_book_completion">Kitap bitirme istatistiği: 75%</string>
     <string name="profile_logout_button">Logout</string>
+    <string name="search_hint">Kitap, yazar veya tür ara...</string>
+    <string name="level_a1">Başlangıç (A1)</string>
+    <string name="level_a2">Temel (A2)</string>
+    <string name="level_b1">Orta Altı (B1)</string>
+    <string name="level_b1_plus">Orta (B1+)</string>
+    <string name="level_b2">Orta Üstü (B2)</string>
+    <string name="level_c1">İleri (C1)</string>
+    <string name="level_c2">Yetkin (C2)</string>
+    <string-array name="levels_array">
+        <item>@string/level_a1</item>
+        <item>@string/level_a2</item>
+        <item>@string/level_b1</item>
+        <item>@string/level_b1_plus</item>
+        <item>@string/level_b2</item>
+        <item>@string/level_c1</item>
+        <item>@string/level_c2</item>
+    </string-array>
+    <string name="home">Anasayfa</string>
+    <string name="books">Kitaplar</string>
+    <string name="words">Kelimeler</string>
+    <string name="downloads">İndirilenler</string>
+    <string name="settings">Ayarlar</string>
+    <string name="select_level">Seviye Seçin</string>
+    <string name="oguz_app">Oguz App</string>
 </resources>

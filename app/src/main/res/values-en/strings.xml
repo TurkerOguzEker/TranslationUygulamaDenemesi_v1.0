@@ -13,4 +13,19 @@
     <string name="profile_owned_books">Number of books owned: 5</string>
     <string name="profile_book_completion">Book completion statistic: 75%</string>
     <string name="profile_logout_button">Logout</string>
+    <string name="search_hint">Search book, author or genre...</string>
+    <string name="level_a1">Beginner (A1)</string>
+    <string name="level_a2">Elementary (A2)</string>
+    <string name="level_b1">Pre-Intermediate (B1)</string>
+    <string name="level_b1_plus">Intermediate (B1+)</string>
+    <string name="level_b2">Upper Intermediate (B2)</string>
+    <string name="level_c1">Advanced (C1)</string>
+    <string name="level_c2">Proficiency (C2)</string>
+    <string name="home">Home</string>
+    <string name="books">Books</string>
+    <string name="words">Words</string>
+    <string name="downloads">Downloads</string>
+    <string name="settings">Settings</string>
+    <string name="select_level">Select Level</string>
+    <string name="oguz_app">Oguz App</string>
 </resources>

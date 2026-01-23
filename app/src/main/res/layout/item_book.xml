@@ -61,18 +61,6 @@
                     android:layout_marginTop="6dp"
                     android:layout_marginBottom="6dp"/>
 
-                <TextView
-                    android:id="@+id/txtBookAuthor"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Author Name"
-                    android:textColor="#BDBDBD"
-                    android:textSize="11sp"
-                    android:textAllCaps="true"
-                    android:letterSpacing="0.04"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
-
             </LinearLayout>
 
         </RelativeLayout>
