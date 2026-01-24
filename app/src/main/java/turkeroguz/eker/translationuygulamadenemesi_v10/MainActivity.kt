@@ -32,16 +32,16 @@ class MainActivity : AppCompatActivity() {
             replaceFragment(HomeFragment())
         }
 
-        findViewById<View>(R.id.btnBooks).setOnClickListener {
+        findViewById<View>(R.id.btnSearch).setOnClickListener {
             replaceFragment(BooksFragment())
+        }
+
+        findViewById<View>(R.id.btnMyBooks).setOnClickListener {
+            replaceFragment(MyBooksFragment())
         }
 
         findViewById<View>(R.id.btnWords).setOnClickListener {
             replaceFragment(WordsFragment())
-        }
-
-        findViewById<View>(R.id.btnDownloads).setOnClickListener {
-            replaceFragment(DownloadsFragment())
         }
 
         findViewById<View>(R.id.btnSettings).setOnClickListener {
@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         replaceFragment(fragment)
-        findViewById<View>(R.id.btnBooks).performClick()
+        findViewById<View>(R.id.btnSearch).performClick()
     }
 
     fun showProfileDialog() {

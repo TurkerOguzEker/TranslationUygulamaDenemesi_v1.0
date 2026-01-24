@@ -18,22 +18,43 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:text="@string/oguz_app"
-            android:textSize="32sp"
+            android:textSize="24sp"
             android:textStyle="bold" />
 
-        <ImageButton
-            android:id="@+id/btnProfile"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/profile_card"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:background="@drawable/bg_profile_button_round"
-            android:src="@android:drawable/ic_menu_gallery" />
+            app:cardCornerRadius="24dp">
+
+            <ImageButton
+                android:id="@+id/btnProfile"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_gallery" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <ImageButton
+            android:id="@+id/btnNotifications"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_toStartOf="@id/profile_card"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_notifications"
+            app:tint="?attr/colorControlNormal" />
 
     </RelativeLayout>
 
     <!-- Okumaya Devam Et -->
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/continue_reading_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -85,13 +106,15 @@
 
     <!-- Seviye Bölümleri -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nested_scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
 
             <include
                 android:id="@+id/sectionA1"

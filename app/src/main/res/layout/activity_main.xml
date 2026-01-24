@@ -29,17 +29,32 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:drawableTop="@drawable/ic_home"
+            android:drawableTint="@color/nav_icon_tint"
             android:gravity="center"
-            android:text="@string/home" />
+            android:text="@string/home"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
 
         <TextView
-            android:id="@+id/btnBooks"
+            android:id="@+id/btnSearch"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:drawableTop="@drawable/ic_books"
+            android:drawableTop="@drawable/ic_search"
+            android:drawableTint="@color/nav_icon_tint"
             android:gravity="center"
-            android:text="@string/books" />
+            android:text="@string/search"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+        <TextView
+            android:id="@+id/btnMyBooks"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:drawableTop="@drawable/ic_book"
+            android:drawableTint="@color/nav_icon_tint"
+            android:gravity="center"
+            android:text="@string/my_books"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
 
         <TextView
             android:id="@+id/btnWords"
@@ -47,17 +62,10 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:drawableTop="@drawable/ic_words"
+            android:drawableTint="@color/nav_icon_tint"
             android:gravity="center"
-            android:text="@string/words" />
-
-        <TextView
-            android:id="@+id/btnDownloads"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:drawableTop="@drawable/ic_downloads"
-            android:gravity="center"
-            android:text="@string/downloads" />
+            android:text="@string/words"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
 
         <TextView
             android:id="@+id/btnSettings"
@@ -65,8 +73,10 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:drawableTop="@drawable/ic_settings"
+            android:drawableTint="@color/nav_icon_tint"
             android:gravity="center"
-            android:text="@string/settings" />
+            android:text="@string/settings"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
 
     </LinearLayout>
 

@@ -21,11 +21,13 @@ class BooksFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_books, container, false)
 
+        // Dropdown (Seviye Seçimi) işlemleri
         val levels = resources.getStringArray(R.array.levels_array)
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, levels)
         val autoCompleteTextView: AutoCompleteTextView = view.findViewById(R.id.autoCompleteTextView)
         autoCompleteTextView.setAdapter(adapter)
 
+        // Kitap listesi verisi (Örnek veriler)
         val featuredList = listOf(
             FeaturedBook("Adventure", R.drawable.ic_launcher_background),
             FeaturedBook("Grammar", R.drawable.ic_launcher_background),
@@ -35,9 +37,13 @@ class BooksFragment : Fragment() {
             FeaturedBook("Mystery", R.drawable.ic_launcher_background)
         )
 
+        // RecyclerView ayarları
         val rvBooks: RecyclerView = view.findViewById(R.id.rvBooks)
         rvBooks.layoutManager = GridLayoutManager(context, 2)
-        rvBooks.adapter = FeaturedAdapter(featuredList)
+
+        // ÖNEMLİ: useSearchLayout = true parametresini buraya ekledik.
+        // Bu sayede Adapter, kartların boyutunu otomatik ayarlayacak ve boşluklar düzelecek.
+        rvBooks.adapter = FeaturedAdapter(featuredList, useSearchLayout = true)
 
         return view
     }

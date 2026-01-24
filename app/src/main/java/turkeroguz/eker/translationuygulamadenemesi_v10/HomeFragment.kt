@@ -4,13 +4,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
-import androidx.viewpager2.widget.ViewPager2
+import androidx.viewpager2.widget.CompositePageTransformer
+import androidx.viewpager2.widget.MarginPageTransformer
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.FeaturedAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.FragmentHomeBinding
 import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.LevelSectionLayoutBinding
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.FeaturedBook
+import kotlin.math.abs
 
 class HomeFragment : Fragment() {
 
@@ -37,7 +40,74 @@ class HomeFragment : Fragment() {
             (activity as? MainActivity)?.showProfileDialog()
         }
 
+        binding.btnNotifications.setOnClickListener {
+            showNotificationsDialog()
+        }
+
+
+        // ... diğer kodların (btnProfile, btnNotifications vs.) ...
+
+        val continueReadingCard = binding.continueReadingCard
+
+// Kartın yüksekliğini doğru ölçmek için 'post' bloğu içine alıyoruz
+        continueReadingCard.post {
+            val originalHeight = continueReadingCard.measuredHeight
+            var isCardVisible = true // Animasyonların çakışmasını önlemek için bayrak
+
+            binding.nestedScrollView.setOnScrollChangeListener(NestedScrollView.OnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
+                val dy = scrollY - oldScrollY // Değişim miktarı
+
+                // AŞAĞI KAYDIRIYORSAK -> KARTI "EZEREK" KAPAT
+                if (dy > 15 && isCardVisible) {
+                    isCardVisible = false
+
+                    // Yüksekliği originalHeight'tan 0'a indiren animasyon
+                    val animator = android.animation.ValueAnimator.ofInt(originalHeight, 0)
+                    animator.addUpdateListener { valueAnimator ->
+                        val value = valueAnimator.animatedValue as Int
+                        // Kartın boyunu anlık olarak güncelle
+                        val params = continueReadingCard.layoutParams
+                        params.height = value
+                        continueReadingCard.layoutParams = params
+                        // Aynı anda saydamlaştır (daha şık durur)
+                        continueReadingCard.alpha = value.toFloat() / originalHeight
+                    }
+                    animator.duration = 300 // Animasyon hızı (ms)
+                    animator.start()
+                }
+
+                // YUKARI KAYDIRIYORSAK -> KARTI TEKRAR AÇ
+                else if (dy < -15 && !isCardVisible) {
+                    isCardVisible = true
+
+                    // Yüksekliği 0'dan originalHeight'a çıkaran animasyon
+                    val animator = android.animation.ValueAnimator.ofInt(0, originalHeight)
+                    animator.addUpdateListener { valueAnimator ->
+                        val value = valueAnimator.animatedValue as Int
+                        val params = continueReadingCard.layoutParams
+                        params.height = value
+                        continueReadingCard.layoutParams = params
+                        continueReadingCard.alpha = value.toFloat() / originalHeight
+                    }
+                    animator.duration = 300
+                    animator.start()
+                }
+            })
+        }
+
+// ... return view ...
+
         return view
+    }
+
+    private fun showNotificationsDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Bildirimler")
+            .setMessage("Gösterilecek bildirim yok.")
+            .setPositiveButton("Tamam") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     override fun onDestroyView() {
@@ -65,19 +135,13 @@ class HomeFragment : Fragment() {
             it.clipChildren = false
             it.offscreenPageLimit = 3
 
-            val marginInDp = 10
-            val px = (marginInDp * resources.displayMetrics.density).toInt()
-            it.setPadding(px, 0, px, 0)
-
-            it.setPageTransformer { page, position ->
-                val absPos = kotlin.math.abs(position)
-
-                val scale = 0.9f + (1 - absPos) * 0.1f
-                page.scaleY = scale
-                page.scaleX = scale
-
-                page.translationX = -position * (px * 0.8f)
+            val compositePageTransformer = CompositePageTransformer()
+            compositePageTransformer.addTransformer(MarginPageTransformer(4))
+            compositePageTransformer.addTransformer { page, position ->
+                val r = 1 - abs(position)
+                page.scaleY = 0.9f + r * 0.1f
             }
+            it.setPageTransformer(compositePageTransformer)
         }
     }
 }

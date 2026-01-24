@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/nav_books"
-        android:icon="@android:drawable/ic_menu_agenda"
-        android:title="Book" />
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="@string/home" />
     <item
-        android:id="@+id/nav_word"
-        android:icon="@android:drawable/ic_menu_sort_alphabetically"
-        android:title="Word" />
+        android:id="@+id/nav_search"
+        android:icon="@drawable/ic_search"
+        android:title="@string/search" />
     <item
-        android:id="@+id/nav_audio"
-        android:icon="@android:drawable/ic_lock_silent_mode_off"
-        android:title="Audio" />
+        android:id="@+id/nav_my_books"
+        android:icon="@drawable/ic_book"
+        android:title="@string/my_books" />
     <item
-        android:id="@+id/nav_download"
-        android:icon="@android:drawable/stat_sys_download"
-        android:title="Download" />
+        android:id="@+id/nav_words"
+        android:icon="@drawable/ic_words"
+        android:title="@string/words" />
     <item
         android:id="@+id/nav_settings"
-        android:icon="@android:drawable/ic_menu_preferences"
-        android:title="Settings" />
+        android:icon="@drawable/ic_settings"
+        android:title="@string/settings" />
 </menu>

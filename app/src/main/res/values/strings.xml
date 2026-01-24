@@ -36,5 +36,9 @@
     <string name="downloads">İndirilenler</string>
     <string name="settings">Ayarlar</string>
     <string name="select_level">Seviye Seçin</string>
-    <string name="oguz_app">Oguz App</string>
+    <string name="oguz_app">Ana Sayfa</string>
+    <string name="search">Arama</string>
+    <string name="my_books">Kitaplarım</string>
+    <string name="favorites">Favorilerim</string>
+    <string name="finished">Bitirdiklerim</string>
 </resources>

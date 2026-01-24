@@ -10,4 +10,6 @@
     <color name="colorBackground">#121212</color>
     <color name="colorOnBackground">#FFFFFF</color>
     <color name="colorError">#CF6679</color>
+
+    <color name="nav_icon_tint">#FFFFFFFF</color>
 </resources>
