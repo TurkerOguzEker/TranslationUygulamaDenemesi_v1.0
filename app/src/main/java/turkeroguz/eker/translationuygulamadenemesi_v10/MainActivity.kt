@@ -1,16 +1,23 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10
 
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.firebase.auth.FirebaseAuth
@@ -22,18 +29,29 @@ import turkeroguz.eker.translationuygulamadenemesi_v10.ui.LoginFragment
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.RegisterFragment
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.AdminPanelFragment
 
-
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // 1. Ana ekrandaki profil resmini (Varsa Fotoğraf, Yoksa Baş Harf) güncelle
+        updateMainProfileImage()
+
+        // 2. Profil butonuna tıklanınca pencereyi aç
+        findViewById<View>(R.id.ivProfileIcon)?.setOnClickListener {
+            showProfileDialog()
+        }
+        // Alternatif buton ID (Eğer kullanıyorsanız)
+        findViewById<View>(R.id.btnProfile)?.setOnClickListener {
+            showProfileDialog()
+        }
+
         if (savedInstanceState == null) {
-            // Uygulama açılınca direkt kullanıcı kontrolü yap:
             checkUserAndNavigate()
         }
 
+        // Alt Menü Butonları
         findViewById<View>(R.id.btnHome).setOnClickListener {
             replaceFragment(HomeFragment())
         }
@@ -55,7 +73,76 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun replaceFragment(fragment: Fragment) {
+    // Ana ekrandaki profil resmini yükleyen fonksiyon
+    private fun updateMainProfileImage() {
+        val user = FirebaseAuth.getInstance().currentUser
+        val profileImage = findViewById<ImageView>(R.id.ivProfileIcon)
+
+        if (user != null && profileImage != null) {
+            if (user.photoUrl != null) {
+                // Google/Firebase resmi varsa yükle
+                Glide.with(this)
+                    .load(user.photoUrl)
+                    .circleCrop()
+                    .into(profileImage)
+            } else {
+                // Resim yoksa BAŞ HARF'ten resim oluştur
+                val email = user.email ?: ""
+                val name = getNameFromEmail(email)
+                val initial = name.firstOrNull()?.toString()?.uppercase() ?: "?"
+
+                val letterBitmap = createProfileBitmap(initial)
+
+                Glide.with(this)
+                    .load(letterBitmap)
+                    .circleCrop() // Yuvarlak yapar
+                    .into(profileImage)
+            }
+        }
+    }
+
+    // Mail adresinden isim türeten yardımcı fonksiyon
+    private fun getNameFromEmail(email: String): String {
+        return if (email.contains("@")) {
+            email.substringBefore("@")
+                .replace(".", " ")
+                .split(" ")
+                .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
+        } else {
+            "Kullanıcı"
+        }
+    }
+
+    // Harften Resim (Bitmap) Oluşturan Fonksiyon
+    private fun createProfileBitmap(text: String): Bitmap {
+        val width = 200
+        val height = 200
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint()
+
+        // Arka plan rengi (Koyu Mavi/Mor tonu)
+        paint.color = Color.parseColor("#5C6BC0")
+        paint.style = Paint.Style.FILL
+        // Kare çiziyoruz, Glide bunu yuvarlak yapacak
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+
+        // Harf ayarları
+        paint.color = Color.WHITE
+        paint.textSize = 100f
+        paint.textAlign = Paint.Align.CENTER
+        paint.typeface = Typeface.DEFAULT_BOLD
+
+        // Harfi tam ortaya hizalama
+        val xPos = (canvas.width / 2).toFloat()
+        val yPos = (canvas.height / 2 - (paint.descent() + paint.ascent()) / 2)
+
+        canvas.drawText(text, xPos, yPos, paint)
+
+        return bitmap
+    }
+
+    fun replaceFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .commit()
@@ -71,11 +158,54 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnSearch).performClick()
     }
 
+    // Profil Penceresini (Bottom Sheet) Açan Fonksiyon
     fun showProfileDialog() {
         val dialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.layout_profile_sheet, null)
         dialog.setContentView(view)
 
+        val user = FirebaseAuth.getInstance().currentUser
+
+        // XML ID Eşleştirmeleri
+        val tvName = view.findViewById<TextView>(R.id.tvProfileName)
+        val tvEmail = view.findViewById<TextView>(R.id.tvProfileEmail)
+        val tvId = view.findViewById<TextView>(R.id.tvProfileId)
+        val ivSheetProfile = view.findViewById<ImageView>(R.id.ivProfileImage)
+
+        if (user != null) {
+            val email = user.email ?: ""
+            val nameFromEmail = getNameFromEmail(email)
+
+            // Verileri Yazdır
+            tvName?.text = nameFromEmail
+            tvEmail?.text = email
+            tvId?.text = "ID: ${user.uid}"
+
+            // Profil Resmini Yükle (Fotoğraf veya Harf)
+            if (ivSheetProfile != null) {
+                if (user.photoUrl != null) {
+                    Glide.with(this)
+                        .load(user.photoUrl)
+                        .circleCrop()
+                        .into(ivSheetProfile)
+                } else {
+                    // Resim yoksa harf oluştur
+                    val initial = nameFromEmail.firstOrNull()?.toString()?.uppercase() ?: "?"
+                    val letterBitmap = createProfileBitmap(initial)
+
+                    Glide.with(this)
+                        .load(letterBitmap)
+                        .circleCrop()
+                        .into(ivSheetProfile)
+                }
+            }
+        } else {
+            tvName?.text = "Misafir"
+            tvEmail?.text = ""
+            tvId?.text = "Giriş Yapılmadı"
+        }
+
+        // --- Tema ve Diğer Ayarlar ---
         val themeSwitch = view.findViewById<MaterialSwitch>(R.id.themeSwitch)
         val themeIcon = view.findViewById<ImageView>(R.id.ivThemeIcon)
         val themeSwitchContainer = view.findViewById<LinearLayout>(R.id.themeSwitchContainer)
@@ -87,33 +217,27 @@ class MainActivity : AppCompatActivity() {
         themeSwitch?.let {
             val isNightMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
             it.isChecked = isNightMode
-
             if (isNightMode) themeIcon?.setImageResource(android.R.drawable.ic_menu_recent_history)
 
             it.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) {
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-                } else {
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-                }
+                AppCompatDelegate.setDefaultNightMode(
+                    if (isChecked) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+                )
             }
         }
 
         view.findViewById<View>(R.id.btnClose)?.setOnClickListener { dialog.dismiss() }
 
-        // DÜZELTME: Burada sadece tek bir listener bıraktık (Firebase Çıkış İşlemi)
+        // ÇIKIŞ YAP Butonu
         view.findViewById<View>(R.id.btnSheetLogout)?.setOnClickListener {
-            // Firebase oturumunu kapat
             FirebaseAuth.getInstance().signOut()
-
-            // Dialogu kapat
             dialog.dismiss()
-
-            // Kullanıcıyı hemen Giriş ekranına at (HomeFragment yerine LoginFragment açılacak)
             checkUserAndNavigate()
-
-            // İsteğe bağlı: Bilgi mesajı
             Toast.makeText(this, "Çıkış yapıldı", Toast.LENGTH_SHORT).show()
+        }
+
+        view.findViewById<View>(R.id.tvSelectLanguage)?.setOnClickListener {
+            showLanguageSelectionDialog(it)
         }
 
         dialog.show()
@@ -124,11 +248,7 @@ class MainActivity : AppCompatActivity() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_language_selection, null)
         dialog.setContentView(dialogView)
 
-        val languages = listOf(
-            Language("English", "en"),
-            Language("Türkçe", "tr")
-        )
-
+        val languages = listOf(Language("English", "en"), Language("Türkçe", "tr"))
         val currentLanguageCode = resources.configuration.locales[0].language
 
         val rvLanguages = dialogView.findViewById<RecyclerView>(R.id.rvLanguages)
@@ -137,7 +257,6 @@ class MainActivity : AppCompatActivity() {
             setLocale(languageCode)
             dialog.dismiss()
         }
-
         dialog.show()
     }
 
@@ -153,31 +272,23 @@ class MainActivity : AppCompatActivity() {
     fun checkUserAndNavigate() {
         val user = FirebaseAuth.getInstance().currentUser
         if (user == null) {
-            // Giriş yapmamışsa Login ekranına at
             replaceFragment(LoginFragment())
         } else {
-            // Giriş yapmışsa rolünü kontrol et
             FirebaseFirestore.getInstance().collection("users").document(user.uid)
                 .get()
                 .addOnSuccessListener { document ->
-                    // Aktivite kapanmışsa işlemi durdur (Çökme önleyici)
                     if (isFinishing || isDestroyed) return@addOnSuccessListener
-
                     if (document.exists()) {
                         val role = document.getString("role")
                         if (role == "admin") {
                             Toast.makeText(this, "Yönetici Girişi", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    // Ana sayfayı aç
                     replaceFragment(HomeFragment())
+                    updateMainProfileImage()
                 }
                 .addOnFailureListener {
-                    // Aktivite kapanmışsa işlemi durdur
-                    if (isFinishing || isDestroyed) return@addOnFailureListener
-
-                    // Hata olsa bile kullanıcının uygulamaya girmesine izin ver (veya hata mesajı göster)
-                    replaceFragment(HomeFragment())
+                    if (!isFinishing && !isDestroyed) replaceFragment(HomeFragment())
                 }
         }
     }

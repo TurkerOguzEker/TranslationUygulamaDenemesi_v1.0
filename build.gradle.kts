@@ -5,4 +5,5 @@ plugins {
 
     // HATAYI ÇÖZEN SATIR BU: Sürüm numarası ve 'apply false' eklendi
     id("com.google.gms.google-services") version "4.4.2" apply false
+
 }

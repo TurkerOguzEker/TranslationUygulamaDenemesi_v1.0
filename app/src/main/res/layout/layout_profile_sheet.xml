@@ -7,7 +7,6 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <!-- Kapatma Butonu -->
     <ImageButton
         android:id="@+id/btnClose"
         android:layout_width="wrap_content"
@@ -17,7 +16,6 @@
         android:padding="12dp"
         android:src="@android:drawable/ic_menu_close_clear_cancel" />
 
-    <!-- Profil Resmi -->
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/ivProfileImage"
         android:layout_width="96dp"
@@ -26,27 +24,35 @@
         android:background="#ccc"
         app:shapeAppearanceOverlay="@style/ShapeAppearance.App.CircleImageView" />
 
-    <!-- Kullanıcı ID -->
     <TextView
-        android:id="@+id/tvUserId"
+        android:id="@+id/tvProfileName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:text="Kullanıcı Adı"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvProfileEmail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="email@ornek.com"
+        android:textSize="14sp"
+        android:textColor="#555555" />
+
+    <TextView
+        android:id="@+id/tvProfileId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="4dp"
-        android:text="@string/profile_user_id"
-        android:textSize="16sp" />
+        android:text="ID: 12345"
+        android:textSize="12sp"
+        android:textColor="#888888" />
 
-    <!-- Kullanıcı Adı -->
-    <TextView
-        android:id="@+id/tvUsername"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="@string/profile_username"
-        android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <!-- Tema Ayarları -->
     <LinearLayout
         android:id="@+id/themeSwitchContainer"
         android:layout_width="match_parent"
@@ -75,7 +81,6 @@
 
     </LinearLayout>
 
-    <!-- Premium Butonu -->
     <Button
         android:id="@+id/btnPremium"
         android:layout_width="match_parent"
@@ -86,7 +91,6 @@
         android:textColor="@android:color/white"
         app:icon="@drawable/ic_crown" />
 
-    <!-- Dil Seçimi -->
     <TextView
         android:id="@+id/tvSelectLanguage"
         android:layout_width="match_parent"
@@ -98,7 +102,6 @@
         android:text="@string/profile_select_language" />
 
 
-    <!-- Kitap İstatistikleri -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -148,7 +151,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Çıkış Yap Butonu -->
     <Button
         android:id="@+id/btnSheetLogout"
         android:layout_width="match_parent"
