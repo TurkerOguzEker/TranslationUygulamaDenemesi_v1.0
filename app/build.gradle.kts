@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -44,6 +46,10 @@ android {
 }
 
 dependencies {
+    // dependencies bloğuna eklenecekler
+    implementation("com.google.firebase:firebase-auth-ktx:23.1.0") // Giriş/Kayıt için
+    implementation("com.google.firebase:firebase-firestore-ktx:25.1.1") // Hikayeler ve Kullanıcılar için
+    implementation("com.google.firebase:firebase-storage-ktx:21.0.1") // Resimler için
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

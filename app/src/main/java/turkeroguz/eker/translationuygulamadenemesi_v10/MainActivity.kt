@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
@@ -12,6 +13,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.LanguageAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Language
 import java.util.Locale
@@ -23,9 +26,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, HomeFragment())
-                .commit()
+            // Uygulama açılınca direkt kullanıcı kontrolü yap:
+            checkUserAndNavigate()
         }
 
         findViewById<View>(R.id.btnHome).setOnClickListener {
@@ -94,9 +96,20 @@ class MainActivity : AppCompatActivity() {
         }
 
         view.findViewById<View>(R.id.btnClose)?.setOnClickListener { dialog.dismiss() }
+
+        // DÜZELTME: Burada sadece tek bir listener bıraktık (Firebase Çıkış İşlemi)
         view.findViewById<View>(R.id.btnSheetLogout)?.setOnClickListener {
+            // Firebase oturumunu kapat
+            FirebaseAuth.getInstance().signOut()
+
+            // Dialogu kapat
             dialog.dismiss()
-            finish()
+
+            // Kullanıcıyı hemen Giriş ekranına at (HomeFragment yerine LoginFragment açılacak)
+            checkUserAndNavigate()
+
+            // İsteğe bağlı: Bilgi mesajı
+            Toast.makeText(this, "Çıkış yapıldı", Toast.LENGTH_SHORT).show()
         }
 
         dialog.show()
@@ -131,5 +144,34 @@ class MainActivity : AppCompatActivity() {
         config.setLocale(locale)
         baseContext.resources.updateConfiguration(config, baseContext.resources.displayMetrics)
         recreate()
+    }
+
+    fun checkUserAndNavigate() {
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) {
+            // Giriş yapmamışsa Login ekranına at
+            replaceFragment(LoginFragment())
+            // İsterseniz burada alt menüyü (BottomNavigationView) gizleyebilirsiniz.
+        } else {
+            // Giriş yapmışsa rolünü kontrol et
+            FirebaseFirestore.getInstance().collection("users").document(user.uid)
+                .get().addOnSuccessListener { document ->
+                    // Eğer doküman henüz oluşmadıysa veya hata varsa null gelebilir, kontrol edelim
+                    if (document.exists()) {
+                        val role = document.getString("role")
+                        // Admin ise bir Toast gösteriyoruz (İleride buraya Admin butonu mantığı eklenecek)
+                        if (role == "admin") {
+                            Toast.makeText(this, "Yönetici Girişi", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    // Her halükarda ana sayfayı aç
+                    replaceFragment(HomeFragment())
+                }
+                .addOnFailureListener {
+                    // Firestore hatası olursa yine de Home'a atalım (veya hata mesajı gösterelim)
+                    replaceFragment(HomeFragment())
+                }
+        }
     }
 }
