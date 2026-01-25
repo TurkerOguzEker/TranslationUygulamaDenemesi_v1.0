@@ -36,6 +36,7 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true // XML sayfalarınızın (item_book vb.) çalışması için şart
+        buildConfig = true
     }
 
     // Kotlin 2.0+ kullandığınız için Compose Compiler artık Kotlin içine gömülüdür.
