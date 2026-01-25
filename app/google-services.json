@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "903780628407",
+    "project_id": "storyenglish-5e271",
+    "storage_bucket": "storyenglish-5e271.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:903780628407:android:a06825099464c050a0da32",
+        "android_client_info": {
+          "package_name": "turkeroguz.eker.translationuygulamadenemesi_v10"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxs7p6B0buoM3QJsNIol2-Nvmj4QvlDiM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

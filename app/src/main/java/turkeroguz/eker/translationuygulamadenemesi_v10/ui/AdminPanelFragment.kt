@@ -23,16 +23,22 @@ class AdminPanelFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // LayoutManager'ı burada tanımlamak daha doğrudur
+        binding.rvUserList.layoutManager = LinearLayoutManager(context)
+
         fetchUsers()
     }
 
     private fun fetchUsers() {
         db.collection("users").get().addOnSuccessListener { result ->
             val userList = result.toObjects(User::class.java)
-            binding.rvUserList.layoutManager = LinearLayoutManager(context)
+            // Adapter'i bağla
             binding.rvUserList.adapter = UserAdapter(userList) { userId, newRole ->
                 updateUserRole(userId, newRole)
             }
+        }.addOnFailureListener {
+            Toast.makeText(context, "Kullanıcılar yüklenemedi: ${it.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -41,6 +47,9 @@ class AdminPanelFragment : Fragment() {
             .addOnSuccessListener {
                 Toast.makeText(context, "Rol güncellendi: $newRole", Toast.LENGTH_SHORT).show()
                 fetchUsers() // Listeyi yenile
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Güncelleme hatası", Toast.LENGTH_SHORT).show()
             }
     }
 }

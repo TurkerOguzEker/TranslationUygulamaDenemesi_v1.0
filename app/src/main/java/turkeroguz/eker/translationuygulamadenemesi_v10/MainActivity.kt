@@ -151,25 +151,28 @@ class MainActivity : AppCompatActivity() {
         if (user == null) {
             // Giriş yapmamışsa Login ekranına at
             replaceFragment(LoginFragment())
-            // İsterseniz burada alt menüyü (BottomNavigationView) gizleyebilirsiniz.
         } else {
             // Giriş yapmışsa rolünü kontrol et
             FirebaseFirestore.getInstance().collection("users").document(user.uid)
-                .get().addOnSuccessListener { document ->
-                    // Eğer doküman henüz oluşmadıysa veya hata varsa null gelebilir, kontrol edelim
+                .get()
+                .addOnSuccessListener { document ->
+                    // Aktivite kapanmışsa işlemi durdur (Çökme önleyici)
+                    if (isFinishing || isDestroyed) return@addOnSuccessListener
+
                     if (document.exists()) {
                         val role = document.getString("role")
-                        // Admin ise bir Toast gösteriyoruz (İleride buraya Admin butonu mantığı eklenecek)
                         if (role == "admin") {
                             Toast.makeText(this, "Yönetici Girişi", Toast.LENGTH_SHORT).show()
                         }
                     }
-
-                    // Her halükarda ana sayfayı aç
+                    // Ana sayfayı aç
                     replaceFragment(HomeFragment())
                 }
                 .addOnFailureListener {
-                    // Firestore hatası olursa yine de Home'a atalım (veya hata mesajı gösterelim)
+                    // Aktivite kapanmışsa işlemi durdur
+                    if (isFinishing || isDestroyed) return@addOnFailureListener
+
+                    // Hata olsa bile kullanıcının uygulamaya girmesine izin ver (veya hata mesajı göster)
                     replaceFragment(HomeFragment())
                 }
         }
