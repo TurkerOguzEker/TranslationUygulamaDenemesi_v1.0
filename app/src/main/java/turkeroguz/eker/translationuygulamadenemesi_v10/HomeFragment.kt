@@ -1,160 +1,93 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.widget.NestedScrollView
+import android.widget.ImageButton
 import androidx.fragment.app.Fragment
-import androidx.viewpager2.widget.CompositePageTransformer
-import androidx.viewpager2.widget.MarginPageTransformer
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.FeaturedAdapter
-import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.FragmentHomeBinding
-import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.LevelSectionLayoutBinding
-import turkeroguz.eker.translationuygulamadenemesi_v10.model.FeaturedBook
-import kotlin.math.abs
+import com.bumptech.glide.Glide
+import com.google.firebase.auth.FirebaseAuth
 
 class HomeFragment : Fragment() {
 
-    private var _binding: FragmentHomeBinding? = null
-    private val binding get() = _binding!!
-
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        val view = binding.root
+    ): View? {
+        return inflater.inflate(R.layout.fragment_home, container, false)
+    }
 
-        val featuredList = listOf(
-            FeaturedBook("Adventure", R.drawable.ic_launcher_background),
-            FeaturedBook("Grammar", R.drawable.ic_launcher_background),
-            FeaturedBook("Mystery", R.drawable.ic_launcher_background)
-        )
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        setupLevelSections(featuredList)
+        // XML'deki yuvarlak butonu bul
+        val btnProfile = view.findViewById<ImageButton>(R.id.btnProfile)
 
-        binding.btnProfile.setOnClickListener {
+        // Tıklayınca MainActivity'deki menüyü aç
+        btnProfile.setOnClickListener {
             (activity as? MainActivity)?.showProfileDialog()
         }
 
-        binding.btnNotifications.setOnClickListener {
-            showNotificationsDialog()
-        }
+        // Resmi Yükle
+        loadProfileImage(btnProfile)
+    }
 
-        val continueReadingCard = binding.continueReadingCard
+    private fun loadProfileImage(imageView: ImageButton) {
+        val user = FirebaseAuth.getInstance().currentUser
 
-        continueReadingCard.post {
-            val originalHeight = continueReadingCard.measuredHeight
-            var isCardVisible = true
-
-            binding.nestedScrollView.setOnScrollChangeListener(NestedScrollView.OnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
-                val dy = scrollY - oldScrollY
-
-                if (dy > 15 && isCardVisible) {
-                    isCardVisible = false
-                    val animator = android.animation.ValueAnimator.ofInt(originalHeight, 0)
-                    animator.addUpdateListener { valueAnimator ->
-                        val value = valueAnimator.animatedValue as Int
-                        val params = continueReadingCard.layoutParams
-                        params.height = value
-                        continueReadingCard.layoutParams = params
-                        continueReadingCard.alpha = value.toFloat() / originalHeight
-                    }
-                    animator.duration = 300
-                    animator.start()
+        if (user != null) {
+            if (user.photoUrl != null) {
+                // Varsa profil fotoğrafını yükle
+                try {
+                    Glide.with(this)
+                        .load(user.photoUrl)
+                        .circleCrop()
+                        .into(imageView)
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-                else if (dy < -15 && !isCardVisible) {
-                    isCardVisible = true
-                    val animator = android.animation.ValueAnimator.ofInt(0, originalHeight)
-                    animator.addUpdateListener { valueAnimator ->
-                        val value = valueAnimator.animatedValue as Int
-                        val params = continueReadingCard.layoutParams
-                        params.height = value
-                        continueReadingCard.layoutParams = params
-                        continueReadingCard.alpha = value.toFloat() / originalHeight
-                    }
-                    animator.duration = 300
-                    animator.start()
-                }
-            })
-        }
+            } else {
+                // Yoksa harften resim yap
+                val email = user.email ?: ""
+                val nameInitial = if (email.isNotEmpty()) email.first().toString().uppercase() else "?"
 
-        return view
-    }
+                val letterBitmap = createProfileBitmap(nameInitial)
 
-    private fun showNotificationsDialog() {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Bildirimler")
-            .setMessage("Gösterilecek bildirim yok.")
-            .setPositiveButton("Tamam") { dialog, _ ->
-                dialog.dismiss()
+                Glide.with(this)
+                    .load(letterBitmap)
+                    .circleCrop()
+                    .into(imageView)
             }
-            .show()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
-    private fun setupLevelSections(featuredList: List<FeaturedBook>) {
-        setupLevelSection(binding.sectionA1, getString(R.string.level_a1), featuredList)
-        setupLevelSection(binding.sectionA2, getString(R.string.level_a2), featuredList)
-        setupLevelSection(binding.sectionB1, getString(R.string.level_b1), featuredList)
-        setupLevelSection(binding.sectionB1Plus, getString(R.string.level_b1_plus), featuredList)
-        setupLevelSection(binding.sectionB2, getString(R.string.level_b2), featuredList)
-        setupLevelSection(binding.sectionC1, getString(R.string.level_c1), featuredList)
-        setupLevelSection(binding.sectionC2, getString(R.string.level_c2), featuredList)
-    }
-
-    // --- BURASI GÜNCELLENDİ ---
-    private fun setupLevelSection(sectionBinding: LevelSectionLayoutBinding, title: String, books: List<FeaturedBook>) {
-        sectionBinding.txtLevelTitle.text = title
-        val viewPager = sectionBinding.viewPagerBooks
-
-        viewPager.apply {
-            adapter = FeaturedAdapter(books)
-            // Yanlardaki öğelerin görünmesi için bu iki ayar şart:
-            clipToPadding = false
-            clipChildren = false
-            offscreenPageLimit = 3
-
-            // --- YENİ EKLENEN KISIM: DİNAMİK PADDING HESAPLAMA ---
-
-            // 1. Ekran genişliğini alıyoruz
-            val displayMetrics = resources.displayMetrics
-            val screenWidth = displayMetrics.widthPixels
-
-            // 2. Bir kitabın kapladığı tahmini genişliği belirliyoruz.
-            // xml'de kartın 165dp, sağ-sol boşluklar dahil yaklaşık 180-190dp idealdir.
-            // Bu değeri artırırsan kitaplar birbirinden uzaklaşır, azaltırsan yaklaşır.
-            val itemWidth = (180 * displayMetrics.density).toInt()
-
-            // 3. Ortadaki kitabı merkeze almak için gereken kenar boşluğunu hesaplıyoruz.
-            // Formül: (Ekran Genişliği - Kitap Genişliği) / 2
-            val padding = (screenWidth - itemWidth) / 2
-
-            // 4. Hesaplanan boşluğu ViewPager'a uyguluyoruz
-            setPadding(padding, 0, padding, 0)
-
-            // -----------------------------------------------------
-
-            val compositePageTransformer = CompositePageTransformer()
-
-            // Kitaplar arası ekstra boşluk (Margin) eklemeye gerek yok, padding bunu halletti.
-            compositePageTransformer.addTransformer(MarginPageTransformer(0))
-
-            // Yanlardaki kitapları biraz küçültüp şeffaflaştıran animasyon (Carousel efekti)
-            compositePageTransformer.addTransformer { page, position ->
-                val r = 1 - abs(position)
-                page.scaleY = 0.85f + r * 0.15f // Yanlar %15 daha küçük
-                page.alpha = 0.5f + r * 0.5f    // Yanlar biraz silik (opsiyonel, istemezsen sil)
-            }
-
-            setPageTransformer(compositePageTransformer)
         }
+    }
+
+    private fun createProfileBitmap(text: String): Bitmap {
+        val width = 200
+        val height = 200
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint()
+
+        paint.color = Color.parseColor("#5C6BC0") // Mavi arka plan
+        paint.style = Paint.Style.FILL
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+
+        paint.color = Color.WHITE
+        paint.textSize = 100f
+        paint.textAlign = Paint.Align.CENTER
+        paint.typeface = Typeface.DEFAULT_BOLD
+
+        val xPos = (canvas.width / 2).toFloat()
+        val yPos = (canvas.height / 2 - (paint.descent() + paint.ascent()) / 2)
+
+        canvas.drawText(text, xPos, yPos, paint)
+
+        return bitmap
     }
 }
