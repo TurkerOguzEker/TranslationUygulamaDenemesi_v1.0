@@ -44,43 +44,30 @@ class HomeFragment : Fragment() {
             showNotificationsDialog()
         }
 
-
-        // ... diğer kodların (btnProfile, btnNotifications vs.) ...
-
         val continueReadingCard = binding.continueReadingCard
 
-// Kartın yüksekliğini doğru ölçmek için 'post' bloğu içine alıyoruz
         continueReadingCard.post {
             val originalHeight = continueReadingCard.measuredHeight
-            var isCardVisible = true // Animasyonların çakışmasını önlemek için bayrak
+            var isCardVisible = true
 
             binding.nestedScrollView.setOnScrollChangeListener(NestedScrollView.OnScrollChangeListener { _, _, scrollY, _, oldScrollY ->
-                val dy = scrollY - oldScrollY // Değişim miktarı
+                val dy = scrollY - oldScrollY
 
-                // AŞAĞI KAYDIRIYORSAK -> KARTI "EZEREK" KAPAT
                 if (dy > 15 && isCardVisible) {
                     isCardVisible = false
-
-                    // Yüksekliği originalHeight'tan 0'a indiren animasyon
                     val animator = android.animation.ValueAnimator.ofInt(originalHeight, 0)
                     animator.addUpdateListener { valueAnimator ->
                         val value = valueAnimator.animatedValue as Int
-                        // Kartın boyunu anlık olarak güncelle
                         val params = continueReadingCard.layoutParams
                         params.height = value
                         continueReadingCard.layoutParams = params
-                        // Aynı anda saydamlaştır (daha şık durur)
                         continueReadingCard.alpha = value.toFloat() / originalHeight
                     }
-                    animator.duration = 300 // Animasyon hızı (ms)
+                    animator.duration = 300
                     animator.start()
                 }
-
-                // YUKARI KAYDIRIYORSAK -> KARTI TEKRAR AÇ
                 else if (dy < -15 && !isCardVisible) {
                     isCardVisible = true
-
-                    // Yüksekliği 0'dan originalHeight'a çıkaran animasyon
                     val animator = android.animation.ValueAnimator.ofInt(0, originalHeight)
                     animator.addUpdateListener { valueAnimator ->
                         val value = valueAnimator.animatedValue as Int
@@ -94,8 +81,6 @@ class HomeFragment : Fragment() {
                 }
             })
         }
-
-// ... return view ...
 
         return view
     }
@@ -125,23 +110,51 @@ class HomeFragment : Fragment() {
         setupLevelSection(binding.sectionC2, getString(R.string.level_c2), featuredList)
     }
 
+    // --- BURASI GÜNCELLENDİ ---
     private fun setupLevelSection(sectionBinding: LevelSectionLayoutBinding, title: String, books: List<FeaturedBook>) {
         sectionBinding.txtLevelTitle.text = title
         val viewPager = sectionBinding.viewPagerBooks
 
-        viewPager.let {
-            it.adapter = FeaturedAdapter(books)
-            it.clipToPadding = false
-            it.clipChildren = false
-            it.offscreenPageLimit = 3
+        viewPager.apply {
+            adapter = FeaturedAdapter(books)
+            // Yanlardaki öğelerin görünmesi için bu iki ayar şart:
+            clipToPadding = false
+            clipChildren = false
+            offscreenPageLimit = 3
+
+            // --- YENİ EKLENEN KISIM: DİNAMİK PADDING HESAPLAMA ---
+
+            // 1. Ekran genişliğini alıyoruz
+            val displayMetrics = resources.displayMetrics
+            val screenWidth = displayMetrics.widthPixels
+
+            // 2. Bir kitabın kapladığı tahmini genişliği belirliyoruz.
+            // xml'de kartın 165dp, sağ-sol boşluklar dahil yaklaşık 180-190dp idealdir.
+            // Bu değeri artırırsan kitaplar birbirinden uzaklaşır, azaltırsan yaklaşır.
+            val itemWidth = (180 * displayMetrics.density).toInt()
+
+            // 3. Ortadaki kitabı merkeze almak için gereken kenar boşluğunu hesaplıyoruz.
+            // Formül: (Ekran Genişliği - Kitap Genişliği) / 2
+            val padding = (screenWidth - itemWidth) / 2
+
+            // 4. Hesaplanan boşluğu ViewPager'a uyguluyoruz
+            setPadding(padding, 0, padding, 0)
+
+            // -----------------------------------------------------
 
             val compositePageTransformer = CompositePageTransformer()
-            compositePageTransformer.addTransformer(MarginPageTransformer(4))
+
+            // Kitaplar arası ekstra boşluk (Margin) eklemeye gerek yok, padding bunu halletti.
+            compositePageTransformer.addTransformer(MarginPageTransformer(0))
+
+            // Yanlardaki kitapları biraz küçültüp şeffaflaştıran animasyon (Carousel efekti)
             compositePageTransformer.addTransformer { page, position ->
                 val r = 1 - abs(position)
-                page.scaleY = 0.9f + r * 0.1f
+                page.scaleY = 0.85f + r * 0.15f // Yanlar %15 daha küçük
+                page.alpha = 0.5f + r * 0.5f    // Yanlar biraz silik (opsiyonel, istemezsen sil)
             }
-            it.setPageTransformer(compositePageTransformer)
+
+            setPageTransformer(compositePageTransformer)
         }
     }
 }
