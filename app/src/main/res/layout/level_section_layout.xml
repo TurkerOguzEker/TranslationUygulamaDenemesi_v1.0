@@ -2,20 +2,26 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:layout_marginBottom="16dp">
 
     <TextView
-        android:id="@+id/txtLevelTitle"
+        android:id="@+id/tvSectionTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginBottom="8dp"
+        android:text="Seviye Başlığı"
         android:textSize="18sp"
         android:textStyle="bold" />
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPagerBooks"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvBookList"
         android:layout_width="match_parent"
-        android:layout_height="240dp" />
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:orientation="horizontal" />
 
 </LinearLayout>
