@@ -1,7 +1,8 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// app/build.gradle.kts (App Level)
 plugins {
-    alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
 
-    id("com.google.gms.google-services") version "4.4.2" apply false
+    // BURADA SADECE ID YAZILIR (Sürüm veya 'apply false' YOK)
+    id("com.google.gms.google-services")
 }

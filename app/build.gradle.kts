@@ -2,7 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 
-    id("com.google.gms.google-services") version "4.4.2" apply false
+    // BU SATIRIN BURADA OLDUĞUNDAN EMİN OLUN:
+    id("com.google.gms.google-services")
 }
 
 android {
