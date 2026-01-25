@@ -1,4 +1,4 @@
-package turkeroguz.eker.translationuygulamadenemesi_v10
+package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,6 +8,9 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.FragmentLoginBinding
+import turkeroguz.eker.translationuygulamadenemesi_v10.MainActivity
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.RegisterFragment
+import turkeroguz.eker.translationuygulamadenemesi_v10.R
 
 class LoginFragment : Fragment() {
     private lateinit var binding: FragmentLoginBinding

@@ -18,6 +18,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.LanguageAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Language
 import java.util.Locale
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.LoginFragment
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.RegisterFragment
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.AdminPanelFragment
+
 
 class MainActivity : AppCompatActivity() {
 

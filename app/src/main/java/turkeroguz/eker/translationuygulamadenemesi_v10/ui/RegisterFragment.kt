@@ -1,4 +1,4 @@
-package turkeroguz.eker.translationuygulamadenemesi_v10
+package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,6 +10,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.FragmentRegisterBinding
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
+import turkeroguz.eker.translationuygulamadenemesi_v10.MainActivity
+import turkeroguz.eker.translationuygulamadenemesi_v10.R
 
 class RegisterFragment : Fragment() {
     private lateinit var binding: FragmentRegisterBinding

@@ -1,4 +1,4 @@
-package turkeroguz.eker.translationuygulamadenemesi_v10
+package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
