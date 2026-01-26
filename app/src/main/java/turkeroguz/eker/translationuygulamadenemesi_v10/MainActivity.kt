@@ -27,18 +27,22 @@ import turkeroguz.eker.translationuygulamadenemesi_v10.model.Language
 import java.util.Locale
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.LoginFragment
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.RegisterFragment
-import turkeroguz.eker.translationuygulamadenemesi_v10.ui.AdminPanelFragment
 
 class MainActivity : AppCompatActivity() {
+
+    // Navbar referansı için değişken
+    private lateinit var bottomNav: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // NOT: Profil butonuna tıklama olayı artık HomeFragment içinde (btnProfile) yönetiliyor.
+        // Navbar'ı XML'den buluyoruz
+        bottomNav = findViewById(R.id.bottomNav)
 
+        // Başlangıçta LoginFragment aç
         if (savedInstanceState == null) {
-            checkUserAndNavigate()
+            loadFragment(LoginFragment())
         }
 
         // Alt Menü Butonları
@@ -63,50 +67,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- Profil Dialogu İçin Yardımcı Fonksiyonlar ---
-
-    // Mail adresinden isim türeten yardımcı fonksiyon
-    private fun getNameFromEmail(email: String): String {
-        return if (email.contains("@")) {
-            email.substringBefore("@")
-                .replace(".", " ")
-                .split(" ")
-                .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
-        } else {
-            "Kullanıcı"
+    // --- NAVBAR GİZLEME/GÖSTERME FONKSİYONU ---
+    // Login ve Register ekranlarında çağırmak için gerekli
+    fun setBottomNavVisibility(isVisible: Boolean) {
+        if (::bottomNav.isInitialized) {
+            bottomNav.visibility = if (isVisible) View.VISIBLE else View.GONE
         }
     }
 
-    // Harften Resim (Bitmap) Oluşturan Fonksiyon (Dialog içindeki resim için)
-    private fun createProfileBitmap(text: String): Bitmap {
-        val width = 200
-        val height = 200
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        val paint = Paint()
+    // --- Navigasyon Yardımcıları ---
 
-        paint.color = Color.parseColor("#5C6BC0")
-        paint.style = Paint.Style.FILL
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
-
-        paint.color = Color.WHITE
-        paint.textSize = 100f
-        paint.textAlign = Paint.Align.CENTER
-        paint.typeface = Typeface.DEFAULT_BOLD
-
-        val xPos = (canvas.width / 2).toFloat()
-        val yPos = (canvas.height / 2 - (paint.descent() + paint.ascent()) / 2)
-
-        canvas.drawText(text, xPos, yPos, paint)
-
-        return bitmap
+    private fun loadFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .commit()
     }
-
-    // --- Navigasyon Fonksiyonları ---
 
     fun replaceFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
+            .addToBackStack(null) // Geri tuşuyla önceki sayfaya dönmek için
             .commit()
     }
 
@@ -117,7 +97,32 @@ class MainActivity : AppCompatActivity() {
             }
         }
         replaceFragment(fragment)
-        findViewById<View>(R.id.btnSearch).performClick()
+        // Arama butonunu aktifmiş gibi göstermek için (opsiyonel görsel efekt)
+        // findViewById<View>(R.id.btnSearch).performClick() // Döngüye girmemesi için kaldırdım veya dikkatli kullanılmalı
+    }
+
+    // --- Kullanıcı Kontrol ve Yönlendirme ---
+    fun checkUserAndNavigate() {
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) {
+            loadFragment(LoginFragment())
+        } else {
+            FirebaseFirestore.getInstance().collection("users").document(user.uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    if (isFinishing || isDestroyed) return@addOnSuccessListener
+                    if (document.exists()) {
+                        val role = document.getString("role")
+                        if (role == "admin") {
+                            Toast.makeText(this, "Yönetici Girişi", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    replaceFragment(HomeFragment())
+                }
+                .addOnFailureListener {
+                    if (!isFinishing && !isDestroyed) replaceFragment(HomeFragment())
+                }
+        }
     }
 
     // --- Profil Penceresi (Bottom Sheet) ---
@@ -202,6 +207,43 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    // --- Yardımcı Fonksiyonlar ---
+
+    private fun getNameFromEmail(email: String): String {
+        return if (email.contains("@")) {
+            email.substringBefore("@")
+                .replace(".", " ")
+                .split(" ")
+                .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
+        } else {
+            "Kullanıcı"
+        }
+    }
+
+    private fun createProfileBitmap(text: String): Bitmap {
+        val width = 200
+        val height = 200
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint()
+
+        paint.color = Color.parseColor("#5C6BC0")
+        paint.style = Paint.Style.FILL
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+
+        paint.color = Color.WHITE
+        paint.textSize = 100f
+        paint.textAlign = Paint.Align.CENTER
+        paint.typeface = Typeface.DEFAULT_BOLD
+
+        val xPos = (canvas.width / 2).toFloat()
+        val yPos = (canvas.height / 2 - (paint.descent() + paint.ascent()) / 2)
+
+        canvas.drawText(text, xPos, yPos, paint)
+
+        return bitmap
+    }
+
     fun showLanguageSelectionDialog(view: View) {
         val dialog = BottomSheetDialog(this)
         val dialogView = layoutInflater.inflate(R.layout.dialog_language_selection, null)
@@ -226,28 +268,5 @@ class MainActivity : AppCompatActivity() {
         config.setLocale(locale)
         baseContext.resources.updateConfiguration(config, baseContext.resources.displayMetrics)
         recreate()
-    }
-
-    fun checkUserAndNavigate() {
-        val user = FirebaseAuth.getInstance().currentUser
-        if (user == null) {
-            replaceFragment(LoginFragment())
-        } else {
-            FirebaseFirestore.getInstance().collection("users").document(user.uid)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (isFinishing || isDestroyed) return@addOnSuccessListener
-                    if (document.exists()) {
-                        val role = document.getString("role")
-                        if (role == "admin") {
-                            Toast.makeText(this, "Yönetici Girişi", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    replaceFragment(HomeFragment())
-                }
-                .addOnFailureListener {
-                    if (!isFinishing && !isDestroyed) replaceFragment(HomeFragment())
-                }
-        }
     }
 }

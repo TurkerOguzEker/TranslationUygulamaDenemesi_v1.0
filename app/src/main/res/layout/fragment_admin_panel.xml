@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -58,7 +59,7 @@
                         android:layout_height="80dp"
                         android:layout_weight="1"
                         android:layout_marginEnd="8dp"
-                        android:backgroundTint="#E3F2FD">
+                        app:cardBackgroundColor="#E3F2FD">
                         <TextView
                             android:id="@+id/tvTotalUsers"
                             android:layout_width="match_parent"
@@ -72,7 +73,7 @@
                         android:layout_width="0dp"
                         android:layout_height="80dp"
                         android:layout_weight="1"
-                        android:backgroundTint="#FFF3E0">
+                        app:cardBackgroundColor="#FFF3E0">
                         <TextView
                             android:id="@+id/tvPremiumUsers"
                             android:layout_width="match_parent"
@@ -108,18 +109,33 @@
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Email Ara..."
-                    android:layout_marginBottom="8dp">
+                    android:hint="Email ile Kullanıcı Ara..."
+                    android:layout_marginBottom="8dp"
+                    app:startIconDrawable="@drawable/ic_search">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etSearchUser"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:inputType="textEmailAddress"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvUserList"
+                <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvUserList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="200dp"/>
+
+                    <ProgressBar
+                        android:id="@+id/progressBarLoading"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:visibility="gone"/>
+                </FrameLayout>
             </LinearLayout>
 
         </LinearLayout>
