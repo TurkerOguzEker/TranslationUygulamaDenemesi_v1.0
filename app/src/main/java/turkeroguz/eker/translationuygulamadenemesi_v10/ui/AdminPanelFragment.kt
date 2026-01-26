@@ -90,13 +90,13 @@ class AdminPanelFragment : Fragment() {
         val rv = view.findViewById<RecyclerView>(R.id.rvUserList)
         rv.layoutManager = LinearLayoutManager(context)
 
-        // onUserClick artık showUserDetailBottomSheet fonksiyonunu çağırıyor
+        // GÜNCELLEME: onPremiumToggle parametresi ARTIK YOK.
         adapter = UserAdapter(allUsers,
-            onUserClick = { user -> showUserDetailBottomSheet(user) },
-            onPremiumToggle = { user, isActive -> togglePremium(user, isActive) }
+            onUserClick = { user -> showUserDetailBottomSheet(user) }
         )
         rv.adapter = adapter
 
+        // ... (Scroll listener ve search listener kodları aynı kalacak) ...
         rv.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
@@ -134,51 +134,64 @@ class AdminPanelFragment : Fragment() {
     }
 
     // --- 1. LİSTELEME & SAYFALAMA ---
+    // --- HATA AYIKLAMA (DEBUG) MODU ---
     private fun fetchUsersResult(isNextPage: Boolean) {
+        // Zaten yükleniyorsa tekrar çağırma
         if (isLoading) return
+
         isLoading = true
         progressBar.visibility = View.VISIBLE
 
-        var query = db.collection("users")
-            .orderBy("email", Query.Direction.ASCENDING)
-            .limit(PAGE_SIZE)
+        // 1. SORGU: Hiçbir sıralama (orderBy) veya limit koymuyoruz.
+        // Amaç: Veritabanında "users" adında ne varsa hepsini çekmek.
+        db.collection("users")
+            .get()
+            .addOnSuccessListener { result ->
+                // LOG: Kaç kişi bulundu?
+                android.util.Log.d("AdminPanel", "TOPLAM BELGE SAYISI: ${result.size()}")
 
-        if (isNextPage && lastVisible != null) {
-            query = query.startAfter(lastVisible!!)
-        }
+                val newUsers = ArrayList<User>()
 
-        query.get().addOnSuccessListener { documentSnapshots ->
-            val newUsers = ArrayList<User>()
-            for (document in documentSnapshots) {
-                val user = document.toObject(User::class.java)
-                val finalUser = if (user.uid.isEmpty()) user.copy(uid = document.id) else user
-                newUsers.add(finalUser)
-            }
+                for (document in result) {
+                    // LOG: Her bir belgenin içeriğini yazdır
+                    android.util.Log.d("AdminPanel", "Belge ID: ${document.id} -> Data: ${document.data}")
 
-            if (documentSnapshots.size() > 0) {
-                lastVisible = documentSnapshots.documents[documentSnapshots.size() - 1]
-            }
+                    try {
+                        val user = document.toObject(User::class.java)
 
-            if (documentSnapshots.size() < PAGE_SIZE) {
-                isLastPage = true
-            }
+                        // Eğer modeldeki UID boş gelirse, döküman ID'sini kullan
+                        val finalUser = if (user.uid.isEmpty()) {
+                            user.copy(uid = document.id)
+                        } else {
+                            user
+                        }
 
-            if (isNextPage) {
-                adapter.addData(newUsers)
-            } else {
+                        newUsers.add(finalUser)
+                    } catch (e: Exception) {
+                        android.util.Log.e("AdminPanel", "Çevirme Hatası (Model Uyuşmazlığı): ${e.message}")
+                    }
+                }
+
+                // Listeyi ekrana bas
                 allUsers.clear()
                 adapter.clearAndSetData(newUsers)
-                isLastPage = false
+
+                isLoading = false
+                progressBar.visibility = View.GONE
+
+                // Eğer liste boşsa kullanıcıya bilgi ver
+                if (newUsers.isEmpty()) {
+                    Toast.makeText(context, "Veritabanında 'users' koleksiyonu boş!", Toast.LENGTH_LONG).show()
+                }
             }
+            .addOnFailureListener { e ->
+                // LOG: Hata mesajı
+                android.util.Log.e("AdminPanel", "BAĞLANTI HATASI: ${e.message}")
+                Toast.makeText(context, "Hata: ${e.message}", Toast.LENGTH_LONG).show()
 
-            isLoading = false
-            progressBar.visibility = View.GONE
-
-        }.addOnFailureListener {
-            Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_SHORT).show()
-            isLoading = false
-            progressBar.visibility = View.GONE
-        }
+                isLoading = false
+                progressBar.visibility = View.GONE
+            }
     }
 
     // --- 2. ARAMA ---

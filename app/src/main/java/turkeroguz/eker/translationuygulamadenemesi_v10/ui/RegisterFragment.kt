@@ -52,30 +52,34 @@ class RegisterFragment : Fragment() {
             val pass = etPass.text.toString().trim()
 
             if (email.isNotEmpty() && pass.isNotEmpty()) {
+                // 1. AUTHENTICATION KAYDI
                 auth.createUserWithEmailAndPassword(email, pass)
                     .addOnSuccessListener { result ->
                         val uid = result.user?.uid ?: ""
 
-                        // Kullanıcıyı Veritabanına Kaydet
                         val newUser = User(
                             uid = uid,
                             email = email,
                             name = name,
-                            registrationDate = System.currentTimeMillis()
+                            registrationDate = System.currentTimeMillis() // Tarih ekleniyor
                         )
 
+                        // 2. FIRESTORE KAYDI (Burada hata oluyor olabilir)
                         db.collection("users").document(uid).set(newUser)
                             .addOnSuccessListener {
-                                Toast.makeText(context, "Kayıt Başarılı!", Toast.LENGTH_SHORT).show()
-                                // NAVBAR'I GÖSTER VE ANA SAYFAYA GİT
+                                Toast.makeText(context, "Kayıt ve Veritabanı Başarılı!", Toast.LENGTH_SHORT).show()
                                 (activity as? MainActivity)?.setBottomNavVisibility(true)
                                 parentFragmentManager.beginTransaction()
                                     .replace(R.id.fragment_container, HomeFragment())
                                     .commit()
                             }
+                            .addOnFailureListener { e ->
+                                // KRİTİK: Veritabanı hatasını ekrana bas
+                                Toast.makeText(context, "Veritabanı Hatası: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
                     }
-                    .addOnFailureListener {
-                        Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_LONG).show()
+                    .addOnFailureListener { e ->
+                        Toast.makeText(context, "Auth Hatası: ${e.message}", Toast.LENGTH_LONG).show()
                     }
             } else {
                 Toast.makeText(context, "Lütfen gerekli alanları doldurun.", Toast.LENGTH_SHORT).show()

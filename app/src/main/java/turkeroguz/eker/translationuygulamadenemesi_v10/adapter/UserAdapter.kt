@@ -8,10 +8,10 @@ import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.ItemUserManag
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
 
 class UserAdapter(
-    // 1. DEĞİŞİKLİK: List<User> yerine ArrayList<User> yaptık ve 'val' yaptık.
-    private val userList: ArrayList<User>,
-    private val onUserClick: (User) -> Unit,
-    private val onPremiumToggle: (User, Boolean) -> Unit
+    // Listeyi 'var' yaptık ve ArrayList olarak tanımladık, böylece değiştirebiliriz
+    private var userList: ArrayList<User>,
+    private val onUserClick: (User) -> Unit
+    // onPremiumToggle parametresi SİLİNDİ
 ) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 
     inner class UserViewHolder(val binding: ItemUserManageBinding) : RecyclerView.ViewHolder(binding.root)
@@ -24,60 +24,41 @@ class UserAdapter(
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
         val user = userList[position]
 
+        // E-posta ve İstatistikler
         holder.binding.tvUserEmail.text = user.email
-        // İstatistik Özeti (Sıfıra bölünme hatasını önlemek için kontrol)
         val dropOffRate = if(user.storiesStarted > 0) (user.storiesCompleted.toFloat() / user.storiesStarted.toFloat()) * 100 else 0f
         holder.binding.tvUserStats.text = "Kelime: ${user.totalWordsLearned} | Bitirme: %${dropOffRate.toInt()}"
 
-        // --- PREMIUM IKON MANTIĞI ---
+        // --- İKON MANTIĞI ---
         if (user.isPremium) {
-            // Aktif - Yeşil Tik
-            holder.binding.ivPremiumStatus.setImageResource(android.R.drawable.checkbox_on_background)
+            // Aktif - Yeşil
             holder.binding.ivPremiumStatus.setColorFilter(Color.parseColor("#4CAF50"))
         } else if (user.hasPurchasedBefore) {
-            // Pasif (Daha önce almış) - Nötr Gri
-            holder.binding.ivPremiumStatus.setImageResource(android.R.drawable.ic_menu_help)
+            // Pasif (Eski müşteri) - Gri
             holder.binding.ivPremiumStatus.setColorFilter(Color.GRAY)
         } else {
-            // Hiç Almamış - Kırmızı Çarpı
-            holder.binding.ivPremiumStatus.setImageResource(android.R.drawable.ic_delete)
+            // Hiç almamış - Kırmızı
             holder.binding.ivPremiumStatus.setColorFilter(Color.parseColor("#D32F2F"))
         }
 
-        // Switch
-        holder.binding.switchPremium.setOnCheckedChangeListener(null)
-        holder.binding.switchPremium.isChecked = user.isPremium
-        holder.binding.switchPremium.setOnCheckedChangeListener { _, isChecked ->
-            onPremiumToggle(user, isChecked)
-        }
-
-        // Tıklama Olayları
+        // Tıklama Olayları (Sadece Düzenle)
         holder.binding.btnEditUser.setOnClickListener { onUserClick(user) }
         holder.binding.cardRoot.setOnClickListener { onUserClick(user) }
     }
 
     override fun getItemCount() = userList.size
 
-    // --- YENİ EKLENEN FONKSİYONLAR (HATA VERENLER DÜZELTİLDİ) ---
+    // --- VERİ GÜNCELLEME FONKSİYONLARI ---
 
-    // Pagination için listeye ekleme yapar
     fun addData(newUsers: List<User>) {
         val startPos = userList.size
-        userList.addAll(newUsers) // Artık cast etmeye gerek yok
+        userList.addAll(newUsers)
         notifyItemRangeInserted(startPos, newUsers.size)
     }
 
-    // Arama veya yenileme yapıldığında listeyi sıfırlar ve yenisini koyar
     fun clearAndSetData(newUsers: List<User>) {
         userList.clear()
         userList.addAll(newUsers)
-        notifyDataSetChanged()
-    }
-
-    // Eski koddan kalan updateList fonksiyonunu da uyumlu hale getirdik
-    fun updateList(newList: List<User>) {
-        userList.clear()
-        userList.addAll(newList)
         notifyDataSetChanged()
     }
 }
