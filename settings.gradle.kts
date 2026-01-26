@@ -1,6 +1,6 @@
 pluginManagement {
     repositories {
-        google() // Kısıtlamaları kaldırdık, artık eklentiyi bulabilir
+        google()
         mavenCentral()
         gradlePluginPortal()
     }
@@ -10,6 +10,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // MPAndroidChart ve diğer GitHub kaynaklı kütüphaneler için bu satır ŞARTTIR:
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
