@@ -154,7 +154,18 @@
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="İyileştirme Öner" />
+        android:text="İyileştirme Öner"
+
+        />
+
+    <Button
+        android:id="@+id/btnAdminPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Yönetici Paneli (Admin)"
+        android:backgroundTint="#D32F2F"
+        android:visibility="gone"
+        android:layout_marginTop="20dp"/>
 
     <RelativeLayout
         android:layout_width="match_parent"
