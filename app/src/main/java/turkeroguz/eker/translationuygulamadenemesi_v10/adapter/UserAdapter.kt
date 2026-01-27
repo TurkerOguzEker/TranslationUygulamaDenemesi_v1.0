@@ -8,9 +8,10 @@ import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.ItemUserManag
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
 
 class UserAdapter(
-    // Listeyi dinamik yönetebilmek için ArrayList olarak alıyoruz
     private var userList: ArrayList<User>,
-    private val onUserClick: (User) -> Unit
+    private val onUserClick: (User) -> Unit,
+    // YENİ EKLENEN: Switch tetiklendiğinde çalışacak fonksiyon
+    private val onPremiumToggle: (User, Boolean) -> Unit
 ) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 
     inner class UserViewHolder(val binding: ItemUserManageBinding) : RecyclerView.ViewHolder(binding.root)
@@ -23,34 +24,41 @@ class UserAdapter(
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
         val user = userList[position]
 
-        // E-posta ve İstatistikler
+        holder.binding.tvUserName.text = user.name ?: "İsimsiz"
         holder.binding.tvUserEmail.text = user.email
 
-        // Bölme işleminde sıfıra bölünme hatasını önlemek için kontrol
-        val dropOffRate = if(user.storiesStarted > 0) (user.storiesCompleted.toFloat() / user.storiesStarted.toFloat()) * 100 else 0f
+        // --- SWITCH MANTIĞI DÜZELTİLDİ ---
+        // 1. Eski dinleyiciyi kaldır (Recycle hatasını önler)
+        holder.binding.switchPremium.setOnCheckedChangeListener(null)
 
-        holder.binding.tvUserStats.text = "Kelime: ${user.totalWordsLearned} | Bitirme: %${dropOffRate.toInt()}"
+        // 2. Doğru durumu ayarla
+        holder.binding.switchPremium.isChecked = user.isPremium
 
-        // --- İKON RENGİ MANTIĞI ---
+        // 3. Renk ayarı
         if (user.isPremium) {
-            // Aktif - Yeşil
-            holder.binding.ivPremiumStatus.setColorFilter(Color.parseColor("#4CAF50"))
-        } else if (user.hasPurchasedBefore) {
-            // Pasif (Eski müşteri) - Gri
-            holder.binding.ivPremiumStatus.setColorFilter(Color.GRAY)
+            holder.binding.ivUserIcon.setColorFilter(Color.parseColor("#FFD700")) // Altın
         } else {
-            // Hiç almamış - Kırmızı
-            holder.binding.ivPremiumStatus.setColorFilter(Color.parseColor("#D32F2F"))
+            holder.binding.ivUserIcon.setColorFilter(Color.GRAY)
         }
 
-        // Tıklama Olayları
+        // 4. Yeni dinleyiciyi ekle
+        holder.binding.switchPremium.setOnCheckedChangeListener { _, isChecked ->
+            // Fragment'a haber ver
+            onPremiumToggle(user, isChecked)
+
+            // Görseli anlık güncelle
+            if (isChecked) {
+                holder.binding.ivUserIcon.setColorFilter(Color.parseColor("#FFD700"))
+            } else {
+                holder.binding.ivUserIcon.setColorFilter(Color.GRAY)
+            }
+        }
+
         holder.binding.btnEditUser.setOnClickListener { onUserClick(user) }
         holder.binding.cardRoot.setOnClickListener { onUserClick(user) }
     }
 
     override fun getItemCount() = userList.size
-
-    // --- LİSTE GÜNCELLEME FONKSİYONLARI ---
 
     fun addData(newUsers: List<User>) {
         val startPos = userList.size

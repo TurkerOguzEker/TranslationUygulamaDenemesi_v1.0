@@ -1,6 +1,6 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
-import android.graphics.Color // EKSİK OLAN BU SATIRDI
+import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -17,7 +17,6 @@ import com.github.mikephil.charting.data.*
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.UserAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
@@ -28,11 +27,9 @@ class AdminPanelFragment : Fragment() {
     private val allUsers = ArrayList<User>()
     private lateinit var adapter: UserAdapter
 
-    // --- PAGINATION DEĞİŞKENLERİ ---
-    private var lastVisible: DocumentSnapshot? = null
+    // --- PAGINATION ---
     private var isLastPage = false
     private var isLoading = false
-    private val PAGE_SIZE = 10L
 
     // UI Elementleri
     private lateinit var layoutDashboard: LinearLayout
@@ -76,6 +73,7 @@ class AdminPanelFragment : Fragment() {
         btnTabDashboard.setOnClickListener {
             layoutDashboard.visibility = View.VISIBLE
             layoutUserList.visibility = View.GONE
+            fetchStatsForDashboard() // Dashboard açılınca verileri tazele
         }
         btnTabUsers.setOnClickListener {
             layoutDashboard.visibility = View.GONE
@@ -90,13 +88,14 @@ class AdminPanelFragment : Fragment() {
         val rv = view.findViewById<RecyclerView>(R.id.rvUserList)
         rv.layoutManager = LinearLayoutManager(context)
 
-        // GÜNCELLEME: onPremiumToggle parametresi ARTIK YOK.
-        adapter = UserAdapter(allUsers,
-            onUserClick = { user -> showUserDetailBottomSheet(user) }
+        // ✅ DÜZELTME: Adapter'a hem tıklama hem de switch toggle fonksiyonunu gönderiyoruz
+        adapter = UserAdapter(
+            allUsers,
+            onUserClick = { user -> showUserDetailBottomSheet(user) },
+            onPremiumToggle = { user, isActive -> togglePremium(user, isActive) }
         )
         rv.adapter = adapter
 
-        // ... (Scroll listener ve search listener kodları aynı kalacak) ...
         rv.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
@@ -127,78 +126,45 @@ class AdminPanelFragment : Fragment() {
         })
     }
 
-    // --- BOTTOM SHEET AÇMA ---
     private fun showUserDetailBottomSheet(user: User) {
         val bottomSheet = UserDetailBottomSheet(user)
         bottomSheet.show(parentFragmentManager, "UserDetailSheet")
     }
 
-    // --- 1. LİSTELEME & SAYFALAMA ---
-    // --- HATA AYIKLAMA (DEBUG) MODU ---
+    // --- LİSTELEME ---
     private fun fetchUsersResult(isNextPage: Boolean) {
-        // Zaten yükleniyorsa tekrar çağırma
         if (isLoading) return
-
         isLoading = true
         progressBar.visibility = View.VISIBLE
 
-        // 1. SORGU: Hiçbir sıralama (orderBy) veya limit koymuyoruz.
-        // Amaç: Veritabanında "users" adında ne varsa hepsini çekmek.
         db.collection("users")
             .get()
             .addOnSuccessListener { result ->
-                // LOG: Kaç kişi bulundu?
-                android.util.Log.d("AdminPanel", "TOPLAM BELGE SAYISI: ${result.size()}")
-
                 val newUsers = ArrayList<User>()
-
                 for (document in result) {
-                    // LOG: Her bir belgenin içeriğini yazdır
-                    android.util.Log.d("AdminPanel", "Belge ID: ${document.id} -> Data: ${document.data}")
-
                     try {
                         val user = document.toObject(User::class.java)
-
-                        // Eğer modeldeki UID boş gelirse, döküman ID'sini kullan
-                        val finalUser = if (user.uid.isEmpty()) {
-                            user.copy(uid = document.id)
-                        } else {
-                            user
-                        }
-
+                        val finalUser = if (user.uid.isEmpty()) user.copy(uid = document.id) else user
                         newUsers.add(finalUser)
                     } catch (e: Exception) {
-                        android.util.Log.e("AdminPanel", "Çevirme Hatası (Model Uyuşmazlığı): ${e.message}")
+                        e.printStackTrace()
                     }
                 }
-
-                // Listeyi ekrana bas
                 allUsers.clear()
                 adapter.clearAndSetData(newUsers)
-
                 isLoading = false
                 progressBar.visibility = View.GONE
-
-                // Eğer liste boşsa kullanıcıya bilgi ver
-                if (newUsers.isEmpty()) {
-                    Toast.makeText(context, "Veritabanında 'users' koleksiyonu boş!", Toast.LENGTH_LONG).show()
-                }
             }
-            .addOnFailureListener { e ->
-                // LOG: Hata mesajı
-                android.util.Log.e("AdminPanel", "BAĞLANTI HATASI: ${e.message}")
-                Toast.makeText(context, "Hata: ${e.message}", Toast.LENGTH_LONG).show()
-
+            .addOnFailureListener {
                 isLoading = false
                 progressBar.visibility = View.GONE
+                Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
-    // --- 2. ARAMA ---
     private fun searchUsersInFirestore(searchText: String) {
         isLoading = true
         progressBar.visibility = View.VISIBLE
-
         db.collection("users")
             .orderBy("email")
             .startAt(searchText)
@@ -209,8 +175,7 @@ class AdminPanelFragment : Fragment() {
                 val searchResults = ArrayList<User>()
                 for (document in result) {
                     val user = document.toObject(User::class.java)
-                    val finalUser = if (user.uid.isEmpty()) user.copy(uid = document.id) else user
-                    searchResults.add(finalUser)
+                    searchResults.add(user)
                 }
                 adapter.clearAndSetData(searchResults)
                 isLoading = false
@@ -218,7 +183,33 @@ class AdminPanelFragment : Fragment() {
             }
     }
 
-    // --- 3. DASHBOARD İSTATİSTİKLERİ ---
+    // --- PREMIUM DEĞİŞTİRME (VERİTABANI) ---
+    private fun togglePremium(user: User, isActive: Boolean) {
+        db.collection("users").document(user.uid)
+            .update("isPremium", isActive, "hasPurchasedBefore", true)
+            .addOnSuccessListener {
+                Toast.makeText(context, "${user.name} Premium durumu: $isActive", Toast.LENGTH_SHORT).show()
+                logAction("Premium ${if(isActive) "Verildi" else "Alındı"}: ${user.email}", "PREMIUM")
+
+                // Grafik verilerinin güncellenmesi için dashboard'u yenileyelim
+                fetchStatsForDashboard()
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Güncelleme Başarısız!", Toast.LENGTH_SHORT).show()
+                // Hata olursa switch'i eski haline getirmek gerekebilir (Opsiyonel)
+            }
+    }
+
+    private fun logAction(desc: String, type: String) {
+        val log = hashMapOf(
+            "description" to desc,
+            "type" to type,
+            "timestamp" to System.currentTimeMillis()
+        )
+        db.collection("admin_logs").add(log)
+    }
+
+    // --- DASHBOARD ---
     private fun fetchStatsForDashboard() {
         db.collection("users").get().addOnSuccessListener { result ->
             var totalRevenue = 0.0
@@ -234,13 +225,15 @@ class AdminPanelFragment : Fragment() {
                 totalRevenue += user.totalRevenue
                 totalStoriesStarted += user.storiesStarted
                 totalStoriesCompleted += user.storiesCompleted
+
                 if (user.isPremium) premiumUsers++ else standardUsers++
             }
 
+            // ✅ GRAFİK GÜNCELLEME ÇAĞRISI
             updatePieChart(premiumUsers, standardUsers)
             updateBarChart(statList)
 
-            tvTotalRevenue.text = "₺${totalRevenue}\nToplam Gelir"
+            tvTotalRevenue.text = "₺${totalRevenue.toInt()}\nToplam Gelir"
             val dropOff = if(totalStoriesStarted > 0)
                 100 - ((totalStoriesCompleted.toFloat() / totalStoriesStarted) * 100).toInt()
             else 0
@@ -248,43 +241,52 @@ class AdminPanelFragment : Fragment() {
         }
     }
 
-    private fun togglePremium(user: User, isActive: Boolean) {
-        db.collection("users").document(user.uid)
-            .update("isPremium", isActive, "hasPurchasedBefore", true)
-            .addOnSuccessListener {
-                Toast.makeText(context, "Premium güncellendi", Toast.LENGTH_SHORT).show()
-                logAction("Premium ${if(isActive) "Verildi" else "Alındı"}: ${user.email}", "PREMIUM")
-            }
-    }
-
-    private fun logAction(desc: String, type: String) {
-        val log = hashMapOf(
-            "description" to desc,
-            "type" to type,
-            "timestamp" to System.currentTimeMillis()
-        )
-        db.collection("admin_logs").add(log)
-    }
-
+    // --- GRAFİK DÜZELTMESİ ---
     private fun updatePieChart(premium: Int, standard: Int) {
-        val entries = listOf(PieEntry(premium.toFloat(), "Premium"), PieEntry(standard.toFloat(), "Standart"))
+        val entries = ArrayList<PieEntry>()
+        val colors = ArrayList<Int>()
+
+        // Sadece sayısı 0'dan büyük olanları grafiğe ekle
+        if (premium > 0) {
+            entries.add(PieEntry(premium.toFloat(), "Premium ($premium)"))
+            colors.add(Color.parseColor("#FFD700")) // Altın Sarısı
+        }
+
+        if (standard > 0) {
+            entries.add(PieEntry(standard.toFloat(), "Standart ($standard)"))
+            colors.add(Color.parseColor("#BDBDBD")) // Gri
+        }
+
         val dataSet = PieDataSet(entries, "")
-        dataSet.colors = listOf(Color.parseColor("#FFD700"), Color.parseColor("#BDBDBD"))
+        dataSet.colors = colors
         dataSet.valueTextColor = Color.WHITE
-        dataSet.valueTextSize = 14f
-        chartUserTypes.data = PieData(dataSet)
+        dataSet.valueTextSize = 16f
+
+        val data = PieData(dataSet)
+        chartUserTypes.data = data
         chartUserTypes.description.isEnabled = false
-        chartUserTypes.invalidate()
+        chartUserTypes.centerText = "Kullanıcılar"
+        chartUserTypes.setCenterTextSize(14f)
+
+        chartUserTypes.animateY(1000) // Animasyon ekle
+        chartUserTypes.invalidate() // ✅ Grafiği çizdir
     }
 
     private fun updateBarChart(users: List<User>) {
         val topUsers = users.sortedByDescending { it.storiesCompleted }.take(5)
         val entries = ArrayList<BarEntry>()
-        topUsers.forEachIndexed { index, user -> entries.add(BarEntry(index.toFloat(), user.storiesCompleted.toFloat())) }
+        topUsers.forEachIndexed { index, user ->
+            entries.add(BarEntry(index.toFloat(), user.storiesCompleted.toFloat()))
+        }
+
         val dataSet = BarDataSet(entries, "En Çok Okuyanlar")
         dataSet.color = Color.parseColor("#4CAF50")
+        dataSet.valueTextColor = Color.BLACK
+        dataSet.valueTextSize = 12f
+
         chartStorySuccess.data = BarData(dataSet)
         chartStorySuccess.description.isEnabled = false
+        chartStorySuccess.animateY(1000)
         chartStorySuccess.invalidate()
     }
 }
