@@ -1,5 +1,6 @@
-package turkeroguz.eker.translationuygulamadenemesi_v10.util
+package turkeroguz.eker.translationuygulamadenemesi_v10
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Properties
@@ -11,14 +12,14 @@ import javax.mail.Transport
 import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
 
-object EmailSender {
+class EmailSender {
 
-    // GÜVENLİK UYARISI: Gerçek projelerde bu bilgileri backend'de tutmalısın.
-    // Gmail > Hesabım > Güvenlik > 2 Adımlı Doğrulama > Uygulama Şifreleri kısmından şifre al.
-    private const val SENDER_EMAIL = "seninmailadresin@gmail.com"
-    private const val SENDER_PASSWORD = "xxxx yyyy zzzz aaaa" // 16 haneli uygulama şifresi
+    // NOT: Gmail kullanıyorsanız "App Password" (Uygulama Şifresi) oluşturup buraya girmelisiniz.
+    // Normal Gmail şifresi çalışmaz.
+    private val senderEmail = "finishingsoftware@gmail.com"
+    private val senderPassword = "vkys jghp dzus bkbg" // 16 haneli App Password
 
-    suspend fun sendEmail(recipientEmail: String, subject: String, messageBody: String): Boolean {
+    suspend fun sendVerificationCode(recipientEmail: String, code: String): Boolean {
         return withContext(Dispatchers.IO) {
             try {
                 val props = Properties().apply {
@@ -30,21 +31,21 @@ object EmailSender {
 
                 val session = Session.getInstance(props, object : Authenticator() {
                     override fun getPasswordAuthentication(): PasswordAuthentication {
-                        return PasswordAuthentication(SENDER_EMAIL, SENDER_PASSWORD)
+                        return PasswordAuthentication(senderEmail, senderPassword)
                     }
                 })
 
                 val message = MimeMessage(session).apply {
-                    setFrom(InternetAddress(SENDER_EMAIL))
+                    setFrom(InternetAddress(senderEmail, "İngilizce Tekrar App"))
                     setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail))
-                    setSubject(subject)
-                    setText(messageBody)
+                    subject = "E-posta Doğrulama Kodu"
+                    setText("Merhaba,\n\nUygulamaya kayıt olmak için doğrulama kodunuz:\n\n$code\n\nBu kodu kimseyle paylaşmayın.")
                 }
 
                 Transport.send(message)
                 true
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("EmailSender", "Hata: ${e.message}")
                 false
             }
         }

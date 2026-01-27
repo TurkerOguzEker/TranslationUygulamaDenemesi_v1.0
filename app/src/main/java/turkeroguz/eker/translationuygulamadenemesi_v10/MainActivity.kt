@@ -24,13 +24,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.LanguageAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Language
-import java.util.Locale
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.LoginFragment
-import turkeroguz.eker.translationuygulamadenemesi_v10.ui.RegisterFragment
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
-    // Navbar referansı için değişken
+    // Navbar referansı (Login/Register ekranlarında gizlemek için)
     private lateinit var bottomNav: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,22 +38,23 @@ class MainActivity : AppCompatActivity() {
 
         bottomNav = findViewById(R.id.bottomNav)
 
-        // --- OTOMATİK GİRİŞ KONTROLÜ ---
+        // --- GİRİŞ KONTROLÜ ---
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
-            // Kullanıcı zaten giriş yapmış, direkt Ana Sayfaya git ve Navbar'ı aç
-            replaceFragment(HomeFragment())
+            // Kullanıcı giriş yapmış -> Ana Sayfaya git
+            if (savedInstanceState == null) {
+                replaceFragment(HomeFragment())
+            }
             setBottomNavVisibility(true)
         } else {
-            // Giriş yapılmamış, Login ekranını aç ve Navbar'ı gizle
+            // Giriş yapmamış -> Login Ekranına git
             if (savedInstanceState == null) {
-                loadFragment(LoginFragment())
-                setBottomNavVisibility(false)
+                replaceFragment(LoginFragment())
             }
+            setBottomNavVisibility(false)
         }
-        // ------------------------------
 
-        // Alt Menü Butonları
+        // --- ALT MENÜ BUTONLARI ---
         findViewById<View>(R.id.btnHome).setOnClickListener { replaceFragment(HomeFragment()) }
         findViewById<View>(R.id.btnSearch).setOnClickListener { replaceFragment(BooksFragment()) }
         findViewById<View>(R.id.btnMyBooks).setOnClickListener { replaceFragment(MyBooksFragment()) }
@@ -62,29 +62,24 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnSettings).setOnClickListener { replaceFragment(SettingsFragment()) }
     }
 
-    // --- NAVBAR GİZLEME/GÖSTERME FONKSİYONU ---
-    // Login ve Register ekranlarında çağırmak için gerekli
+    // --- NAVBAR GİZLEME/GÖSTERME ---
+    // Fragment'lardan erişilebilmesi için public (varsayılan)
     fun setBottomNavVisibility(isVisible: Boolean) {
         if (::bottomNav.isInitialized) {
             bottomNav.visibility = if (isVisible) View.VISIBLE else View.GONE
         }
     }
 
-    // --- Navigasyon Yardımcıları ---
-
-    private fun loadFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-            .commit()
-    }
+    // --- FRAGMENT YÖNETİMİ ---
 
     fun replaceFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
-            .addToBackStack(null) // Geri tuşuyla önceki sayfaya dönmek için
+            .addToBackStack(null)
             .commit()
     }
 
+    // Arama sayfasına parametre ile gitmek için
     fun navigateToBooksSearch(query: String) {
         val fragment = BooksFragment().apply {
             arguments = Bundle().apply {
@@ -92,15 +87,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
         replaceFragment(fragment)
-        // Arama butonunu aktifmiş gibi göstermek için (opsiyonel görsel efekt)
-        // findViewById<View>(R.id.btnSearch).performClick() // Döngüye girmemesi için kaldırdım veya dikkatli kullanılmalı
     }
 
-    // --- Kullanıcı Kontrol ve Yönlendirme ---
+    // --- KULLANICI KONTROLÜ VE YÖNLENDİRME ---
     fun checkUserAndNavigate() {
         val user = FirebaseAuth.getInstance().currentUser
         if (user == null) {
-            loadFragment(LoginFragment())
+            replaceFragment(LoginFragment())
+            setBottomNavVisibility(false) // Çıkış yapınca navbar gizlenmeli
         } else {
             FirebaseFirestore.getInstance().collection("users").document(user.uid)
                 .get()
@@ -113,15 +107,19 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     replaceFragment(HomeFragment())
+                    setBottomNavVisibility(true) // Giriş yapınca navbar görünmeli
                 }
                 .addOnFailureListener {
-                    if (!isFinishing && !isDestroyed) replaceFragment(HomeFragment())
+                    // Hata olsa bile ana sayfaya atmayı dene (internet yoksa vs.)
+                    if (!isFinishing && !isDestroyed) {
+                        replaceFragment(HomeFragment())
+                        setBottomNavVisibility(true)
+                    }
                 }
         }
     }
 
-    // --- Profil Penceresi (Bottom Sheet) ---
-
+    // --- PROFİL PENCERESİ (Bottom Sheet) ---
     fun showProfileDialog() {
         val dialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.layout_profile_sheet, null)
@@ -164,7 +162,7 @@ class MainActivity : AppCompatActivity() {
             tvId?.text = "Giriş Yapılmadı"
         }
 
-        // --- Tema ve Diğer Ayarlar ---
+        // Tema Ayarları
         val themeSwitch = view.findViewById<MaterialSwitch>(R.id.themeSwitch)
         val themeIcon = view.findViewById<ImageView>(R.id.ivThemeIcon)
         val themeSwitchContainer = view.findViewById<LinearLayout>(R.id.themeSwitchContainer)
@@ -191,10 +189,11 @@ class MainActivity : AppCompatActivity() {
         view.findViewById<View>(R.id.btnSheetLogout)?.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
             dialog.dismiss()
-            checkUserAndNavigate()
+            checkUserAndNavigate() // Çıkış sonrası Login ekranına atacak
             Toast.makeText(this, "Çıkış yapıldı", Toast.LENGTH_SHORT).show()
         }
 
+        // Dil Seçimi
         view.findViewById<View>(R.id.tvSelectLanguage)?.setOnClickListener {
             showLanguageSelectionDialog(it)
         }
@@ -202,7 +201,7 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    // --- Yardımcı Fonksiyonlar ---
+    // --- YARDIMCI FONKSİYONLAR ---
 
     private fun getNameFromEmail(email: String): String {
         return if (email.contains("@")) {

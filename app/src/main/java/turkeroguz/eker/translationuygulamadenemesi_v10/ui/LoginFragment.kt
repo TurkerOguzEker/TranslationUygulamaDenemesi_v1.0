@@ -1,12 +1,13 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
 import android.app.Activity
-import android.content.Intent
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,10 +31,11 @@ class LoginFragment : Fragment() {
     private lateinit var btnLogin: Button
     private lateinit var btnGoogleLogin: Button
     private lateinit var tvGoToRegister: TextView
+    private lateinit var tvForgotPassword: TextView
+
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
-    // Google Giriş Sonucunu Yakalayan Yapı
     private val googleSignInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
@@ -60,32 +62,26 @@ class LoginFragment : Fragment() {
         btnGoogleLogin = view.findViewById(R.id.btnGoogleLogin)
         tvGoToRegister = view.findViewById(R.id.tvGoToRegister)
 
-        // Normal Giriş
+        // XML'e eklediğimiz yeni ID'yi burada bağlıyoruz
+        tvForgotPassword = view.findViewById(R.id.tvForgotPassword)
+
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val pass = etPass.text.toString().trim()
             if (email.isNotEmpty() && pass.isNotEmpty()) {
                 auth.signInWithEmailAndPassword(email, pass)
-                    .addOnSuccessListener {
-                        goHome()
-                    }
-                    .addOnFailureListener {
-                        Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_LONG).show()
-                    }
+                    .addOnSuccessListener { goHome() }
+                    .addOnFailureListener { Toast.makeText(context, "Giriş Hatası: ${it.message}", Toast.LENGTH_LONG).show() }
             } else {
                 Toast.makeText(context, "Lütfen alanları doldurun.", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Google Giriş Butonu
         btnGoogleLogin.setOnClickListener {
-            // ÖNEMLİ: string.xml içinde 'default_web_client_id' otomatik oluşur ama
-            // google-services.json dosyanızın güncel olması gerekir.
             val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build()
-
             val googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
             googleSignInLauncher.launch(googleSignInClient.signInIntent)
         }
@@ -96,13 +92,49 @@ class LoginFragment : Fragment() {
                 .addToBackStack(null)
                 .commit()
         }
+
+        // ŞİFREMİ UNUTTUM TIKLAMA OLAYI
+        tvForgotPassword.setOnClickListener {
+            showForgotPasswordDialog()
+        }
+    }
+
+    private fun showForgotPasswordDialog() {
+        val editText = EditText(context)
+        editText.hint = "E-posta adresinizi girin"
+        editText.inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+        val padding = 50
+        editText.setPadding(padding, padding, padding, padding)
+
+        AlertDialog.Builder(context)
+            .setTitle("Şifre Sıfırlama")
+            .setView(editText)
+            .setPositiveButton("Gönder") { _, _ ->
+                val email = editText.text.toString().trim()
+                if (email.isNotEmpty()) {
+                    sendResetEmail(email)
+                } else {
+                    Toast.makeText(context, "E-posta boş olamaz.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("İptal", null)
+            .show()
+    }
+
+    private fun sendResetEmail(email: String) {
+        auth.sendPasswordResetEmail(email)
+            .addOnSuccessListener {
+                Toast.makeText(context, "Sıfırlama linki e-postanıza gönderildi.", Toast.LENGTH_LONG).show()
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_LONG).show()
+            }
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential)
             .addOnSuccessListener { authResult ->
-                // İlk defa giriyorsa veritabanına kaydet
                 val user = authResult.user
                 val uid = user?.uid ?: ""
                 val email = user?.email ?: ""

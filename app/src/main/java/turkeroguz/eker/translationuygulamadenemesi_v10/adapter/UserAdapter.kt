@@ -8,10 +8,9 @@ import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.ItemUserManag
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
 
 class UserAdapter(
-    // Listeyi 'var' yaptık ve ArrayList olarak tanımladık, böylece değiştirebiliriz
+    // Listeyi dinamik yönetebilmek için ArrayList olarak alıyoruz
     private var userList: ArrayList<User>,
     private val onUserClick: (User) -> Unit
-    // onPremiumToggle parametresi SİLİNDİ
 ) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
 
     inner class UserViewHolder(val binding: ItemUserManageBinding) : RecyclerView.ViewHolder(binding.root)
@@ -26,10 +25,13 @@ class UserAdapter(
 
         // E-posta ve İstatistikler
         holder.binding.tvUserEmail.text = user.email
+
+        // Bölme işleminde sıfıra bölünme hatasını önlemek için kontrol
         val dropOffRate = if(user.storiesStarted > 0) (user.storiesCompleted.toFloat() / user.storiesStarted.toFloat()) * 100 else 0f
+
         holder.binding.tvUserStats.text = "Kelime: ${user.totalWordsLearned} | Bitirme: %${dropOffRate.toInt()}"
 
-        // --- İKON MANTIĞI ---
+        // --- İKON RENGİ MANTIĞI ---
         if (user.isPremium) {
             // Aktif - Yeşil
             holder.binding.ivPremiumStatus.setColorFilter(Color.parseColor("#4CAF50"))
@@ -41,14 +43,14 @@ class UserAdapter(
             holder.binding.ivPremiumStatus.setColorFilter(Color.parseColor("#D32F2F"))
         }
 
-        // Tıklama Olayları (Sadece Düzenle)
+        // Tıklama Olayları
         holder.binding.btnEditUser.setOnClickListener { onUserClick(user) }
         holder.binding.cardRoot.setOnClickListener { onUserClick(user) }
     }
 
     override fun getItemCount() = userList.size
 
-    // --- VERİ GÜNCELLEME FONKSİYONLARI ---
+    // --- LİSTE GÜNCELLEME FONKSİYONLARI ---
 
     fun addData(newUsers: List<User>) {
         val startPos = userList.size
@@ -60,14 +62,5 @@ class UserAdapter(
         userList.clear()
         userList.addAll(newUsers)
         notifyDataSetChanged()
-    }
-    fun updatePassword(email: String, newPassword: String): Boolean {
-        val db = this.writableDatabase
-        val values = ContentValues()
-        values.put("password", newPassword) // "password" senin veritabanındaki sütun adın olmalı
-
-        // Email'e göre güncelleme yap
-        val result = db.update("users", values, "email = ?", arrayOf(email))
-        return result > 0
     }
 }
