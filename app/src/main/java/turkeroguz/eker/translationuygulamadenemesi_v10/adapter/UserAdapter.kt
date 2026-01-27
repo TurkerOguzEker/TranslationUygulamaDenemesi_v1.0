@@ -61,4 +61,13 @@ class UserAdapter(
         userList.addAll(newUsers)
         notifyDataSetChanged()
     }
+    fun updatePassword(email: String, newPassword: String): Boolean {
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put("password", newPassword) // "password" senin veritabanındaki sütun adın olmalı
+
+        // Email'e göre güncelleme yap
+        val result = db.update("users", values, "email = ?", arrayOf(email))
+        return result > 0
+    }
 }

@@ -37,34 +37,29 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Navbar'ı XML'den buluyoruz
         bottomNav = findViewById(R.id.bottomNav)
 
-        // Başlangıçta LoginFragment aç
-        if (savedInstanceState == null) {
-            loadFragment(LoginFragment())
+        // --- OTOMATİK GİRİŞ KONTROLÜ ---
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            // Kullanıcı zaten giriş yapmış, direkt Ana Sayfaya git ve Navbar'ı aç
+            replaceFragment(HomeFragment())
+            setBottomNavVisibility(true)
+        } else {
+            // Giriş yapılmamış, Login ekranını aç ve Navbar'ı gizle
+            if (savedInstanceState == null) {
+                loadFragment(LoginFragment())
+                setBottomNavVisibility(false)
+            }
         }
+        // ------------------------------
 
         // Alt Menü Butonları
-        findViewById<View>(R.id.btnHome).setOnClickListener {
-            replaceFragment(HomeFragment())
-        }
-
-        findViewById<View>(R.id.btnSearch).setOnClickListener {
-            replaceFragment(BooksFragment())
-        }
-
-        findViewById<View>(R.id.btnMyBooks).setOnClickListener {
-            replaceFragment(MyBooksFragment())
-        }
-
-        findViewById<View>(R.id.btnWords).setOnClickListener {
-            replaceFragment(WordsFragment())
-        }
-
-        findViewById<View>(R.id.btnSettings).setOnClickListener {
-            replaceFragment(SettingsFragment())
-        }
+        findViewById<View>(R.id.btnHome).setOnClickListener { replaceFragment(HomeFragment()) }
+        findViewById<View>(R.id.btnSearch).setOnClickListener { replaceFragment(BooksFragment()) }
+        findViewById<View>(R.id.btnMyBooks).setOnClickListener { replaceFragment(MyBooksFragment()) }
+        findViewById<View>(R.id.btnWords).setOnClickListener { replaceFragment(WordsFragment()) }
+        findViewById<View>(R.id.btnSettings).setOnClickListener { replaceFragment(SettingsFragment()) }
     }
 
     // --- NAVBAR GİZLEME/GÖSTERME FONKSİYONU ---

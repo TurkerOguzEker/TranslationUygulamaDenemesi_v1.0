@@ -57,13 +57,8 @@
                         android:layout_height="wrap_content"
                         android:hint="E-posta Adresi"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:boxCornerRadiusTopStart="12dp"
-                        app:boxCornerRadiusTopEnd="12dp"
-                        app:boxCornerRadiusBottomStart="12dp"
-                        app:boxCornerRadiusBottomEnd="12dp"
                         app:startIconDrawable="@drawable/ic_logout"
                         android:layout_marginBottom="16dp">
-
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etEmail"
                             android:layout_width="match_parent"
@@ -76,14 +71,9 @@
                         android:layout_height="wrap_content"
                         android:hint="Şifre"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:boxCornerRadiusTopStart="12dp"
-                        app:boxCornerRadiusTopEnd="12dp"
-                        app:boxCornerRadiusBottomStart="12dp"
-                        app:boxCornerRadiusBottomEnd="12dp"
                         app:startIconDrawable="@drawable/ic_settings"
                         app:endIconMode="password_toggle"
                         android:layout_marginBottom="24dp">
-
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etPassword"
                             android:layout_width="match_parent"
@@ -101,18 +91,33 @@
                         app:cornerRadius="12dp"
                         android:layout_marginBottom="16dp"/>
 
+                    <Button
+                        android:id="@+id/btnGoogleLogin"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:text="Google ile Bağlan"
+                        android:textColor="#333"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="#FFFFFF"
+                        app:strokeColor="#DDDDDD"
+                        app:strokeWidth="1dp"
+                        app:icon="@drawable/ic_search"
+                        app:iconTint="@null"
+                        app:iconGravity="textStart"
+                        app:cornerRadius="12dp"
+                        android:layout_marginBottom="24dp"/>
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:orientation="horizontal">
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Hesabınız yok mu? "
                             android:textColor="#757575"/>
-
                         <TextView
                             android:id="@+id/tvGoToRegister"
                             android:layout_width="wrap_content"
@@ -124,7 +129,6 @@
                             android:focusable="true"
                             android:padding="8dp"/>
                     </LinearLayout>
-
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>

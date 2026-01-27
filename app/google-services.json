@@ -12,7 +12,20 @@
           "package_name": "turkeroguz.eker.translationuygulamadenemesi_v10"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "903780628407-0gmmar11dgoms5sg6ctgmobp2hsv5691.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "turkeroguz.eker.translationuygulamadenemesi_v10",
+            "certificate_hash": "26fc622fe21a8f0b64bd271a75569f3152e5f1be"
+          }
+        },
+        {
+          "client_id": "903780628407-fb1mii0042p2011vtb693udsr6uvf5eb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDxs7p6B0buoM3QJsNIol2-Nvmj4QvlDiM"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "903780628407-fb1mii0042p2011vtb693udsr6uvf5eb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

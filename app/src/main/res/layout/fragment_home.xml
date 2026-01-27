@@ -1,145 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:paddingTop="16dp">
+    android:background="#F5F5F5">
 
-    <!-- Başlık ve Profil Butonu -->
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="@string/oguz_app"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/profile_card"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            app:cardCornerRadius="24dp">
-
-            <ImageButton
-                android:id="@+id/btnProfile"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:scaleType="centerCrop"
-                android:src="@android:drawable/ic_menu_gallery" />
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <ImageButton
-            android:id="@+id/btnNotifications"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_toStartOf="@id/profile_card"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_notifications"
-            app:tint="?attr/colorControlNormal" />
-
-    </RelativeLayout>
-
-    <!-- Okumaya Devam Et -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/continue_reading_card"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        app:cardCornerRadius="12dp">
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        android:background="@android:color/white"
+        android:elevation="4dp">
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/layoutPremiumBadge"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:padding="12dp">
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_profile_button_round"
+            android:paddingStart="8dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:layout_marginEnd="12dp"
+            android:visibility="gone">
 
             <ImageView
-                android:layout_width="60dp"
-                android:layout_height="80dp"
-                android:background="#E0E0E0" />
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_crown"
+                app:tint="#FFD700"
+                android:layout_marginEnd="4dp"/>
 
-            <LinearLayout
-                android:layout_width="0dp"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/continue_reading"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Sherlock Holmes"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <ProgressBar
-                    style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:progress="60" />
-            </LinearLayout>
+                android:text="Premium Aktif"
+                android:textColor="#FFD700"
+                android:textStyle="bold"
+                android:textSize="12sp"/>
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
 
-    <!-- Seviye Bölümleri -->
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/nested_scroll_view"
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Hikayeler"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#333"/>
+
+        <ImageButton
+            android:id="@+id/btnProfile"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_launcher_foreground"
+            android:background="@drawable/bg_profile_button_round"
+            android:padding="8dp"
+            android:scaleType="centerCrop"/>
+    </LinearLayout>
+
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="16dp">
+            android:padding="16dp">
 
-            <include
-                android:id="@+id/sectionA1"
-                layout="@layout/level_section_layout" />
+            <TextView android:text="Seviyenizi Seçin" android:textStyle="bold" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            <include layout="@layout/level_section_layout" android:id="@+id/levelSection" />
 
-            <include
-                android:id="@+id/sectionA2"
-                layout="@layout/level_section_layout" />
+            <TextView android:text="Öne Çıkanlar" android:textStyle="bold" android:layout_marginTop="24dp" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvFeaturedBooks" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
 
-            <include
-                android:id="@+id/sectionB1"
-                layout="@layout/level_section_layout" />
-            <include
-                android:id="@+id/sectionB1Plus"
-                layout="@layout/level_section_layout" />
-            <include
-                android:id="@+id/sectionB2"
-                layout="@layout/level_section_layout" />
-            <include
-                android:id="@+id/sectionC1"
-                layout="@layout/level_section_layout" />
-            <include
-                android:id="@+id/sectionC2"
-                layout="@layout/level_section_layout" />
+            <TextView android:text="Tüm Kitaplar" android:textStyle="bold" android:layout_marginTop="24dp" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvAllBooks" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-
+    </ScrollView>
 </LinearLayout>

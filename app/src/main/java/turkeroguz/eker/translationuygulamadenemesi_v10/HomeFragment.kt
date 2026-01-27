@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -24,28 +25,60 @@ import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
 
 class HomeFragment : Fragment() {
 
+    // Firebase ve Liste Değişkenleri (Tek seferde tanımlanmalı)
     private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
     private val bookList = ArrayList<Book>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // XML Dosyasını Şişir
         return inflater.inflate(R.layout.fragment_home, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 1. Profil Butonu ve Resmi Ayarla (Az önce yaptığımız kısım)
+        // 1. Profil Resmini Yükle
         val btnProfile = view.findViewById<ImageButton>(R.id.btnProfile)
+        loadProfileImage(btnProfile)
+
+        // Profil butonuna tıklanınca MainActivity'deki dialog açılsın
         btnProfile.setOnClickListener {
             (activity as? MainActivity)?.showProfileDialog()
         }
-        loadProfileImage(btnProfile)
 
-        // 2. Kitapları Getir ve Listele (Kaybolan kısım geri eklendi)
+        // 2. Premium Kontrolü ve Gösterimi
+        checkPremiumStatus(view)
+
+        // 3. Kitapları Çek ve Listele
         fetchBooks(view)
+    }
+
+    private fun checkPremiumStatus(view: View) {
+        val layoutPremiumBadge = view.findViewById<LinearLayout>(R.id.layoutPremiumBadge)
+        val currentUser = auth.currentUser
+
+        if (currentUser != null && layoutPremiumBadge != null) {
+            db.collection("users").document(currentUser.uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        val isPremium = document.getBoolean("isPremium") == true
+                        if (isPremium) {
+                            layoutPremiumBadge.visibility = View.VISIBLE
+                        } else {
+                            layoutPremiumBadge.visibility = View.GONE
+                        }
+                    }
+                }
+                .addOnFailureListener {
+                    // Hata olursa varsayılan olarak gizle
+                    layoutPremiumBadge.visibility = View.GONE
+                }
+        }
     }
 
     private fun fetchBooks(view: View) {
@@ -62,62 +95,40 @@ class HomeFragment : Fragment() {
                     bookList.add(book)
                 }
 
-                // Kitapları seviyelerine göre ayır ve ilgili listelere gönder
-                setupSection(view, R.id.sectionA1, "A1 Seviyesi", "A1")
-                setupSection(view, R.id.sectionA2, "A2 Seviyesi", "A2")
-                setupSection(view, R.id.sectionB1, "B1 Seviyesi", "B1")
-                setupSection(view, R.id.sectionB1Plus, "B1+ Seviyesi", "B1+")
-                setupSection(view, R.id.sectionB2, "B2 Seviyesi", "B2")
-                setupSection(view, R.id.sectionC1, "C1 Seviyesi", "C1")
-                setupSection(view, R.id.sectionC2, "C2 Seviyesi", "C2")
+                // NOT: XML'inizde bu ID'lere (sectionA1 vb.) sahip 'include' veya 'LinearLayout' yapıları olmalı.
+                // Eğer yoksa "setupSection" çalışırken hata alırsınız.
+                // Şimdilik örnek olarak ekliyorum, XML'inizde yoksa bu satırları kapatın veya XML'i güncelleyin.
+
+                // --- KİTAP LİSTELEME MANTIĞI ---
+                // Eğer "layout_book_section" gibi bir yapı kullanıyorsanız ID'ler XML ile uyuşmalı.
+                // Şimdilik geçici olarak ana listede gösteriyoruz:
+
+                // ÖRNEK: Öne Çıkanlar (RV varsa)
+                val rvFeatured = view.findViewById<RecyclerView>(R.id.rvFeaturedBooks)
+                if (rvFeatured != null && bookList.isNotEmpty()) {
+                    rvFeatured.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+                    rvFeatured.adapter = BookAdapter(bookList.take(5)) { selectedBook ->
+                        Toast.makeText(context, "${selectedBook.title} seçildi", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                // ÖRNEK: Tüm Kitaplar (RV varsa)
+                val rvAll = view.findViewById<RecyclerView>(R.id.rvAllBooks)
+                if (rvAll != null) {
+                    rvAll.layoutManager = LinearLayoutManager(context) // Dikey
+                    rvAll.adapter = BookAdapter(bookList) { selectedBook ->
+                        Toast.makeText(context, "${selectedBook.title} seçildi", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
             .addOnFailureListener { exception ->
                 Toast.makeText(context, "Kitaplar yüklenemedi: ${exception.localizedMessage}", Toast.LENGTH_LONG).show()
             }
     }
 
-    // Belirli bir seviyedeki kitapları filtreleyip ilgili RecyclerView'a bağlar
-    private fun setupSection(view: View, sectionId: Int, title: String, level: String) {
-        val sectionView = view.findViewById<View>(sectionId)
-        val tvTitle = sectionView.findViewById<TextView>(R.id.tvSectionTitle)
-        val recyclerView = sectionView.findViewById<RecyclerView>(R.id.rvBookList)
-
-        // Bölüm başlığını ayarla
-        tvTitle.text = title
-
-        // Sadece bu seviyeye ait kitapları filtrele
-        val filteredList = bookList.filter { it.level == level }
-
-        if (filteredList.isNotEmpty()) {
-            // Eğer bu seviyede kitap varsa listeyi göster
-            sectionView.visibility = View.VISIBLE
-
-            // YATAY KAYDIRMA (Animasyon hissi veren kısım burası)
-            recyclerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-
-            // Adapter'ı bağla
-            val adapter = BookAdapter(filteredList) { selectedBook ->
-                // Kitaba tıklanınca detay sayfasına git (veya okuma sayfasına)
-                // Buradaki kod, BookAdapter'ınızın tıklama mantığına göre değişebilir
-                Toast.makeText(context, "${selectedBook.title} seçildi", Toast.LENGTH_SHORT).show()
-
-                // Örnek: Detay sayfasına yönlendirme (Eğer varsa)
-                /*
-                val intent = Intent(context, BookDetailActivity::class.java)
-                intent.putExtra("bookId", selectedBook.bookId)
-                startActivity(intent)
-                */
-            }
-            recyclerView.adapter = adapter
-        } else {
-            // Bu seviyede kitap yoksa o bölümü gizle
-            sectionView.visibility = View.GONE
-        }
-    }
-
-    // --- Profil Resmi Fonksiyonları (Aynı kalıyor) ---
+    // --- Profil Resmi Fonksiyonları ---
     private fun loadProfileImage(imageView: ImageButton) {
-        val user = FirebaseAuth.getInstance().currentUser
+        val user = auth.currentUser
         if (user != null) {
             if (user.photoUrl != null) {
                 try {
