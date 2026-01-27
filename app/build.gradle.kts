@@ -1,14 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-
-    // BU SATIRIN BURADA OLDUĞUNDAN EMİN OLUN:
     id("com.google.gms.google-services")
 }
 
 android {
     namespace = "turkeroguz.eker.translationuygulamadenemesi_v10"
-    // Stabil bir deneyim için 35 kullanmanızı öneririm (36 çok yeni)
     compileSdk = 35
 
     defaultConfig {
@@ -38,19 +35,27 @@ android {
 
     buildFeatures {
         compose = true
-        viewBinding = true // XML sayfalarınızın (item_book vb.) çalışması için şart
+        viewBinding = true
         buildConfig = true
     }
 
-    // Kotlin 2.0+ kullandığınız için Compose Compiler artık Kotlin içine gömülüdür.
-    // composeOptions ve kotlinCompilerExtensionVersion satırlarını silebilirsiniz.
+    // --- EKLENEN KISIM BAŞLANGIÇ ---
+    packaging {
+        resources {
+            // Çakışan lisans dosyalarını dahil etme
+            excludes += "META-INF/NOTICE.md"
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/NOTICE.txt"
+            excludes += "META-INF/LICENSE.txt"
+        }
+    }
+    // --- EKLENEN KISIM BİTİŞ ---
 }
 
 dependencies {
-    // dependencies bloğuna eklenecekler
-    implementation("com.google.firebase:firebase-auth-ktx:23.1.0") // Giriş/Kayıt için
-    implementation("com.google.firebase:firebase-firestore-ktx:25.1.1") // Hikayeler ve Kullanıcılar için
-    implementation("com.google.firebase:firebase-storage-ktx:21.0.1") // Resimler için
+    implementation("com.google.firebase:firebase-auth-ktx:23.1.0")
+    implementation("com.google.firebase:firebase-firestore-ktx:25.1.1")
+    implementation("com.google.firebase:firebase-storage-ktx:21.0.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -60,7 +65,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
-    // XML ve ViewPager2 bileşenleri
     implementation(libs.androidx.viewpager2)
     implementation(libs.androidx.appcompat)
     implementation(libs.google.material)
@@ -69,9 +73,13 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation("com.github.bumptech.glide:glide:4.16.0")
+
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("com.google.android.gms:play-services-auth:21.0.0")
+
+    // Mail kütüphaneleri
     implementation("com.sun.mail:android-mail:1.6.7")
     implementation("com.sun.mail:android-activation:1.6.7")
+
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }

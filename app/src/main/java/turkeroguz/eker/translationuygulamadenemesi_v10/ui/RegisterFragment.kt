@@ -1,12 +1,12 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
-import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -15,31 +15,37 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import turkeroguz.eker.translationuygulamadenemesi_v10.EmailSender
 import turkeroguz.eker.translationuygulamadenemesi_v10.HomeFragment
 import turkeroguz.eker.translationuygulamadenemesi_v10.MainActivity
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
-import turkeroguz.eker.translationuygulamadenemesi_v10.EmailSender
-// Yukarıdaki satır doğru olan. '.util' içeren hatalı satır kaldırıldı.
 
 class RegisterFragment : Fragment() {
 
+    // Görünüm (Layout) Grupları
+    private lateinit var layoutRegisterForm: LinearLayout
+    private lateinit var layoutVerification: LinearLayout
+
+    // Form Elemanları
     private lateinit var etName: TextInputEditText
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPass: TextInputEditText
     private lateinit var btnRegister: Button
     private lateinit var tvGoToLogin: TextView
 
+    // Doğrulama Elemanları
+    private lateinit var tvInfoText: TextView
+    private lateinit var etVerificationCode: EditText
+    private lateinit var btnVerifyCode: Button
+    private lateinit var btnBackToRegister: Button
+
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
-    // Doğrulama kodu için geçici değişken
     private var generatedCode: String = ""
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_register, container, false)
     }
 
@@ -47,12 +53,22 @@ class RegisterFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         (activity as? MainActivity)?.setBottomNavVisibility(false)
 
+        // --- View Bağlamaları ---
+        layoutRegisterForm = view.findViewById(R.id.layoutRegisterForm)
+        layoutVerification = view.findViewById(R.id.layoutVerification)
+
         etName = view.findViewById(R.id.etName)
         etEmail = view.findViewById(R.id.etEmail)
         etPass = view.findViewById(R.id.etPassword)
         btnRegister = view.findViewById(R.id.btnRegister)
         tvGoToLogin = view.findViewById(R.id.tvGoToLogin)
 
+        tvInfoText = view.findViewById(R.id.tvInfoText)
+        etVerificationCode = view.findViewById(R.id.etVerificationCode)
+        btnVerifyCode = view.findViewById(R.id.btnVerifyCode)
+        btnBackToRegister = view.findViewById(R.id.btnBackToRegister)
+
+        // --- 1. BUTON: KOD GÖNDERME ---
         btnRegister.setOnClickListener {
             val name = etName.text.toString().trim()
             val email = etEmail.text.toString().trim()
@@ -63,25 +79,43 @@ class RegisterFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // 1. KOD OLUŞTUR VE MAİL GÖNDER
+            // Kodu oluştur
             generatedCode = (100000..999999).random().toString()
-
-            // Kullanıcıya bilgi ver
-            Toast.makeText(context, "Doğrulama kodu gönderiliyor...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Kod gönderiliyor...", Toast.LENGTH_SHORT).show()
 
             lifecycleScope.launch {
-                val isSent = EmailSender.sendEmail(
-                    email,
-                    "Doğrulama Kodu",
-                    "Merhaba $name,\n\nUygulamaya kayıt kodun: $generatedCode"
-                )
+                // EmailSender nesnesini kullan
+                val isSent = EmailSender.sendVerificationCode(email, name, generatedCode)
 
                 if (isSent) {
-                    showVerificationDialog(name, email, pass)
+                    // Ekranı Değiştir: Formu gizle, Doğrulamayı aç
+                    showVerificationScreen(email)
                 } else {
                     Toast.makeText(context, "Kod gönderilemedi! E-postayı kontrol edin.", Toast.LENGTH_LONG).show()
                 }
             }
+        }
+
+        // --- 2. BUTON: KODU ONAYLAMA ---
+        btnVerifyCode.setOnClickListener {
+            val inputCode = etVerificationCode.text.toString().trim()
+
+            if (inputCode == generatedCode) {
+                // Kod Doğru -> Kaydı Tamamla
+                val name = etName.text.toString().trim()
+                val email = etEmail.text.toString().trim()
+                val pass = etPass.text.toString().trim()
+
+                completeRegistration(name, email, pass)
+            } else {
+                Toast.makeText(context, "Hatalı Kod! Lütfen tekrar deneyin.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Geri Dön Butonu (E-posta yanlışsa düzeltmek için)
+        btnBackToRegister.setOnClickListener {
+            layoutVerification.visibility = View.GONE
+            layoutRegisterForm.visibility = View.VISIBLE
         }
 
         tvGoToLogin.setOnClickListener {
@@ -91,28 +125,13 @@ class RegisterFragment : Fragment() {
         }
     }
 
-    private fun showVerificationDialog(name: String, email: String, pass: String) {
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_verification_code, null)
-        val etCode = dialogView.findViewById<EditText>(R.id.etVerificationCode)
-
-        AlertDialog.Builder(context)
-            .setTitle("E-posta Doğrulama")
-            .setView(dialogView)
-            .setCancelable(false)
-            .setPositiveButton("Doğrula") { dialog, _ ->
-                val inputCode = etCode.text.toString().trim()
-                if (inputCode == generatedCode) {
-                    // KOD DOĞRU -> FIREBASE KAYDI BAŞLASIN
-                    registerUserToFirebase(name, email, pass)
-                } else {
-                    Toast.makeText(context, "Hatalı Kod!", Toast.LENGTH_LONG).show()
-                }
-            }
-            .setNegativeButton("İptal", null)
-            .show()
+    private fun showVerificationScreen(email: String) {
+        layoutRegisterForm.visibility = View.GONE
+        layoutVerification.visibility = View.VISIBLE
+        tvInfoText.text = "$email adresine gelen 6 haneli kodu giriniz."
     }
 
-    private fun registerUserToFirebase(name: String, email: String, pass: String) {
+    private fun completeRegistration(name: String, email: String, pass: String) {
         auth.createUserWithEmailAndPassword(email, pass)
             .addOnSuccessListener { result ->
                 val uid = result.user?.uid ?: ""

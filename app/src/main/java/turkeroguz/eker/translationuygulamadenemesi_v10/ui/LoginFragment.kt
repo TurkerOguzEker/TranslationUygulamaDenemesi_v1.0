@@ -61,8 +61,6 @@ class LoginFragment : Fragment() {
         btnLogin = view.findViewById(R.id.btnLogin)
         btnGoogleLogin = view.findViewById(R.id.btnGoogleLogin)
         tvGoToRegister = view.findViewById(R.id.tvGoToRegister)
-
-        // XML'e eklediğimiz yeni ID'yi burada bağlıyoruz
         tvForgotPassword = view.findViewById(R.id.tvForgotPassword)
 
         btnLogin.setOnClickListener {
@@ -93,7 +91,6 @@ class LoginFragment : Fragment() {
                 .commit()
         }
 
-        // ŞİFREMİ UNUTTUM TIKLAMA OLAYI
         tvForgotPassword.setOnClickListener {
             showForgotPasswordDialog()
         }
@@ -108,6 +105,7 @@ class LoginFragment : Fragment() {
 
         AlertDialog.Builder(context)
             .setTitle("Şifre Sıfırlama")
+            .setMessage("Hesabınıza ait e-posta adresini giriniz. Size şifrenizi yenilemeniz için bir bağlantı göndereceğiz.")
             .setView(editText)
             .setPositiveButton("Gönder") { _, _ ->
                 val email = editText.text.toString().trim()
@@ -124,7 +122,12 @@ class LoginFragment : Fragment() {
     private fun sendResetEmail(email: String) {
         auth.sendPasswordResetEmail(email)
             .addOnSuccessListener {
-                Toast.makeText(context, "Sıfırlama linki e-postanıza gönderildi.", Toast.LENGTH_LONG).show()
+                // BAŞARILI OLUNCA BU PENCERE AÇILACAK
+                AlertDialog.Builder(context)
+                    .setTitle("Bağlantı Gönderildi ✅")
+                    .setMessage("$email adresine şifre sıfırlama linki gönderildi.\n\nLütfen Gelen Kutunuzu ve SPAM (Gereksiz) klasörünü kontrol edin.\n\nMaildeki linke tıklayarak yeni şifrenizi belirleyebilirsiniz.")
+                    .setPositiveButton("Tamam", null)
+                    .show()
             }
             .addOnFailureListener {
                 Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_LONG).show()

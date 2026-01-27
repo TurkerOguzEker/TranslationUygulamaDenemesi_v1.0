@@ -12,14 +12,14 @@ import javax.mail.Transport
 import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
 
-class EmailSender {
+object EmailSender {
 
-    // NOT: Gmail kullanıyorsanız "App Password" (Uygulama Şifresi) oluşturup buraya girmelisiniz.
-    // Normal Gmail şifresi çalışmaz.
-    private val senderEmail = "finishingsoftware@gmail.com"
-    private val senderPassword = "vkys jghp dzus bkbg" // 16 haneli App Password
+    // Buradaki mail ve şifre sizin girmiş olduğunuz bilgilerdir.
+    private const val SENDER_EMAIL = "finishingsoftware@gmail.com"
+    private const val SENDER_PASSWORD = "vkys jghp dzus bkbg"
 
-    suspend fun sendVerificationCode(recipientEmail: String, code: String): Boolean {
+    // İsim parametresi eklendi
+    suspend fun sendVerificationCode(recipientEmail: String, userName: String, code: String): Boolean {
         return withContext(Dispatchers.IO) {
             try {
                 val props = Properties().apply {
@@ -31,21 +31,24 @@ class EmailSender {
 
                 val session = Session.getInstance(props, object : Authenticator() {
                     override fun getPasswordAuthentication(): PasswordAuthentication {
-                        return PasswordAuthentication(senderEmail, senderPassword)
+                        return PasswordAuthentication(SENDER_EMAIL, SENDER_PASSWORD)
                     }
                 })
 
                 val message = MimeMessage(session).apply {
-                    setFrom(InternetAddress(senderEmail, "İngilizce Tekrar App"))
+                    setFrom(InternetAddress(SENDER_EMAIL, "İngilizce Tekrar App"))
                     setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail))
                     subject = "E-posta Doğrulama Kodu"
-                    setText("Merhaba,\n\nUygulamaya kayıt olmak için doğrulama kodunuz:\n\n$code\n\nBu kodu kimseyle paylaşmayın.")
+                    // Kullanıcı ismini de ekledik
+                    setText("Merhaba $userName,\n\nUygulamaya kayıt olmak için doğrulama kodunuz:\n\n$code\n\nBu kodu kimseyle paylaşmayın.")
                 }
 
                 Transport.send(message)
+                Log.d("EmailSender", "Mail başarıyla gönderildi.")
                 true
             } catch (e: Exception) {
-                Log.e("EmailSender", "Hata: ${e.message}")
+                Log.e("EmailSender", "Mail Hatası: ${e.message}")
+                e.printStackTrace()
                 false
             }
         }
