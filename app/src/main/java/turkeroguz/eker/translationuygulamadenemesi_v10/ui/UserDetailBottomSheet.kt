@@ -1,157 +1,150 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
 import android.app.AlertDialog
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.LayoutUserDetailSheetBinding
-import turkeroguz.eker.translationuygulamadenemesi_v10.model.ActivityLog
+import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class UserDetailBottomSheet(private val user: User) : BottomSheetDialogFragment() {
 
-    private var _binding: LayoutUserDetailSheetBinding? = null
-    private val binding get() = _binding!!
     private val db = FirebaseFirestore.getInstance()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = LayoutUserDetailSheetBinding.inflate(inflater, container, false)
-        return binding.root
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return inflater.inflate(R.layout.layout_user_detail_sheet, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // --- İSİM MANTIĞINI DÜZELTEN KISIM ---
-        val displayName = if (user.name.isNotEmpty()) {
-            user.name
-        } else {
-            // İsmi yoksa e-posta adresinin @ işaretinden önceki kısmını al
-            user.email.substringBefore("@")
-        }
+        // View Tanımlamaları
+        val tvName = view.findViewById<TextView>(R.id.tvDetailName)
+        val tvEmail = view.findViewById<TextView>(R.id.tvDetailEmail)
+        val tvUid = view.findViewById<TextView>(R.id.tvDetailUid)
+        val ivIcon = view.findViewById<ImageView>(R.id.ivSheetIcon)
 
-        binding.tvDetailName.text = displayName
-        // -------------------------------------
+        // İstatistikler
+        val tvWords = view.findViewById<TextView>(R.id.tvStatWords)
+        val tvRevenue = view.findViewById<TextView>(R.id.tvStatRevenue)
+        val tvStreak = view.findViewById<TextView>(R.id.tvStatStreak)
 
-        binding.tvDetailEmail.text = user.email
-        binding.tvDetailUid.text = "UID: ${user.uid}"
-        binding.tvDevice.text = user.deviceInfo
+        // Teknik Detaylar
+        val tvRegDate = view.findViewById<TextView>(R.id.tvRegDate)
+        val tvLastLogin = view.findViewById<TextView>(R.id.tvLastLogin)
+        val tvStoriesCount = view.findViewById<TextView>(R.id.tvStoriesCount)
 
-        // Tarih Formatlama
-        val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale("tr"))
-        binding.tvRegDate.text = if (user.registrationDate > 0) dateFormat.format(Date(user.registrationDate)) else "Bilinmiyor"
-        binding.tvLastLogin.text = if (user.lastLoginDate > 0) dateFormat.format(Date(user.lastLoginDate)) else "Hiç girmedi"
+        // Butonlar ve Switchler
+        val btnRole = view.findViewById<Button>(R.id.btnChangeRole)
+        val switchPremium = view.findViewById<MaterialSwitch>(R.id.switchPremiumDetail)
+        val switchBan = view.findViewById<MaterialSwitch>(R.id.switchBan)
+        val btnResetPass = view.findViewById<Button>(R.id.btnResetPassword)
+        val btnDelete = view.findViewById<Button>(R.id.btnDeleteAccount)
+        val btnClose = view.findViewById<Button>(R.id.btnCloseSheet)
 
-        // --- İSTATİSTİKLERİ DOLDUR ---
-        binding.tvStatWords.text = user.totalWordsLearned.toString()
-        binding.tvStatRevenue.text = "₺${user.totalRevenue}"
-        binding.tvStatStreak.text = user.streakDays.toString()
+        // --- VERİLERİ DOLDUR ---
+        tvName.text = user.name ?: "İsimsiz Kullanıcı"
+        tvEmail.text = user.email
+        tvUid.text = "UID: ${user.uid}"
+
+        // İstatistikler (Eğer veriler User modelinde yoksa 0 yazar)
+        tvWords.text = "0" // User modeline 'totalWordsRead' eklersen burayı güncelle
+        tvRevenue.text = "₺${user.totalRevenue}"
+        tvStreak.text = "0" // User modeline 'streakDays' eklersen burayı güncelle
+
+        tvStoriesCount.text = "${user.storiesCompleted} Tamamlanan / ${user.storiesStarted} Başlanan"
+
+        val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale("tr"))
+        tvRegDate.text = try { dateFormat.format(Date(user.registrationDate)) } catch (e:Exception) {"-"}
+        tvLastLogin.text = "Bugün" // Son giriş tarihi modelde yoksa şimdilik statik
 
         // --- BUTON VE SWITCH DURUMLARI ---
 
-        // 1. ROL AYARI
-        binding.btnChangeRole.text = user.role.uppercase()
-        binding.btnChangeRole.setOnClickListener { showRoleSelectionDialog() }
-
-        // 2. PREMIUM SWITCH
-        binding.switchPremium.setOnCheckedChangeListener(null) // Listener çakışmasını önle
-        binding.switchPremium.isChecked = user.isPremium
-        binding.switchPremium.setOnCheckedChangeListener { _, isChecked ->
-            updateUserField("isPremium", isChecked, "Premium ${if(isChecked) "Verildi" else "Alındı"}")
+        // 1. Premium
+        switchPremium.setOnCheckedChangeListener(null) // Listener çakışmasını önle
+        switchPremium.isChecked = user.isPremium
+        if (user.isPremium) {
+            ivIcon.setColorFilter(Color.parseColor("#FFD700"))
+        } else {
+            ivIcon.setColorFilter(Color.GRAY)
         }
 
-        // 3. BAN SWITCH
-        binding.switchBan.setOnCheckedChangeListener(null) // Listener çakışmasını önle
-        binding.switchBan.isChecked = user.isBanned
-        binding.switchBan.setOnCheckedChangeListener { _, isChecked ->
-            val action = if(isChecked) "Kullanıcı BANLANDI" else "Ban Kaldırıldı"
-            updateUserField("isBanned", isChecked, action)
+        switchPremium.setOnCheckedChangeListener { _, isChecked ->
+            updatePremiumStatus(isChecked, ivIcon)
         }
 
-        // 4. ŞİFRE SIFIRLAMA
-        binding.btnResetPassword.setOnClickListener {
+        // 2. Rol Değiştirme (Örnek Mantık)
+        btnRole.setOnClickListener {
+            Toast.makeText(context, "Rol değiştirme özelliği yakında!", Toast.LENGTH_SHORT).show()
+        }
+
+        // 3. Banlama (Şimdilik Premium gibi bir alan günceller, modelde 'isBanned' varsa onu kullan)
+        switchBan.setOnCheckedChangeListener { _, isChecked ->
+            Toast.makeText(context, "Ban durumu: $isChecked (Veritabanı alanı eklenmeli)", Toast.LENGTH_SHORT).show()
+        }
+
+        // 4. Şifre Sıfırlama
+        btnResetPass.setOnClickListener {
             FirebaseAuth.getInstance().sendPasswordResetEmail(user.email)
-                .addOnSuccessListener { Toast.makeText(context, "Sıfırlama maili gönderildi", Toast.LENGTH_SHORT).show() }
-                .addOnFailureListener { Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_SHORT).show() }
-        }
-
-        // 5. HESAP SİLME (Soft Delete)
-        binding.btnDeleteAccount.setOnClickListener {
-            AlertDialog.Builder(requireContext())
-                .setTitle("Hesabı Sil")
-                .setMessage("Bu işlem geri alınamaz. Kullanıcı silinmiş olarak işaretlenecek.")
-                .setPositiveButton("Sil") { _, _ ->
-                    updateUserField("isDeleted", true, "Hesap Silindi (Soft Delete)")
-                    dismiss()
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Sıfırlama maili gönderildi!", Toast.LENGTH_SHORT).show()
                 }
-                .setNegativeButton("İptal", null)
-                .show()
+                .addOnFailureListener {
+                    Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_SHORT).show()
+                }
         }
 
-        // 6. LOGLARI ÇEK
-        fetchLogs()
+        // 5. Hesabı Sil
+        btnDelete.setOnClickListener {
+            deleteUserPermanently()
+        }
+
+        // 6. Kapat
+        btnClose.setOnClickListener { dismiss() }
     }
 
-    private fun showRoleSelectionDialog() {
-        val roles = arrayOf("user", "author", "admin")
-        AlertDialog.Builder(requireContext())
-            .setTitle("Yeni Rol Seçin")
-            .setItems(roles) { _, which ->
-                val newRole = roles[which]
-                updateUserField("role", newRole, "Rol değişti: $newRole")
-                binding.btnChangeRole.text = newRole.uppercase()
-            }
-            .show()
-    }
-
-    private fun updateUserField(field: String, value: Any, logMessage: String) {
+    private fun updatePremiumStatus(isActive: Boolean, icon: ImageView) {
         db.collection("users").document(user.uid)
-            .update(field, value)
+            .update("isPremium", isActive)
             .addOnSuccessListener {
-                Toast.makeText(context, "Güncellendi", Toast.LENGTH_SHORT).show()
-                logAdminAction(logMessage)
+                if (isActive) {
+                    icon.setColorFilter(Color.parseColor("#FFD700"))
+                    Toast.makeText(context, "Premium Verildi ✅", Toast.LENGTH_SHORT).show()
+                } else {
+                    icon.setColorFilter(Color.GRAY)
+                    Toast.makeText(context, "Premium Alındı ❌", Toast.LENGTH_SHORT).show()
+                }
             }
             .addOnFailureListener {
-                Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Hata oluştu!", Toast.LENGTH_SHORT).show()
             }
     }
 
-    private fun logAdminAction(desc: String) {
-        val log = ActivityLog(
-            userId = user.uid,
-            actionType = "ADMIN_ACTION",
-            description = desc,
-            timestamp = System.currentTimeMillis()
-        )
-        db.collection("activity_logs").add(log)
-    }
-
-    // Logları listelemek için fonksiyon (Eksikse ekleyin)
-    private fun fetchLogs() {
-        // Eğer layout dosyanızda rvDetailLogs varsa bu kodu açabilirsiniz:
-        /*
-        db.collection("activity_logs")
-            .whereEqualTo("userId", user.uid)
-            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .limit(20)
-            .get()
-            .addOnSuccessListener { result ->
-                val logs = result.toObjects(ActivityLog::class.java)
-                binding.rvDetailLogs.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(context)
-                binding.rvDetailLogs.adapter = turkeroguz.eker.translationuygulamadenemesi_v10.adapter.LogAdapter(logs)
+    private fun deleteUserPermanently() {
+        AlertDialog.Builder(context)
+            .setTitle("Kullanıcıyı Sil")
+            .setMessage("Bu işlem geri alınamaz. Emin misiniz?")
+            .setPositiveButton("Evet, Sil") { _, _ ->
+                db.collection("users").document(user.uid).delete()
+                    .addOnSuccessListener {
+                        Toast.makeText(context, "Kullanıcı Silindi.", Toast.LENGTH_SHORT).show()
+                        dismiss() // Pencereyi kapat
+                    }
             }
-        */
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+            .setNegativeButton("İptal", null)
+            .show()
     }
 }

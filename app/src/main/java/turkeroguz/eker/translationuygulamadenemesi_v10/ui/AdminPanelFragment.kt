@@ -1,5 +1,6 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
+import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
@@ -15,7 +16,6 @@ import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.*
 import com.google.android.material.textfield.TextInputEditText
-import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.UserAdapter
@@ -52,6 +52,7 @@ class AdminPanelFragment : Fragment() {
 
         initViews(view)
         setupTabs()
+        // RecyclerView kurulumunu buradan çağırıyoruz
         setupRecyclerView(view)
         fetchStatsForDashboard()
     }
@@ -73,7 +74,7 @@ class AdminPanelFragment : Fragment() {
         btnTabDashboard.setOnClickListener {
             layoutDashboard.visibility = View.VISIBLE
             layoutUserList.visibility = View.GONE
-            fetchStatsForDashboard() // Dashboard açılınca verileri tazele
+            fetchStatsForDashboard()
         }
         btnTabUsers.setOnClickListener {
             layoutDashboard.visibility = View.GONE
@@ -88,11 +89,12 @@ class AdminPanelFragment : Fragment() {
         val rv = view.findViewById<RecyclerView>(R.id.rvUserList)
         rv.layoutManager = LinearLayoutManager(context)
 
-        // ✅ DÜZELTME: Adapter'a hem tıklama hem de switch toggle fonksiyonunu gönderiyoruz
+        // ✅ HATA VEREN KISIM BURASIYDI
+        // deleteUserFromFirestore fonksiyonunu aşağıda tanımladığımız için artık hata vermeyecek.
         adapter = UserAdapter(
             allUsers,
             onUserClick = { user -> showUserDetailBottomSheet(user) },
-            onPremiumToggle = { user, isActive -> togglePremium(user, isActive) }
+            onDeleteClick = { user -> deleteUserFromFirestore(user) } // Silme işlemini bağlıyoruz
         )
         rv.adapter = adapter
 
@@ -124,6 +126,49 @@ class AdminPanelFragment : Fragment() {
                 }
             }
         })
+    }
+
+    // ✅ İŞTE EKSİK OLAN FONKSİYON BU
+    // Bunu sınıfın içine eklediğimiz için yukarıdaki kod artık bunu görebilecek.
+    private fun deleteUserFromFirestore(user: User) {
+        // --- GÜVENLİK KONTROLÜ BAŞLANGICI ---
+
+        // 1. Eğer silinmeye çalışılan kişi ADMIN ise İZİN VERME!
+        // (Not: User modelinde rol bilgisini 'role' veya 'userRole' olarak tuttuğunu varsayıyorum.
+        // Eğer modelinde bu alanın adı farklıysa (örn: userType) onu yazmalısın.)
+        if (user.role == "admin" || user.email == "senin_ozel_admin_mailin@gmail.com") {
+            android.app.AlertDialog.Builder(context)
+                .setTitle("İşlem Engellendi 🛡️")
+                .setMessage("Yöneticiler (Admin) silinemez! Güvenlik gereği bu işlem engellenmiştir.")
+                .setPositiveButton("Tamam", null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show()
+            return // Fonksiyonu burada durdur, aşağıya inme
+        }
+
+        // --- GÜVENLİK KONTROLÜ BİTİŞİ ---
+
+        AlertDialog.Builder(context)
+            .setTitle("Kullanıcıyı Sil")
+            .setMessage("${user.email} hesabını silmek istediğine emin misin? Bu işlem geri alınamaz.")
+            .setPositiveButton("EVET, SİL") { _, _ ->
+
+                progressBar.visibility = View.VISIBLE
+
+                db.collection("users").document(user.uid)
+                    .delete()
+                    .addOnSuccessListener {
+                        Toast.makeText(context, "Kullanıcı başarıyla silindi.", Toast.LENGTH_SHORT).show()
+                        fetchUsersResult(isNextPage = false)
+                        fetchStatsForDashboard()
+                    }
+                    .addOnFailureListener { e ->
+                        progressBar.visibility = View.GONE
+                        Toast.makeText(context, "Hata: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            .setNegativeButton("İptal", null)
+            .show()
     }
 
     private fun showUserDetailBottomSheet(user: User) {
@@ -183,33 +228,7 @@ class AdminPanelFragment : Fragment() {
             }
     }
 
-    // --- PREMIUM DEĞİŞTİRME (VERİTABANI) ---
-    private fun togglePremium(user: User, isActive: Boolean) {
-        db.collection("users").document(user.uid)
-            .update("isPremium", isActive, "hasPurchasedBefore", true)
-            .addOnSuccessListener {
-                Toast.makeText(context, "${user.name} Premium durumu: $isActive", Toast.LENGTH_SHORT).show()
-                logAction("Premium ${if(isActive) "Verildi" else "Alındı"}: ${user.email}", "PREMIUM")
-
-                // Grafik verilerinin güncellenmesi için dashboard'u yenileyelim
-                fetchStatsForDashboard()
-            }
-            .addOnFailureListener {
-                Toast.makeText(context, "Güncelleme Başarısız!", Toast.LENGTH_SHORT).show()
-                // Hata olursa switch'i eski haline getirmek gerekebilir (Opsiyonel)
-            }
-    }
-
-    private fun logAction(desc: String, type: String) {
-        val log = hashMapOf(
-            "description" to desc,
-            "type" to type,
-            "timestamp" to System.currentTimeMillis()
-        )
-        db.collection("admin_logs").add(log)
-    }
-
-    // --- DASHBOARD ---
+    // --- DASHBOARD İSTATİSTİKLERİ ---
     private fun fetchStatsForDashboard() {
         db.collection("users").get().addOnSuccessListener { result ->
             var totalRevenue = 0.0
@@ -229,7 +248,6 @@ class AdminPanelFragment : Fragment() {
                 if (user.isPremium) premiumUsers++ else standardUsers++
             }
 
-            // ✅ GRAFİK GÜNCELLEME ÇAĞRISI
             updatePieChart(premiumUsers, standardUsers)
             updateBarChart(statList)
 
@@ -241,20 +259,18 @@ class AdminPanelFragment : Fragment() {
         }
     }
 
-    // --- GRAFİK DÜZELTMESİ ---
     private fun updatePieChart(premium: Int, standard: Int) {
         val entries = ArrayList<PieEntry>()
         val colors = ArrayList<Int>()
 
-        // Sadece sayısı 0'dan büyük olanları grafiğe ekle
         if (premium > 0) {
             entries.add(PieEntry(premium.toFloat(), "Premium ($premium)"))
-            colors.add(Color.parseColor("#FFD700")) // Altın Sarısı
+            colors.add(Color.parseColor("#FFD700"))
         }
 
         if (standard > 0) {
             entries.add(PieEntry(standard.toFloat(), "Standart ($standard)"))
-            colors.add(Color.parseColor("#BDBDBD")) // Gri
+            colors.add(Color.parseColor("#BDBDBD"))
         }
 
         val dataSet = PieDataSet(entries, "")
@@ -268,8 +284,8 @@ class AdminPanelFragment : Fragment() {
         chartUserTypes.centerText = "Kullanıcılar"
         chartUserTypes.setCenterTextSize(14f)
 
-        chartUserTypes.animateY(1000) // Animasyon ekle
-        chartUserTypes.invalidate() // ✅ Grafiği çizdir
+        chartUserTypes.animateY(1000)
+        chartUserTypes.invalidate()
     }
 
     private fun updateBarChart(users: List<User>) {

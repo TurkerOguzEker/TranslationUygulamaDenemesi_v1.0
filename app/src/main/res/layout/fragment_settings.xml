@@ -157,6 +157,21 @@
         android:text="İyileştirme Öner"
 
         />
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnAdminPanel"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Yönetici Paneli (Admin)"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:backgroundTint="#D32F2F"
+        android:textColor="@android:color/white"
+        app:icon="@drawable/ic_settings"
+        app:iconGravity="textStart"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="12dp"
+        app:cornerRadius="12dp"/>
 
 
 
@@ -179,15 +194,21 @@
             android:layout_centerVertical="true"
             tools:text="1.0" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnAdminPanel"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="60dp"
             android:text="Yönetici Paneli (Admin)"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone"
             android:backgroundTint="#D32F2F"
             android:textColor="@android:color/white"
-            android:visibility="gone"
-            android:layout_marginTop="24dp" />
+            app:icon="@drawable/ic_settings"
+            app:iconGravity="textStart"
+            app:cornerRadius="12dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="12dp"/>
 
     </RelativeLayout>
 

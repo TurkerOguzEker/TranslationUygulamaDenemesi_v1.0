@@ -10,8 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // MPAndroidChart ve diğer GitHub kaynaklı kütüphaneler için bu satır ŞARTTIR:
-        maven { url = uri("https://jitpack.io") }
+        maven { url = uri("https://jitpack.io") } // BU SATIRIN OLDUĞUNDAN EMEİN OL
     }
 }
 
