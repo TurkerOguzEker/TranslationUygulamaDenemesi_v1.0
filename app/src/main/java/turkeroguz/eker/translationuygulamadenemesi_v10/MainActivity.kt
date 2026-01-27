@@ -61,6 +61,28 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnWords).setOnClickListener { replaceFragment(WordsFragment()) }
         findViewById<View>(R.id.btnSettings).setOnClickListener { replaceFragment(SettingsFragment()) }
     }
+    override fun onNewIntent(intent: android.content.Intent?) {
+        super.onNewIntent(intent)
+        intent?.let { handleDeepLink(it) }
+    }
+
+    private fun handleDeepLink(intent: android.content.Intent) {
+        val data = intent.data
+        if (data != null && data.toString().contains("mode=resetPassword")) {
+            // Linkten gelen özel kodu (oobCode) al
+            val oobCode = data.getQueryParameter("oobCode")
+
+            if (oobCode != null) {
+                // Şifre Sıfırlama Sayfasını Özel Modda Aç
+                val fragment = turkeroguz.eker.translationuygulamadenemesi_v10.ui.ForgotPasswordFragment()
+                val bundle = Bundle()
+                bundle.putString("oobCode", oobCode) // Kodu sayfaya gönderiyoruz
+                fragment.arguments = bundle
+
+                replaceFragment(fragment)
+            }
+        }
+    }
 
     // --- NAVBAR GİZLEME/GÖSTERME ---
     // Fragment'lardan erişilebilmesi için public (varsayılan)

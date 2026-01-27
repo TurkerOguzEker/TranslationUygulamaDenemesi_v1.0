@@ -1,13 +1,11 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -77,7 +75,7 @@ class LoginFragment : Fragment() {
 
         btnGoogleLogin.setOnClickListener {
             val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestIdToken(getString(R.string.default_web_client_id)) // string.xml kontrol edilmeli
                 .requestEmail()
                 .build()
             val googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
@@ -91,47 +89,14 @@ class LoginFragment : Fragment() {
                 .commit()
         }
 
+        // --- İŞTE BURAYI DEĞİŞTİRDİK ---
+        // Artık Dialog açmıyor, yeni tasarladığımız Fragment'a gidiyor.
         tvForgotPassword.setOnClickListener {
-            showForgotPasswordDialog()
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, ForgotPasswordFragment())
+                .addToBackStack(null)
+                .commit()
         }
-    }
-
-    private fun showForgotPasswordDialog() {
-        val editText = EditText(context)
-        editText.hint = "E-posta adresinizi girin"
-        editText.inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-        val padding = 50
-        editText.setPadding(padding, padding, padding, padding)
-
-        AlertDialog.Builder(context)
-            .setTitle("Şifre Sıfırlama")
-            .setMessage("Hesabınıza ait e-posta adresini giriniz. Size şifrenizi yenilemeniz için bir bağlantı göndereceğiz.")
-            .setView(editText)
-            .setPositiveButton("Gönder") { _, _ ->
-                val email = editText.text.toString().trim()
-                if (email.isNotEmpty()) {
-                    sendResetEmail(email)
-                } else {
-                    Toast.makeText(context, "E-posta boş olamaz.", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("İptal", null)
-            .show()
-    }
-
-    private fun sendResetEmail(email: String) {
-        auth.sendPasswordResetEmail(email)
-            .addOnSuccessListener {
-                // BAŞARILI OLUNCA BU PENCERE AÇILACAK
-                AlertDialog.Builder(context)
-                    .setTitle("Bağlantı Gönderildi ✅")
-                    .setMessage("$email adresine şifre sıfırlama linki gönderildi.\n\nLütfen Gelen Kutunuzu ve SPAM (Gereksiz) klasörünü kontrol edin.\n\nMaildeki linke tıklayarak yeni şifrenizi belirleyebilirsiniz.")
-                    .setPositiveButton("Tamam", null)
-                    .show()
-            }
-            .addOnFailureListener {
-                Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_LONG).show()
-            }
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {

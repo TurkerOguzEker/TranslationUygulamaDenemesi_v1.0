@@ -9,34 +9,28 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
-import turkeroguz.eker.translationuygulamadenemesi_v10.EmailSender
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
 
 class ForgotPasswordFragment : Fragment() {
 
-    // Görünüm Grupları (LinearLayout yerine MaterialCardView kullandık)
-    private lateinit var cardStep1: MaterialCardView
-    private lateinit var cardStep2: MaterialCardView
+    private lateinit var cardStep1: MaterialCardView // Mail Gönderme Kartı
+    private lateinit var cardStep2: MaterialCardView // Şifre Değiştirme Kartı
 
-    // Elemanlar
     private lateinit var etResetEmail: TextInputEditText
     private lateinit var btnSendResetCode: Button
 
-    private lateinit var etResetCode: EditText
     private lateinit var etNewPassword: TextInputEditText
     private lateinit var btnUpdatePassword: Button
 
-    private lateinit var tvBackToLogin: TextView
     private lateinit var tvTitle: TextView
     private lateinit var tvSubtitle: TextView
+    private lateinit var tvBackToLogin: TextView
 
-    private var generatedCode: String = ""
-    private var userEmail: String = ""
+    // Firebase'den gelen özel kod (Linkten alınacak)
+    private var oobCode: String? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_forgot_password, container, false)
@@ -45,42 +39,46 @@ class ForgotPasswordFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Bağlamalar
+        // MainActivity'den gelen kodu al
+        oobCode = arguments?.getString("oobCode")
+
+        // View Tanımlamaları
         cardStep1 = view.findViewById(R.id.cardStep1)
         cardStep2 = view.findViewById(R.id.cardStep2)
-
         etResetEmail = view.findViewById(R.id.etResetEmail)
         btnSendResetCode = view.findViewById(R.id.btnSendResetCode)
-
-        etResetCode = view.findViewById(R.id.etResetCode)
         etNewPassword = view.findViewById(R.id.etNewPassword)
         btnUpdatePassword = view.findViewById(R.id.btnUpdatePassword)
-
-        tvBackToLogin = view.findViewById(R.id.tvBackToLogin)
         tvTitle = view.findViewById(R.id.tvTitle)
         tvSubtitle = view.findViewById(R.id.tvSubtitle)
+        tvBackToLogin = view.findViewById(R.id.tvBackToLogin)
 
-        // --- 1. ADIM: Kod Gönder ---
+        // --- EKRAN AYARLAMASI ---
+        if (oobCode != null) {
+            // Eğer linkten geldiyse direkt ŞİFRE DEĞİŞTİRME ekranını aç
+            showChangePasswordScreen()
+        } else {
+            // Normal geldiyse MAİL GİRME ekranını aç
+            showEmailScreen()
+        }
+
+        // 1. BUTON: Mail Gönder (Link Gönderir)
         btnSendResetCode.setOnClickListener {
-            userEmail = etResetEmail.text.toString().trim()
-
-            if (userEmail.isNotEmpty()) {
-                sendVerificationCode(userEmail)
+            val email = etResetEmail.text.toString().trim()
+            if (email.isNotEmpty()) {
+                sendFirebaseLink(email)
             } else {
-                etResetEmail.error = "Lütfen e-posta adresinizi girin"
+                etResetEmail.error = "E-posta giriniz"
             }
         }
 
-        // --- 2. ADIM: Doğrula ve Güncelle ---
+        // 2. BUTON: Şifreyi Güncelle (Linkten geldiyse çalışır)
         btnUpdatePassword.setOnClickListener {
-            val inputCode = etResetCode.text.toString().trim()
             val newPass = etNewPassword.text.toString().trim()
-
-            if (inputCode == generatedCode && newPass.isNotEmpty()) {
-                // Kod doğru, Firebase sıfırlama linkini gönder
-                sendOfficialFirebaseResetLink(userEmail)
+            if (newPass.length >= 6) {
+                confirmPasswordChange(newPass)
             } else {
-                Toast.makeText(context, "Hatalı Kod veya Eksik Şifre!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Şifre en az 6 karakter olmalı", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -91,51 +89,64 @@ class ForgotPasswordFragment : Fragment() {
         }
     }
 
-    private fun sendVerificationCode(email: String) {
-        generatedCode = (100000..999999).random().toString()
+    private fun showEmailScreen() {
+        cardStep1.visibility = View.VISIBLE
+        cardStep2.visibility = View.GONE
+        tvTitle.text = "Şifreni mi Unuttun?"
+        tvSubtitle.text = "E-posta adresini gir, sana şifreni sıfırlaman için güvenli bir bağlantı gönderelim."
+    }
 
-        // Butonu pasif yap ki tekrar basmasın
+    private fun showChangePasswordScreen() {
+        cardStep1.visibility = View.GONE
+        cardStep2.visibility = View.VISIBLE
+
+        // Tasarımdaki gereksiz "Kod Gir" kutusunu gizleyelim (Layout'ta kod kutusu varsa id'si etResetCode idi)
+        view?.findViewById<View>(R.id.etResetCode)?.visibility = View.GONE
+
+        tvTitle.text = "Yeni Şifre Belirle"
+        tvSubtitle.text = "Lütfen yeni ve güçlü bir şifre giriniz."
+    }
+
+    private fun sendFirebaseLink(email: String) {
         btnSendResetCode.isEnabled = false
         btnSendResetCode.text = "Gönderiliyor..."
 
-        lifecycleScope.launch {
-            val isSent = EmailSender.sendVerificationCode(email, "Kullanıcı", generatedCode)
-
-            btnSendResetCode.isEnabled = true
-            btnSendResetCode.text = "Doğrulama Kodu Gönder"
-
-            if (isSent) {
-                // Görünümü Değiştir
-                cardStep1.visibility = View.GONE
-                cardStep2.visibility = View.VISIBLE
-
-                // Başlıkları güncelle
-                tvTitle.text = "Kodu Doğrula"
-                tvSubtitle.text = "$email adresine gelen kodu gir."
-
-                Toast.makeText(context, "Kod gönderildi!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(context, "Kod gönderilemedi. E-postayı kontrol edin.", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    private fun sendOfficialFirebaseResetLink(email: String) {
         FirebaseAuth.getInstance().sendPasswordResetEmail(email)
             .addOnSuccessListener {
+                btnSendResetCode.text = "Tekrar Gönder"
+                btnSendResetCode.isEnabled = true
+
                 android.app.AlertDialog.Builder(context)
-                    .setTitle("İşlem Başarılı! 🎉")
-                    .setMessage("Kod doğrulandı ve güvenlik kontrolü sağlandı.\n\nE-postanıza gelen 'Şifre Sıfırlama Bağlantısı'na tıklayarak yeni şifrenizi hemen belirleyebilirsiniz.")
-                    .setCancelable(false)
-                    .setPositiveButton("Giriş Yap") { _, _ ->
-                        parentFragmentManager.beginTransaction()
-                            .replace(R.id.fragment_container, LoginFragment())
-                            .commit()
-                    }
+                    .setTitle("Bağlantı Gönderildi 🚀")
+                    .setMessage("$email adresine bir link gönderdik.\n\nLinke tıkladığında UYGULAMA AÇILACAK ve şifreni buradan değiştirebileceksin.")
+                    .setPositiveButton("Tamam", null)
                     .show()
             }
             .addOnFailureListener {
-                Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_SHORT).show()
+                btnSendResetCode.isEnabled = true
+                btnSendResetCode.text = "Doğrulama Linki Gönder"
+                Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun confirmPasswordChange(newPass: String) {
+        if (oobCode == null) return
+
+        btnUpdatePassword.isEnabled = false
+        btnUpdatePassword.text = "Güncelleniyor..."
+
+        FirebaseAuth.getInstance().confirmPasswordReset(oobCode!!, newPass)
+            .addOnSuccessListener {
+                Toast.makeText(context, "Şifreniz Başarıyla Değiştirildi! 🎉", Toast.LENGTH_LONG).show()
+                // Giriş Ekranına At
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, LoginFragment())
+                    .commit()
+            }
+            .addOnFailureListener {
+                btnUpdatePassword.isEnabled = true
+                btnUpdatePassword.text = "Şifreyi Güncelle"
+                Toast.makeText(context, "Süre dolmuş veya hata oluştu. Lütfen tekrar mail isteyin.", Toast.LENGTH_LONG).show()
             }
     }
 }
