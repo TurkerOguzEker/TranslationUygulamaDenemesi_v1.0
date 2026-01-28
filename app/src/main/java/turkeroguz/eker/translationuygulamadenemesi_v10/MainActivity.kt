@@ -24,6 +24,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.LanguageAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Language
+import turkeroguz.eker.translationuygulamadenemesi_v10.model.User // EKLENDİ
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.LoginFragment
 import java.util.Locale
 
@@ -32,6 +33,10 @@ class MainActivity : AppCompatActivity() {
     // Navbar referansı (Login/Register ekranlarında gizlemek için)
     private lateinit var bottomNav: LinearLayout
 
+    // Firebase referansları (Sınıf seviyesinde tanımlandı)
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -39,13 +44,16 @@ class MainActivity : AppCompatActivity() {
         bottomNav = findViewById(R.id.bottomNav)
 
         // --- GİRİŞ KONTROLÜ ---
-        val currentUser = FirebaseAuth.getInstance().currentUser
+        val currentUser = auth.currentUser
         if (currentUser != null) {
             // Kullanıcı giriş yapmış -> Ana Sayfaya git
             if (savedInstanceState == null) {
                 replaceFragment(HomeFragment())
             }
             setBottomNavVisibility(true)
+
+            // Uygulama açıldığında seri kontrolü yap
+            checkUserStreak()
         } else {
             // Giriş yapmamış -> Login Ekranına git
             if (savedInstanceState == null) {
@@ -60,7 +68,62 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnMyBooks).setOnClickListener { replaceFragment(MyBooksFragment()) }
         findViewById<View>(R.id.btnWords).setOnClickListener { replaceFragment(WordsFragment()) }
         findViewById<View>(R.id.btnSettings).setOnClickListener { replaceFragment(SettingsFragment()) }
+    } // onCreate BURADA BİTİYOR
+
+    // --- FONKSİYONLAR BURADA (ONCREATE DIŞINDA) OLMALI ---
+
+    private fun checkUserStreak() {
+        val currentUser = auth.currentUser ?: return
+        val userRef = db.collection("users").document(currentUser.uid)
+
+        userRef.get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                val user = document.toObject(User::class.java) ?: return@addOnSuccessListener
+
+                val today = java.util.Calendar.getInstance()
+                val lastLogin = java.util.Calendar.getInstance()
+                lastLogin.timeInMillis = user.lastLoginDate
+
+                // Gün farkını hesapla
+                val isSameDay = today.get(java.util.Calendar.DAY_OF_YEAR) == lastLogin.get(java.util.Calendar.DAY_OF_YEAR) &&
+                        today.get(java.util.Calendar.YEAR) == lastLogin.get(java.util.Calendar.YEAR)
+
+                // val isNextDay = today.timeInMillis - user.lastLoginDate < (24 * 60 * 60 * 1000) + (1000 * 60 * 60 * 12) // Yaklaşık kontrol (İsteğe bağlı kullanılabilir)
+
+                if (!isSameDay) {
+                    // Bugün ilk giriş
+                    var newStreak = if (today.get(java.util.Calendar.DAY_OF_YEAR) - lastLogin.get(java.util.Calendar.DAY_OF_YEAR) == 1) {
+                        user.streakDays + 1
+                    } else {
+                        1 // Seri bozulmuş, başa dön
+                    }
+
+                    // Veritabanını güncelle
+                    userRef.update(
+                        mapOf(
+                            "lastLoginDate" to System.currentTimeMillis(),
+                            "streakDays" to newStreak
+                        )
+                    )
+
+                    // Günlük Giriş Logu At
+                    logActivity(currentUser.uid, "Günlük Giriş", "Kullanıcı uygulamayı açtı. Seri: $newStreak")
+                }
+            }
+        }
     }
+
+    // --- LOGLAMA FONKSİYONU ---
+    private fun logActivity(uid: String, action: String, details: String, type: String = "info") {
+        val log = hashMapOf(
+            "action" to action,
+            "details" to details,
+            "timestamp" to com.google.firebase.Timestamp.now(),
+            "type" to type
+        )
+        db.collection("users").document(uid).collection("logs").add(log)
+    }
+
     override fun onNewIntent(intent: android.content.Intent?) {
         super.onNewIntent(intent)
         intent?.let { handleDeepLink(it) }
@@ -85,7 +148,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     // --- NAVBAR GİZLEME/GÖSTERME ---
-    // Fragment'lardan erişilebilmesi için public (varsayılan)
     fun setBottomNavVisibility(isVisible: Boolean) {
         if (::bottomNav.isInitialized) {
             bottomNav.visibility = if (isVisible) View.VISIBLE else View.GONE
@@ -132,7 +194,6 @@ class MainActivity : AppCompatActivity() {
                     setBottomNavVisibility(true) // Giriş yapınca navbar görünmeli
                 }
                 .addOnFailureListener {
-                    // Hata olsa bile ana sayfaya atmayı dene (internet yoksa vs.)
                     if (!isFinishing && !isDestroyed) {
                         replaceFragment(HomeFragment())
                         setBottomNavVisibility(true)
@@ -211,7 +272,7 @@ class MainActivity : AppCompatActivity() {
         view.findViewById<View>(R.id.btnSheetLogout)?.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
             dialog.dismiss()
-            checkUserAndNavigate() // Çıkış sonrası Login ekranına atacak
+            checkUserAndNavigate()
             Toast.makeText(this, "Çıkış yapıldı", Toast.LENGTH_SHORT).show()
         }
 

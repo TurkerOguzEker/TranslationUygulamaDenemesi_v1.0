@@ -1,20 +1,23 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
 import android.app.Activity
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.HomeFragment
@@ -41,7 +44,7 @@ class LoginFragment : Fragment() {
                 val account = task.getResult(ApiException::class.java)!!
                 firebaseAuthWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
-                Toast.makeText(context, "Google Giriş Hatası: ${e.message}", Toast.LENGTH_SHORT).show()
+                showModernMessage("❌ Google Giriş Hatası: ${e.message}", true)
             }
         }
     }
@@ -61,25 +64,41 @@ class LoginFragment : Fragment() {
         tvGoToRegister = view.findViewById(R.id.tvGoToRegister)
         tvForgotPassword = view.findViewById(R.id.tvForgotPassword)
 
+        // --- GİRİŞ BUTONU ---
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val pass = etPass.text.toString().trim()
+
             if (email.isNotEmpty() && pass.isNotEmpty()) {
                 auth.signInWithEmailAndPassword(email, pass)
-                    .addOnSuccessListener { goHome() }
-                    .addOnFailureListener { Toast.makeText(context, "Giriş Hatası: ${it.message}", Toast.LENGTH_LONG).show() }
+                    .addOnSuccessListener {
+                        showModernMessage("✅ Giriş Başarılı!", false)
+                        goHome()
+                    }
+                    .addOnFailureListener { e ->
+                        // ÖZEL HATA YAKALAMA (Kullanıcı Dostu Mesaj)
+                        if (e is FirebaseAuthInvalidUserException || e is FirebaseAuthInvalidCredentialsException) {
+                            showModernMessage("🚫 E-posta veya şifrenizi kontrol edin.", true)
+                        } else {
+                            showModernMessage("❌ Giriş başarısız: ${e.localizedMessage}", true)
+                        }
+                    }
             } else {
-                Toast.makeText(context, "Lütfen alanları doldurun.", Toast.LENGTH_SHORT).show()
+                showModernMessage("⚠️ Lütfen tüm alanları doldurun.", true)
             }
         }
 
         btnGoogleLogin.setOnClickListener {
-            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id)) // string.xml kontrol edilmeli
-                .requestEmail()
-                .build()
-            val googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
-            googleSignInLauncher.launch(googleSignInClient.signInIntent)
+            try {
+                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()
+                val googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
+                googleSignInLauncher.launch(googleSignInClient.signInIntent)
+            } catch (e: Exception) {
+                showModernMessage("⚠️ Google hizmetleri hatası: ${e.message}", true)
+            }
         }
 
         tvGoToRegister.setOnClickListener {
@@ -89,8 +108,6 @@ class LoginFragment : Fragment() {
                 .commit()
         }
 
-        // --- İŞTE BURAYI DEĞİŞTİRDİK ---
-        // Artık Dialog açmıyor, yeni tasarladığımız Fragment'a gidiyor.
         tvForgotPassword.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, ForgotPasswordFragment())
@@ -105,16 +122,15 @@ class LoginFragment : Fragment() {
             .addOnSuccessListener { authResult ->
                 val user = authResult.user
                 val uid = user?.uid ?: ""
-                val email = user?.email ?: ""
-                val name = user?.displayName ?: "Google Kullanıcısı"
 
+                // Kullanıcı var mı kontrol et, yoksa oluştur
                 val docRef = db.collection("users").document(uid)
                 docRef.get().addOnSuccessListener { document ->
                     if (!document.exists()) {
                         val newUser = User(
                             uid = uid,
-                            email = email,
-                            name = name,
+                            email = user?.email ?: "",
+                            name = user?.displayName ?: "Google Kullanıcısı",
                             registrationDate = System.currentTimeMillis()
                         )
                         docRef.set(newUser).addOnSuccessListener { goHome() }
@@ -124,15 +140,27 @@ class LoginFragment : Fragment() {
                 }
             }
             .addOnFailureListener {
-                Toast.makeText(context, "Auth Hatası: ${it.message}", Toast.LENGTH_SHORT).show()
+                showModernMessage("❌ Kimlik doğrulama hatası: ${it.message}", true)
             }
     }
 
     private fun goHome() {
-        Toast.makeText(context, "Giriş Başarılı!", Toast.LENGTH_SHORT).show()
         (activity as? MainActivity)?.setBottomNavVisibility(true)
         parentFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, HomeFragment())
             .commit()
+    }
+
+    // MODERN MESAJ GÖSTERİCİ (Snackbar)
+    private fun showModernMessage(message: String, isError: Boolean) {
+        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
+        if (isError) {
+            snackbar.setBackgroundTint(Color.parseColor("#D32F2F")) // Kırmızı
+            snackbar.setTextColor(Color.WHITE)
+        } else {
+            snackbar.setBackgroundTint(Color.parseColor("#388E3C")) // Yeşil
+            snackbar.setTextColor(Color.WHITE)
+        }
+        snackbar.show()
     }
 }

@@ -29,7 +29,7 @@ class BookAdapter(
             // Kitap ismini yaz
             binding.txtBookName.text = book.title
 
-            // Resmi Glide ile yükle (Internetten)
+            // Resmi Glide ile yükle
             if (book.imageUrl.isNotEmpty()) {
                 Glide.with(binding.root.context)
                     .load(book.imageUrl)
