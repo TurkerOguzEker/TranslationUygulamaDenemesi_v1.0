@@ -24,16 +24,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.LanguageAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Language
-import turkeroguz.eker.translationuygulamadenemesi_v10.model.User // EKLENDİ
+import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.LoginFragment
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
-    // Navbar referansı (Login/Register ekranlarında gizlemek için)
     private lateinit var bottomNav: LinearLayout
-
-    // Firebase referansları (Sınıf seviyesinde tanımlandı)
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
@@ -43,78 +40,67 @@ class MainActivity : AppCompatActivity() {
 
         bottomNav = findViewById(R.id.bottomNav)
 
-        // --- GİRİŞ KONTROLÜ ---
         val currentUser = auth.currentUser
         if (currentUser != null) {
-            // Kullanıcı giriş yapmış -> Ana Sayfaya git
             if (savedInstanceState == null) {
                 replaceFragment(HomeFragment())
             }
             setBottomNavVisibility(true)
 
-            // Uygulama açıldığında seri kontrolü yap
-            checkUserStreak()
+            // --- EKSİK OLAN PARÇA BURASIYDI: Giriş Tarihini Güncelle ---
+            updateLastLoginAndStreak()
         } else {
-            // Giriş yapmamış -> Login Ekranına git
             if (savedInstanceState == null) {
                 replaceFragment(LoginFragment())
             }
             setBottomNavVisibility(false)
         }
 
-        // --- ALT MENÜ BUTONLARI ---
-        findViewById<View>(R.id.btnHome).setOnClickListener { replaceFragment(HomeFragment()) }
-        findViewById<View>(R.id.btnSearch).setOnClickListener { replaceFragment(BooksFragment()) }
-        findViewById<View>(R.id.btnMyBooks).setOnClickListener { replaceFragment(MyBooksFragment()) }
-        findViewById<View>(R.id.btnWords).setOnClickListener { replaceFragment(WordsFragment()) }
-        findViewById<View>(R.id.btnSettings).setOnClickListener { replaceFragment(SettingsFragment()) }
-    } // onCreate BURADA BİTİYOR
+        setupBottomNav()
+    }
 
-    // --- FONKSİYONLAR BURADA (ONCREATE DIŞINDA) OLMALI ---
-
-    private fun checkUserStreak() {
+    // --- BU FONKSİYON SİZİN KODUNUZDA EKSİKTİ ---
+    private fun updateLastLoginAndStreak() {
         val currentUser = auth.currentUser ?: return
         val userRef = db.collection("users").document(currentUser.uid)
 
         userRef.get().addOnSuccessListener { document ->
             if (document.exists()) {
                 val user = document.toObject(User::class.java) ?: return@addOnSuccessListener
+                val now = System.currentTimeMillis()
 
+                // 1. Son Giriş Tarihini Kesinlikle Güncelle
+                val updates = hashMapOf<String, Any>("lastLoginDate" to now)
+
+                // 2. Seri (Streak) Kontrolü
+                val lastDate = java.util.Calendar.getInstance().apply { timeInMillis = if(user.lastLoginDate > 0) user.lastLoginDate else 0 }
                 val today = java.util.Calendar.getInstance()
-                val lastLogin = java.util.Calendar.getInstance()
-                lastLogin.timeInMillis = user.lastLoginDate
 
-                // Gün farkını hesapla
-                val isSameDay = today.get(java.util.Calendar.DAY_OF_YEAR) == lastLogin.get(java.util.Calendar.DAY_OF_YEAR) &&
-                        today.get(java.util.Calendar.YEAR) == lastLogin.get(java.util.Calendar.YEAR)
-
-                // val isNextDay = today.timeInMillis - user.lastLoginDate < (24 * 60 * 60 * 1000) + (1000 * 60 * 60 * 12) // Yaklaşık kontrol (İsteğe bağlı kullanılabilir)
+                val isSameDay = lastDate.get(java.util.Calendar.DAY_OF_YEAR) == today.get(java.util.Calendar.DAY_OF_YEAR) &&
+                        lastDate.get(java.util.Calendar.YEAR) == today.get(java.util.Calendar.YEAR)
 
                 if (!isSameDay) {
-                    // Bugün ilk giriş
-                    var newStreak = if (today.get(java.util.Calendar.DAY_OF_YEAR) - lastLogin.get(java.util.Calendar.DAY_OF_YEAR) == 1) {
-                        user.streakDays + 1
+                    val yesterday = java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, -1) }
+                    val isConsecutive = lastDate.get(java.util.Calendar.DAY_OF_YEAR) == yesterday.get(java.util.Calendar.DAY_OF_YEAR)
+
+                    var newStreak = user.streakDays
+                    if (isConsecutive || user.lastLoginDate == 0L) {
+                        newStreak += 1
+                        logActivity(currentUser.uid, "GÜNLÜK SERİ", "Tebrikler! Seri $newStreak gün oldu. 🔥", "success")
                     } else {
-                        1 // Seri bozulmuş, başa dön
+                        newStreak = 1
+                        logActivity(currentUser.uid, "SERİ BOZULDU", "Dün girmediğiniz için seri sıfırlandı.", "warning")
                     }
-
-                    // Veritabanını güncelle
-                    userRef.update(
-                        mapOf(
-                            "lastLoginDate" to System.currentTimeMillis(),
-                            "streakDays" to newStreak
-                        )
-                    )
-
-                    // Günlük Giriş Logu At
-                    logActivity(currentUser.uid, "Günlük Giriş", "Kullanıcı uygulamayı açtı. Seri: $newStreak")
+                    updates["streakDays"] = newStreak
                 }
+
+                // 3. Veritabanına Yaz
+                userRef.update(updates)
             }
         }
     }
 
-    // --- LOGLAMA FONKSİYONU ---
-    private fun logActivity(uid: String, action: String, details: String, type: String = "info") {
+    private fun logActivity(uid: String, action: String, details: String, type: String) {
         val log = hashMapOf(
             "action" to action,
             "details" to details,
@@ -124,6 +110,15 @@ class MainActivity : AppCompatActivity() {
         db.collection("users").document(uid).collection("logs").add(log)
     }
 
+    private fun setupBottomNav() {
+        findViewById<View>(R.id.btnHome).setOnClickListener { replaceFragment(HomeFragment()) }
+        findViewById<View>(R.id.btnSearch).setOnClickListener { replaceFragment(BooksFragment()) }
+        findViewById<View>(R.id.btnMyBooks).setOnClickListener { replaceFragment(MyBooksFragment()) }
+        findViewById<View>(R.id.btnWords).setOnClickListener { replaceFragment(WordsFragment()) }
+        findViewById<View>(R.id.btnSettings).setOnClickListener { replaceFragment(SettingsFragment()) }
+    }
+
+    // --- DİĞER STANDART FONKSİYONLAR ---
     override fun onNewIntent(intent: android.content.Intent?) {
         super.onNewIntent(intent)
         intent?.let { handleDeepLink(it) }
@@ -132,29 +127,20 @@ class MainActivity : AppCompatActivity() {
     private fun handleDeepLink(intent: android.content.Intent) {
         val data = intent.data
         if (data != null && data.toString().contains("mode=resetPassword")) {
-            // Linkten gelen özel kodu (oobCode) al
             val oobCode = data.getQueryParameter("oobCode")
-
             if (oobCode != null) {
-                // Şifre Sıfırlama Sayfasını Özel Modda Aç
                 val fragment = turkeroguz.eker.translationuygulamadenemesi_v10.ui.ForgotPasswordFragment()
                 val bundle = Bundle()
-                bundle.putString("oobCode", oobCode) // Kodu sayfaya gönderiyoruz
+                bundle.putString("oobCode", oobCode)
                 fragment.arguments = bundle
-
                 replaceFragment(fragment)
             }
         }
     }
 
-    // --- NAVBAR GİZLEME/GÖSTERME ---
     fun setBottomNavVisibility(isVisible: Boolean) {
-        if (::bottomNav.isInitialized) {
-            bottomNav.visibility = if (isVisible) View.VISIBLE else View.GONE
-        }
+        if (::bottomNav.isInitialized) bottomNav.visibility = if (isVisible) View.VISIBLE else View.GONE
     }
-
-    // --- FRAGMENT YÖNETİMİ ---
 
     fun replaceFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
@@ -163,7 +149,6 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    // Arama sayfasına parametre ile gitmek için
     fun navigateToBooksSearch(query: String) {
         val fragment = BooksFragment().apply {
             arguments = Bundle().apply {
@@ -173,25 +158,19 @@ class MainActivity : AppCompatActivity() {
         replaceFragment(fragment)
     }
 
-    // --- KULLANICI KONTROLÜ VE YÖNLENDİRME ---
     fun checkUserAndNavigate() {
         val user = FirebaseAuth.getInstance().currentUser
         if (user == null) {
             replaceFragment(LoginFragment())
-            setBottomNavVisibility(false) // Çıkış yapınca navbar gizlenmeli
+            setBottomNavVisibility(false)
         } else {
             FirebaseFirestore.getInstance().collection("users").document(user.uid)
                 .get()
                 .addOnSuccessListener { document ->
                     if (isFinishing || isDestroyed) return@addOnSuccessListener
-                    if (document.exists()) {
-                        val role = document.getString("role")
-                        if (role == "admin") {
-                            Toast.makeText(this, "Yönetici Girişi", Toast.LENGTH_SHORT).show()
-                        }
-                    }
                     replaceFragment(HomeFragment())
-                    setBottomNavVisibility(true) // Giriş yapınca navbar görünmeli
+                    setBottomNavVisibility(true)
+                    updateLastLoginAndStreak()
                 }
                 .addOnFailureListener {
                     if (!isFinishing && !isDestroyed) {
@@ -202,14 +181,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- PROFİL PENCERESİ (Bottom Sheet) ---
     fun showProfileDialog() {
         val dialog = BottomSheetDialog(this)
         val view = layoutInflater.inflate(R.layout.layout_profile_sheet, null)
         dialog.setContentView(view)
 
         val user = FirebaseAuth.getInstance().currentUser
-
         val tvName = view.findViewById<TextView>(R.id.tvProfileName)
         val tvEmail = view.findViewById<TextView>(R.id.tvProfileEmail)
         val tvId = view.findViewById<TextView>(R.id.tvProfileId)
@@ -218,25 +195,17 @@ class MainActivity : AppCompatActivity() {
         if (user != null) {
             val email = user.email ?: ""
             val nameFromEmail = getNameFromEmail(email)
-
             tvName?.text = nameFromEmail
             tvEmail?.text = email
             tvId?.text = "ID: ${user.uid}"
 
             if (ivSheetProfile != null) {
                 if (user.photoUrl != null) {
-                    Glide.with(this)
-                        .load(user.photoUrl)
-                        .circleCrop()
-                        .into(ivSheetProfile)
+                    Glide.with(this).load(user.photoUrl).circleCrop().into(ivSheetProfile)
                 } else {
                     val initial = nameFromEmail.firstOrNull()?.toString()?.uppercase() ?: "?"
                     val letterBitmap = createProfileBitmap(initial)
-
-                    Glide.with(this)
-                        .load(letterBitmap)
-                        .circleCrop()
-                        .into(ivSheetProfile)
+                    Glide.with(this).load(letterBitmap).circleCrop().into(ivSheetProfile)
                 }
             }
         } else {
@@ -245,20 +214,12 @@ class MainActivity : AppCompatActivity() {
             tvId?.text = "Giriş Yapılmadı"
         }
 
-        // Tema Ayarları
         val themeSwitch = view.findViewById<MaterialSwitch>(R.id.themeSwitch)
-        val themeIcon = view.findViewById<ImageView>(R.id.ivThemeIcon)
         val themeSwitchContainer = view.findViewById<LinearLayout>(R.id.themeSwitchContainer)
-
-        themeSwitchContainer?.setOnClickListener {
-            themeSwitch.isChecked = !themeSwitch.isChecked
-        }
-
+        themeSwitchContainer?.setOnClickListener { themeSwitch.isChecked = !themeSwitch.isChecked }
         themeSwitch?.let {
             val isNightMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
             it.isChecked = isNightMode
-            if (isNightMode) themeIcon?.setImageResource(android.R.drawable.ic_menu_recent_history)
-
             it.setOnCheckedChangeListener { _, isChecked ->
                 AppCompatDelegate.setDefaultNightMode(
                     if (isChecked) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
@@ -267,30 +228,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         view.findViewById<View>(R.id.btnClose)?.setOnClickListener { dialog.dismiss() }
-
-        // ÇIKIŞ YAP Butonu
         view.findViewById<View>(R.id.btnSheetLogout)?.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
             dialog.dismiss()
             checkUserAndNavigate()
             Toast.makeText(this, "Çıkış yapıldı", Toast.LENGTH_SHORT).show()
         }
-
-        // Dil Seçimi
-        view.findViewById<View>(R.id.tvSelectLanguage)?.setOnClickListener {
-            showLanguageSelectionDialog(it)
-        }
-
+        view.findViewById<View>(R.id.tvSelectLanguage)?.setOnClickListener { showLanguageSelectionDialog(it) }
         dialog.show()
     }
 
-    // --- YARDIMCI FONKSİYONLAR ---
-
     private fun getNameFromEmail(email: String): String {
         return if (email.contains("@")) {
-            email.substringBefore("@")
-                .replace(".", " ")
-                .split(" ")
+            email.substringBefore("@").replace(".", " ").split(" ")
                 .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
         } else {
             "Kullanıcı"
@@ -303,21 +253,16 @@ class MainActivity : AppCompatActivity() {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val paint = Paint()
-
         paint.color = Color.parseColor("#5C6BC0")
         paint.style = Paint.Style.FILL
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
-
         paint.color = Color.WHITE
         paint.textSize = 100f
         paint.textAlign = Paint.Align.CENTER
         paint.typeface = Typeface.DEFAULT_BOLD
-
         val xPos = (canvas.width / 2).toFloat()
         val yPos = (canvas.height / 2 - (paint.descent() + paint.ascent()) / 2)
-
         canvas.drawText(text, xPos, yPos, paint)
-
         return bitmap
     }
 
@@ -325,10 +270,8 @@ class MainActivity : AppCompatActivity() {
         val dialog = BottomSheetDialog(this)
         val dialogView = layoutInflater.inflate(R.layout.dialog_language_selection, null)
         dialog.setContentView(dialogView)
-
         val languages = listOf(Language("English", "en"), Language("Türkçe", "tr"))
         val currentLanguageCode = resources.configuration.locales[0].language
-
         val rvLanguages = dialogView.findViewById<RecyclerView>(R.id.rvLanguages)
         rvLanguages.layoutManager = LinearLayoutManager(this)
         rvLanguages.adapter = LanguageAdapter(languages, currentLanguageCode) { languageCode ->
