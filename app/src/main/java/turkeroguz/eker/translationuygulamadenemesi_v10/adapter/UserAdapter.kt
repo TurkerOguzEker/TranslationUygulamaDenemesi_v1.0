@@ -10,7 +10,7 @@ import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.ItemUserManag
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
 
 class UserAdapter(
-    private var userList: List<User>, // ArrayList yerine List kullanmak daha esnektir
+    private var userList: List<User>,
     private val onUserClick: (User) -> Unit,
     private val onDeleteClick: (User) -> Unit
 ) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
@@ -30,21 +30,21 @@ class UserAdapter(
         holder.binding.tvUserName.text = user.name.ifEmpty { "İsimsiz" }
         holder.binding.tvUserEmail.text = user.email
 
-        // 1. Önce dinleyiciyi kaldır (Sonsuz döngüyü engellemek için)
+        // 1. Önce dinleyiciyi kaldır (Sonsuz döngüyü ve hatalı tetiklemeyi önler)
         holder.binding.switchPremium.setOnCheckedChangeListener(null)
 
-        // 2. Switch'i veritabanındaki duruma göre ayarla
+        // 2. Switch'i veritabanındaki 'Gerçek' duruma göre ayarla
         holder.binding.switchPremium.isChecked = user.isPremium
 
         // 3. İkon rengini ayarla
         holder.binding.ivUserIcon.setColorFilter(if (user.isPremium) Color.parseColor("#FFD700") else Color.GRAY)
 
-        // 4. Dinleyiciyi tekrar ekle
+        // 4. Dinleyiciyi tekrar ekle (Kullanıcı dokunduğunda çalışacak)
         holder.binding.switchPremium.setOnCheckedChangeListener { _, isChecked ->
             // Sadece bu kullanıcıyı güncelle
             db.collection("users").document(user.uid).update("isPremium", isChecked)
                 .addOnFailureListener {
-                    // Hata olursa switch'i eski haline getir
+                    // Hata olursa (internet yoksa vb.) switch'i eski haline getir
                     holder.binding.switchPremium.isChecked = !isChecked
                     Toast.makeText(holder.itemView.context, "Güncelleme Başarısız", Toast.LENGTH_SHORT).show()
                 }
@@ -66,7 +66,6 @@ class UserAdapter(
     override fun getItemCount() = userList.size
 
     fun clearAndSetData(newUsers: List<User>) {
-        // Listeyi yenile ve arayüzü güncelle
         userList = newUsers
         notifyDataSetChanged()
     }

@@ -28,7 +28,6 @@ class AdminPanelFragment : Fragment() {
     private val allUsers = ArrayList<User>()
     private lateinit var adapter: UserAdapter
 
-    // Canlı dinleyiciyi durdurmak için kayıt değişkeni
     private var statsListener: ListenerRegistration? = null
 
     // UI Elementleri
@@ -53,7 +52,6 @@ class AdminPanelFragment : Fragment() {
         setupTabs()
         setupRecyclerView(view)
 
-        // KRİTİK NOKTA: Verileri canlı izlemeye başla
         startRealtimeUpdates()
     }
 
@@ -67,7 +65,6 @@ class AdminPanelFragment : Fragment() {
         chartUserTypes = view.findViewById(R.id.chartUserTypes)
         chartStorySuccess = view.findViewById(R.id.chartReadingStats)
 
-        // XML ID eşleşmeleri
         tvTotalUsersLabel = view.findViewById(R.id.tvTotalUsers)
         tvPremiumUsersLabel = view.findViewById(R.id.tvPremiumUsers)
     }
@@ -75,7 +72,6 @@ class AdminPanelFragment : Fragment() {
     private fun startRealtimeUpdates() {
         progressBar.visibility = View.VISIBLE
 
-        // .get() YERİNE .addSnapshotListener KULLANIYORUZ
         statsListener = db.collection("users").addSnapshotListener { result, error ->
             progressBar.visibility = View.GONE
             if (error != null || result == null) return@addSnapshotListener
@@ -85,7 +81,6 @@ class AdminPanelFragment : Fragment() {
             var revenue = 0.0
 
             for (document in result) {
-                // UID'yi döküman ID'sinden alarak garantiye alıyoruz
                 val user = document.toObject(User::class.java).copy(uid = document.id)
                 userList.add(user)
 
@@ -93,17 +88,37 @@ class AdminPanelFragment : Fragment() {
                 revenue += user.totalRevenue
             }
 
-            // Listeyi güncelle (Switchlerin doğru gözükmesi için bu şart)
+            // --- YENİ SIRALAMA MANTIĞI ---
+            // 1. Adminler, 2. Yazarlar (author), 3. Normal Kullanıcılar
+            userList.sortWith(Comparator { u1, u2 ->
+                val rolePriority1 = getRolePriority(u1.role)
+                val rolePriority2 = getRolePriority(u2.role)
+
+                if (rolePriority1 != rolePriority2) {
+                    rolePriority1.compareTo(rolePriority2) // Düşük sayı (yüksek öncelik) önce gelir
+                } else {
+                    u1.name.compareTo(u2.name, ignoreCase = true) // İsim sırasına göre ikincil sıralama
+                }
+            })
+
             allUsers.clear()
             allUsers.addAll(userList)
             adapter.clearAndSetData(userList)
 
-            // İstatistikleri Anlık Güncelle
             tvTotalUsersLabel.text = "${userList.size}\nToplam Kullanıcı"
             tvPremiumUsersLabel.text = "$premiumCount\nPremium Üye"
 
             updatePieChart(premiumCount, userList.size - premiumCount)
             updateBarChart(userList)
+        }
+    }
+
+    // Rol önceliğini belirleyen yardımcı fonksiyon (Küçük sayı = Üst sıra)
+    private fun getRolePriority(role: String): Int {
+        return when (role.lowercase()) {
+            "admin" -> 1
+            "author" -> 2
+            else -> 3 // "user" ve diğerleri
         }
     }
 
@@ -118,14 +133,12 @@ class AdminPanelFragment : Fragment() {
         )
         rv.adapter = adapter
 
-        // Arama kutusu dinleyicisi
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {}
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val query = s.toString().trim().lowercase()
                 if (query.isNotEmpty()) {
-                    // Yerel listede filtreleme yap (daha hızlı)
                     val filteredList = allUsers.filter {
                         it.email.lowercase().contains(query) || it.name.lowercase().contains(query)
                     }

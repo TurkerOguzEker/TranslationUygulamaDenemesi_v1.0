@@ -28,6 +28,8 @@ class HomeFragment : Fragment() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private val bookList = ArrayList<Book>()
+
+    // Canlı veri dinleyicisi
     private var userListener: ListenerRegistration? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -40,9 +42,12 @@ class HomeFragment : Fragment() {
         // Profil Butonu ve Kitaplar
         val btnProfile = view.findViewById<ImageButton>(R.id.btnProfile)
         loadProfileImage(btnProfile)
-        btnProfile.setOnClickListener { (activity as? MainActivity)?.showProfileDialog() }
 
-        // CANLI TAKİP BAŞLAT
+        btnProfile.setOnClickListener {
+            (activity as? MainActivity)?.showProfileDialog()
+        }
+
+        // --- KRİTİK NOKTA: CANLI TAKİP BAŞLAT ---
         startRealtimeTracking(view)
 
         fetchBooks(view)
@@ -54,15 +59,14 @@ class HomeFragment : Fragment() {
         val currentUser = auth.currentUser
 
         if (currentUser != null) {
-            // .addSnapshotListener: Veri değiştiği an burası çalışır
+            // .addSnapshotListener: Veri değiştiği an burası çalışır (Sayfa yenilemeye gerek kalmaz)
             userListener = db.collection("users").document(currentUser.uid)
                 .addSnapshotListener { doc, _ ->
                     if (doc != null && doc.exists()) {
 
                         // Premium Kontrolü
-                        val isPremium = doc.getBoolean("isPremium") ?: false
-
                         // Eğer isPremium true ise GÖRÜNÜR yap, değilse GİZLE
+                        val isPremium = doc.getBoolean("isPremium") ?: false
                         layoutPremium?.visibility = if (isPremium) View.VISIBLE else View.GONE
 
                         // Admin Kontrolü
@@ -70,18 +74,19 @@ class HomeFragment : Fragment() {
                         tvAdmin?.visibility = if (role == "admin") View.VISIBLE else View.GONE
                     }
                 }
+        } else {
+            // Kullanıcı yoksa rozetleri gizle
+            layoutPremium?.visibility = View.GONE
+            tvAdmin?.visibility = View.GONE
         }
     }
 
-    // ... Diğer fonksiyonlar (fetchBooks, loadProfileImage) aynen kalabilir ...
-    // Sadece onDestroyView'de listener'ı kapatmayı unutmayın:
-
+    // Uygulama kapanınca veya sayfa değişince dinlemeyi durdur (Performans için)
     override fun onDestroyView() {
         super.onDestroyView()
         userListener?.remove()
     }
 
-    // (Aşağıdaki yardımcı fonksiyonlarınızı buraya eklemeyi unutmayın: fetchBooks, loadProfileImage, createProfileBitmap)
     private fun fetchBooks(view: View) {
         db.collection("books")
             .get()
