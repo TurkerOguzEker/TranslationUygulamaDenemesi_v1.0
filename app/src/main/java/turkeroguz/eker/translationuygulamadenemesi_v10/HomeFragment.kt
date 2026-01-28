@@ -25,16 +25,18 @@ import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
 
 class HomeFragment : Fragment() {
 
-    // Firebase ve Liste Değişkenleri (Tek seferde tanımlanmalı)
+    // Firebase ve Liste Değişkenleri
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private val bookList = ArrayList<Book>()
+
+    // Admin yazısı için değişken
+    private lateinit var tvAdminBadge: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // XML Dosyasını Şişir
         return inflater.inflate(R.layout.fragment_home, container, false)
     }
 
@@ -45,65 +47,70 @@ class HomeFragment : Fragment() {
         val btnProfile = view.findViewById<ImageButton>(R.id.btnProfile)
         loadProfileImage(btnProfile)
 
-        // Profil butonuna tıklanınca MainActivity'deki dialog açılsın
+        // Profil butonuna tıklanınca dialog açılsın
         btnProfile.setOnClickListener {
             (activity as? MainActivity)?.showProfileDialog()
         }
 
-        // 2. Premium Kontrolü ve Gösterimi
-        checkPremiumStatus(view)
+        // 2. XML'deki Admin Badge'i Tanımla
+        // (Eğer XML'e eklemediyseniz hata verir, önceki adımı uyguladığınızdan emin olun)
+        tvAdminBadge = view.findViewById(R.id.tvAdminBadge)
 
-        // 3. Kitapları Çek ve Listele
+        // 3. Kullanıcı Durumunu (Premium ve Admin) Kontrol Et
+        checkUserStatus(view)
+
+        // 4. Kitapları Çek ve Listele
         fetchBooks(view)
     }
 
-    private fun checkPremiumStatus(view: View) {
+    private fun checkUserStatus(view: View) {
         val layoutPremiumBadge = view.findViewById<LinearLayout>(R.id.layoutPremiumBadge)
         val currentUser = auth.currentUser
 
-        if (currentUser != null && layoutPremiumBadge != null) {
+        if (currentUser != null) {
             db.collection("users").document(currentUser.uid)
                 .get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
+
+                        // A) PREMIUM KONTROLÜ
                         val isPremium = document.getBoolean("isPremium") == true
-                        if (isPremium) {
-                            layoutPremiumBadge.visibility = View.VISIBLE
+                        if (layoutPremiumBadge != null) {
+                            layoutPremiumBadge.visibility = if (isPremium) View.VISIBLE else View.GONE
+                        }
+
+                        // B) ADMIN KONTROLÜ (YENİ EKLENEN KISIM)
+                        val role = document.getString("role")
+                        if (role == "admin") {
+                            tvAdminBadge.visibility = View.VISIBLE
                         } else {
-                            layoutPremiumBadge.visibility = View.GONE
+                            tvAdminBadge.visibility = View.GONE
                         }
                     }
                 }
                 .addOnFailureListener {
-                    // Hata olursa varsayılan olarak gizle
-                    layoutPremiumBadge.visibility = View.GONE
+                    // Hata durumunda her ikisini de gizle
+                    layoutPremiumBadge?.visibility = View.GONE
+                    tvAdminBadge.visibility = View.GONE
                 }
+        } else {
+            layoutPremiumBadge?.visibility = View.GONE
+            tvAdminBadge.visibility = View.GONE
         }
     }
 
     private fun fetchBooks(view: View) {
-        // Tüm kitapları "books" koleksiyonundan çek
         db.collection("books")
             .get()
             .addOnSuccessListener { result ->
                 bookList.clear()
                 for (document in result) {
-                    // Firestore verisini Book modeline çevir
                     val book = document.toObject(Book::class.java)
-                    // Belge ID'sini modele ekle (tıklama işlemleri için gerekebilir)
                     book.bookId = document.id
                     bookList.add(book)
                 }
 
-                // NOT: XML'inizde bu ID'lere (sectionA1 vb.) sahip 'include' veya 'LinearLayout' yapıları olmalı.
-                // Eğer yoksa "setupSection" çalışırken hata alırsınız.
-                // Şimdilik örnek olarak ekliyorum, XML'inizde yoksa bu satırları kapatın veya XML'i güncelleyin.
-
-                // --- KİTAP LİSTELEME MANTIĞI ---
-                // Eğer "layout_book_section" gibi bir yapı kullanıyorsanız ID'ler XML ile uyuşmalı.
-                // Şimdilik geçici olarak ana listede gösteriyoruz:
-
-                // ÖRNEK: Öne Çıkanlar (RV varsa)
+                // Öne Çıkanlar Listesi
                 val rvFeatured = view.findViewById<RecyclerView>(R.id.rvFeaturedBooks)
                 if (rvFeatured != null && bookList.isNotEmpty()) {
                     rvFeatured.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
@@ -112,10 +119,10 @@ class HomeFragment : Fragment() {
                     }
                 }
 
-                // ÖRNEK: Tüm Kitaplar (RV varsa)
+                // Tüm Kitaplar Listesi
                 val rvAll = view.findViewById<RecyclerView>(R.id.rvAllBooks)
                 if (rvAll != null) {
-                    rvAll.layoutManager = LinearLayoutManager(context) // Dikey
+                    rvAll.layoutManager = LinearLayoutManager(context)
                     rvAll.adapter = BookAdapter(bookList) { selectedBook ->
                         Toast.makeText(context, "${selectedBook.title} seçildi", Toast.LENGTH_SHORT).show()
                     }

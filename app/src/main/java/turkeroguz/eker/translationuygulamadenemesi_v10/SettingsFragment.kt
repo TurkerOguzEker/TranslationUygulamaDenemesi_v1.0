@@ -4,19 +4,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.AdminPanelFragment
-import turkeroguz.eker.translationuygulamadenemesi_v10.ui.LoginFragment
 
 class SettingsFragment : Fragment() {
 
+    // Sadece Admin butonu tanımlı, çıkış butonu kaldırıldı
     private var btnAdminPanel: MaterialButton? = null
-    private var btnLogout: Button? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -29,26 +26,15 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // XML'deki ID'ler ile eşleştirme
+        // 1. Admin Butonunu Bağla
         btnAdminPanel = view.findViewById(R.id.btnAdminPanel)
-        btnLogout = view.findViewById(R.id.btnLogout) // XML'e eklediğiniz yeni buton
 
-        // Admin Kontrolü
+        // 2. Admin Yetki Kontrolünü Başlat
         checkIfAdmin()
 
-        // Admin Paneli Geçişi
+        // 3. Admin Paneline Geçiş Tıklaması
         btnAdminPanel?.setOnClickListener {
             (activity as? MainActivity)?.replaceFragment(AdminPanelFragment())
-        }
-
-        // Çıkış Yapma İşlemi
-        btnLogout?.setOnClickListener {
-            FirebaseAuth.getInstance().signOut()
-            Toast.makeText(context, "Çıkış yapıldı", Toast.LENGTH_SHORT).show()
-
-            // Login ekranına at ve alt menüyü gizle
-            (activity as? MainActivity)?.replaceFragment(LoginFragment())
-            (activity as? MainActivity)?.setBottomNavVisibility(false)
         }
     }
 
@@ -62,14 +48,28 @@ class SettingsFragment : Fragment() {
         FirebaseFirestore.getInstance().collection("users").document(userId)
             .get()
             .addOnSuccessListener { document ->
-                if (document.exists() && document.getString("role") == "admin") {
-                    btnAdminPanel?.visibility = View.VISIBLE
+                if (document.exists()) {
+                    // Veritabanından gelen değeri logla
+                    val role = document.getString("role")
+                    android.util.Log.d("ADMIN_KONTROL", "Kullanıcı ID: $userId")
+                    android.util.Log.d("ADMIN_KONTROL", "Gelen Role Değeri: $role")
+
+                    if (role == "admin") {
+                        android.util.Log.d("ADMIN_KONTROL", "Eşleşme BAŞARILI. Buton gösteriliyor.")
+                        btnAdminPanel?.visibility = View.VISIBLE
+                    } else {
+                        android.util.Log.d("ADMIN_KONTROL", "Eşleşme BAŞARISIZ. Beklenen: 'admin', Gelen: '$role'")
+                        btnAdminPanel?.visibility = View.GONE
+                    }
                 } else {
+                    android.util.Log.d("ADMIN_KONTROL", "Kullanıcı dökümanı bulunamadı!")
                     btnAdminPanel?.visibility = View.GONE
                 }
             }
-            .addOnFailureListener {
+            .addOnFailureListener { e ->
+                android.util.Log.e("ADMIN_KONTROL", "Firebase Hatası: ${e.localizedMessage}")
                 btnAdminPanel?.visibility = View.GONE
             }
     }
+
 }
