@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
+    android:background="#F5F5F5"
     tools:context=".SettingsFragment">
 
     <TextView
@@ -14,202 +15,181 @@
         android:text="Ayarlar"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:layout_gravity="center"/>
+        android:textColor="#333"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"/>
 
-    <Button
-        android:id="@+id/btn_premium"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:drawableLeft="@drawable/ic_crown"
-        android:text="Premium almak istiyorum" />
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp">
-
-        <Button
-            android:id="@+id/btn_learning_language"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Öğrenmek istediğim dil" />
-
-        <TextView
-            android:id="@+id/txt_learning_language"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:text="İngilizce" />
-
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
-
-        <Button
-            android:id="@+id/btn_translation_language"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Çeviri yapılacak dil" />
-
-        <TextView
-            android:id="@+id/txt_translation_language"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:text="Türkçe" />
-
-    </RelativeLayout>
-
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/switch_reminder"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Hatırlatma bildirimi almak istiyorum" />
-
-    <RelativeLayout
-        android:id="@+id/layout_reminder_time"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:visibility="gone">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:text="Saat seçimi yapınız" />
-
-        <Button
-            android:id="@+id/btn_reminder_time"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:text="Saat Seç" />
-
-    </RelativeLayout>
-
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/switch_sound_effects"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Ses Efektleri" />
-
-    <Button
-        android:id="@+id/btn_customer_support"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Müşteri Desteği" />
-
-    <Button
-        android:id="@+id/btn_rate_us"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Bizi Oylayın" />
-
-    <Button
-        android:id="@+id/btn_share_app"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Uygulamayı Paylaş" />
-
-    <Button
-        android:id="@+id/btn_delete_account"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Delete Account" />
-
-    <Button
-        android:id="@+id/btn_privacy_policy"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Kullanıcı Gizlilik Politikası" />
-
-    <Button
-        android:id="@+id/btn_terms_of_use"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Kullanım Şartları" />
-
-    <Button
-        android:id="@+id/btn_suggest_improvement"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="İyileştirme Öner"
-
-        />
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnAdminPanel"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="Yönetici Paneli (Admin)"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:visibility="gone"
-        android:backgroundTint="#D32F2F"
-        android:textColor="@android:color/white"
-        app:icon="@drawable/ic_settings"
-        app:iconGravity="textStart"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="12dp"
-        app:cornerRadius="12dp"/>
-
-
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:text="Uygulama Sürümü" />
-
-        <TextView
-            android:id="@+id/txt_app_version"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            tools:text="1.0" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAdminPanel"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="Yönetici Paneli (Admin)"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:visibility="gone"
-            android:backgroundTint="#D32F2F"
-            android:textColor="@android:color/white"
-            app:icon="@drawable/ic_settings"
-            app:iconGravity="textStart"
-            app:cornerRadius="12dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="12dp"/>
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-    </RelativeLayout>
+            <Button
+                android:id="@+id/btn_premium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableLeft="@drawable/ic_crown"
+                android:text="Premium almak istiyorum" />
 
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp">
+                <Button
+                    android:id="@+id/btn_learning_language"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Öğrenmek istediğim dil" />
+                <TextView
+                    android:id="@+id/txt_learning_language"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:text="İngilizce" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+                <Button
+                    android:id="@+id/btn_translation_language"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Çeviri yapılacak dil" />
+                <TextView
+                    android:id="@+id/txt_translation_language"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:text="Türkçe" />
+            </RelativeLayout>
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_reminder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Hatırlatma bildirimi almak istiyorum" />
+
+            <RelativeLayout
+                android:id="@+id/layout_reminder_time"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="Saat seçimi yapınız" />
+                <Button
+                    android:id="@+id/btn_reminder_time"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:text="Saat Seç" />
+            </RelativeLayout>
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_sound_effects"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Ses Efektleri" />
+
+            <Button
+                android:id="@+id/btn_customer_support"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Müşteri Desteği" />
+
+            <Button
+                android:id="@+id/btn_rate_us"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bizi Oylayın" />
+
+            <Button
+                android:id="@+id/btn_share_app"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Uygulamayı Paylaş" />
+
+            <Button
+                android:id="@+id/btn_delete_account"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Hesabı Sil" />
+
+            <Button
+                android:id="@+id/btn_privacy_policy"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Kullanıcı Gizlilik Politikası" />
+
+            <Button
+                android:id="@+id/btn_terms_of_use"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Kullanım Şartları" />
+
+            <Button
+                android:id="@+id/btn_suggest_improvement"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="İyileştirme Öner" />
+
+            <Button
+                android:id="@+id/btnLogout"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Çıkış Yap"
+                android:textColor="#D32F2F"
+                app:strokeColor="#D32F2F"/>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="24dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="Uygulama Sürümü"
+                    android:textColor="#999"/>
+                <TextView
+                    android:id="@+id/txt_app_version"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    tools:text="1.0"
+                    android:textColor="#999"/>
+            </RelativeLayout>
+
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>
