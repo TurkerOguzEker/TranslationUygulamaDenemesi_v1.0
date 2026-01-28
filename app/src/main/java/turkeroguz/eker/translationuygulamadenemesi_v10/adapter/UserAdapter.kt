@@ -2,7 +2,6 @@ package turkeroguz.eker.translationuygulamadenemesi_v10.adapter
 
 import android.graphics.Color
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
@@ -11,7 +10,7 @@ import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.ItemUserManag
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
 
 class UserAdapter(
-    private var userList: ArrayList<User>,
+    private var userList: List<User>, // ArrayList yerine List kullanmak daha esnektir
     private val onUserClick: (User) -> Unit,
     private val onDeleteClick: (User) -> Unit
 ) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
@@ -28,65 +27,47 @@ class UserAdapter(
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
         val user = userList[position]
 
-        // 1. Temel Bilgiler
-        holder.binding.tvUserName.text = user.name ?: "İsimsiz"
+        holder.binding.tvUserName.text = user.name.ifEmpty { "İsimsiz" }
         holder.binding.tvUserEmail.text = user.email
 
-        // 2. Switch'in Mevcut Durumunu Ayarla (Kritik Düzeltme)
-        holder.binding.switchPremium.setOnCheckedChangeListener(null) // Döngüyü engellemek için önce listener'ı sil
+        // 1. Önce dinleyiciyi kaldır (Sonsuz döngüyü engellemek için)
+        holder.binding.switchPremium.setOnCheckedChangeListener(null)
+
+        // 2. Switch'i veritabanındaki duruma göre ayarla
         holder.binding.switchPremium.isChecked = user.isPremium
 
-        // 3. İkon Rengini Ayarla
-        updateIconColor(holder, user.isPremium)
+        // 3. İkon rengini ayarla
+        holder.binding.ivUserIcon.setColorFilter(if (user.isPremium) Color.parseColor("#FFD700") else Color.GRAY)
 
-        // 4. Switch Değiştirildiğinde Firebase'i Güncelle
+        // 4. Dinleyiciyi tekrar ekle
         holder.binding.switchPremium.setOnCheckedChangeListener { _, isChecked ->
-            updatePremiumInFirebase(user.uid, isChecked, holder)
+            // Sadece bu kullanıcıyı güncelle
+            db.collection("users").document(user.uid).update("isPremium", isChecked)
+                .addOnFailureListener {
+                    // Hata olursa switch'i eski haline getir
+                    holder.binding.switchPremium.isChecked = !isChecked
+                    Toast.makeText(holder.itemView.context, "Güncelleme Başarısız", Toast.LENGTH_SHORT).show()
+                }
         }
 
-        // 5. Admin Koruması
-        if (user.role == "admin") {
-            holder.binding.btnDeleteUser.visibility = View.GONE
-            holder.binding.switchPremium.isEnabled = false // Adminin yetkisi değiştirilemez
-        } else {
-            holder.binding.btnDeleteUser.visibility = View.VISIBLE
-            holder.binding.switchPremium.isEnabled = true
-        }
-
-        // 6. Tıklama Olayları
-        holder.binding.btnDeleteUser.setOnClickListener { onDeleteClick(user) }
+        // Diğer butonlar
         holder.binding.btnEditUser.setOnClickListener { onUserClick(user) }
-        holder.binding.cardRoot.setOnClickListener { onUserClick(user) }
-    }
 
-    private fun updatePremiumInFirebase(uid: String, isPremium: Boolean, holder: UserViewHolder) {
-        if (uid.isEmpty()) return
-
-        db.collection("users").document(uid)
-            .update("isPremium", isPremium)
-            .addOnSuccessListener {
-                updateIconColor(holder, isPremium)
-                Toast.makeText(holder.itemView.context, "Premium Durumu Güncellendi", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener {
-                holder.binding.switchPremium.isChecked = !isPremium
-                Toast.makeText(holder.itemView.context, "Hata: Güncellenemedi", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun updateIconColor(holder: UserViewHolder, isPremium: Boolean) {
-        if (isPremium) {
-            holder.binding.ivUserIcon.setColorFilter(Color.parseColor("#FFD700")) // Altın Rengi
+        if (user.role == "admin") {
+            holder.binding.btnDeleteUser.visibility = android.view.View.GONE
+            holder.binding.switchPremium.isEnabled = false
         } else {
-            holder.binding.ivUserIcon.setColorFilter(Color.GRAY)
+            holder.binding.btnDeleteUser.visibility = android.view.View.VISIBLE
+            holder.binding.btnDeleteUser.setOnClickListener { onDeleteClick(user) }
+            holder.binding.switchPremium.isEnabled = true
         }
     }
 
     override fun getItemCount() = userList.size
 
     fun clearAndSetData(newUsers: List<User>) {
-        userList.clear()
-        userList.addAll(newUsers)
+        // Listeyi yenile ve arayüzü güncelle
+        userList = newUsers
         notifyDataSetChanged()
     }
 }

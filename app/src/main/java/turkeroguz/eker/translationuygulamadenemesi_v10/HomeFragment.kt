@@ -28,64 +28,60 @@ class HomeFragment : Fragment() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private val bookList = ArrayList<Book>()
+    private var userListener: ListenerRegistration? = null
 
-    private var tvAdminBadge: TextView? = null
-    private var userListener: ListenerRegistration? = null // Gerçek zamanlı dinleyici
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_home, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Profil Butonu ve Kitaplar
         val btnProfile = view.findViewById<ImageButton>(R.id.btnProfile)
         loadProfileImage(btnProfile)
+        btnProfile.setOnClickListener { (activity as? MainActivity)?.showProfileDialog() }
 
-        btnProfile.setOnClickListener {
-            (activity as? MainActivity)?.showProfileDialog()
-        }
-
-        tvAdminBadge = view.findViewById(R.id.tvAdminBadge)
-
-        // CANLI TAKİBİ BAŞLAT (Kritik Düzeltme)
-        startUserTracking(view)
+        // CANLI TAKİP BAŞLAT
+        startRealtimeTracking(view)
 
         fetchBooks(view)
     }
 
-    private fun startUserTracking(view: View) {
-        val layoutPremiumBadge = view.findViewById<LinearLayout>(R.id.layoutPremiumBadge)
+    private fun startRealtimeTracking(view: View) {
+        val layoutPremium = view.findViewById<LinearLayout>(R.id.layoutPremiumBadge)
+        val tvAdmin = view.findViewById<TextView>(R.id.tvAdminBadge)
         val currentUser = auth.currentUser
 
         if (currentUser != null) {
-            // .addSnapshotListener veritabanındaki değişikliği anlık yakalar
+            // .addSnapshotListener: Veri değiştiği an burası çalışır
             userListener = db.collection("users").document(currentUser.uid)
-                .addSnapshotListener { document, error ->
-                    if (error != null) return@addSnapshotListener
+                .addSnapshotListener { doc, _ ->
+                    if (doc != null && doc.exists()) {
 
-                    if (document != null && document.exists()) {
-                        // PREMIUM KONTROLÜ
-                        val isPremium = document.getBoolean("isPremium") ?: false
-                        layoutPremiumBadge?.visibility = if (isPremium) View.VISIBLE else View.GONE
+                        // Premium Kontrolü
+                        val isPremium = doc.getBoolean("isPremium") ?: false
 
-                        // ADMIN KONTROLÜ
-                        val role = document.getString("role")
-                        tvAdminBadge?.visibility = if (role == "admin") View.VISIBLE else View.GONE
+                        // Eğer isPremium true ise GÖRÜNÜR yap, değilse GİZLE
+                        layoutPremium?.visibility = if (isPremium) View.VISIBLE else View.GONE
+
+                        // Admin Kontrolü
+                        val role = doc.getString("role")
+                        tvAdmin?.visibility = if (role == "admin") View.VISIBLE else View.GONE
                     }
                 }
         }
     }
 
+    // ... Diğer fonksiyonlar (fetchBooks, loadProfileImage) aynen kalabilir ...
+    // Sadece onDestroyView'de listener'ı kapatmayı unutmayın:
+
     override fun onDestroyView() {
         super.onDestroyView()
-        userListener?.remove() // Kaynak tüketmemesi için dinleyiciyi kapat
+        userListener?.remove()
     }
 
-    // fetchBooks ve profil resim fonksiyonları aynı kalacak (Gönderdiğin dosyadan devam et)
+    // (Aşağıdaki yardımcı fonksiyonlarınızı buraya eklemeyi unutmayın: fetchBooks, loadProfileImage, createProfileBitmap)
     private fun fetchBooks(view: View) {
         db.collection("books")
             .get()
