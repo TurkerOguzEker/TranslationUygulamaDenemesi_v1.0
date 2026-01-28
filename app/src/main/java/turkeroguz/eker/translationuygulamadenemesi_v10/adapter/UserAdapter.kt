@@ -2,16 +2,21 @@ package turkeroguz.eker.translationuygulamadenemesi_v10.adapter
 
 import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.ItemUserManageBinding
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
 
 class UserAdapter(
     private var userList: ArrayList<User>,
-    private val onUserClick: (User) -> Unit, // Detay/Profil açma
-    private val onDeleteClick: (User) -> Unit // Silme işlemi (Switch yerine bu geldi)
+    private val onUserClick: (User) -> Unit,
+    private val onDeleteClick: (User) -> Unit
 ) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
+
+    private val db = FirebaseFirestore.getInstance()
 
     inner class UserViewHolder(val binding: ItemUserManageBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -22,34 +27,58 @@ class UserAdapter(
 
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
         val user = userList[position]
-        if (user.role == "admin") {
-            holder.binding.btnDeleteUser.visibility = android.view.View.GONE
-        } else {
-            holder.binding.btnDeleteUser.visibility = android.view.View.VISIBLE
 
-            // Normal kullanıcılarda tıklama özelliği çalışsın
-            holder.binding.btnDeleteUser.setOnClickListener {
-                onDeleteClick(user)
-            }
-        }
+        // 1. Temel Bilgiler
         holder.binding.tvUserName.text = user.name ?: "İsimsiz"
         holder.binding.tvUserEmail.text = user.email
 
-        // Premium ise Altın rengi ikon, değilse gri
-        if (user.isPremium) {
-            holder.binding.ivUserIcon.setColorFilter(Color.parseColor("#FFD700"))
-        } else {
-            holder.binding.ivUserIcon.setColorFilter(Color.GRAY)
+        // 2. Switch'in Mevcut Durumunu Ayarla (Kritik Düzeltme)
+        holder.binding.switchPremium.setOnCheckedChangeListener(null) // Döngüyü engellemek için önce listener'ı sil
+        holder.binding.switchPremium.isChecked = user.isPremium
+
+        // 3. İkon Rengini Ayarla
+        updateIconColor(holder, user.isPremium)
+
+        // 4. Switch Değiştirildiğinde Firebase'i Güncelle
+        holder.binding.switchPremium.setOnCheckedChangeListener { _, isChecked ->
+            updatePremiumInFirebase(user.uid, isChecked, holder)
         }
 
-        // Tıklama olayları (Detay sayfasını açar)
-        holder.binding.cardRoot.setOnClickListener { onUserClick(user) }
-        holder.binding.btnEditUser.setOnClickListener { onUserClick(user) }
+        // 5. Admin Koruması
+        if (user.role == "admin") {
+            holder.binding.btnDeleteUser.visibility = View.GONE
+            holder.binding.switchPremium.isEnabled = false // Adminin yetkisi değiştirilemez
+        } else {
+            holder.binding.btnDeleteUser.visibility = View.VISIBLE
+            holder.binding.switchPremium.isEnabled = true
+        }
 
-        // SİLME BUTONU
-        // Hata veren 'switchPremium' kodlarını sildik, yerine bunu ekledik:
-        holder.binding.btnDeleteUser.setOnClickListener {
-            onDeleteClick(user)
+        // 6. Tıklama Olayları
+        holder.binding.btnDeleteUser.setOnClickListener { onDeleteClick(user) }
+        holder.binding.btnEditUser.setOnClickListener { onUserClick(user) }
+        holder.binding.cardRoot.setOnClickListener { onUserClick(user) }
+    }
+
+    private fun updatePremiumInFirebase(uid: String, isPremium: Boolean, holder: UserViewHolder) {
+        if (uid.isEmpty()) return
+
+        db.collection("users").document(uid)
+            .update("isPremium", isPremium)
+            .addOnSuccessListener {
+                updateIconColor(holder, isPremium)
+                Toast.makeText(holder.itemView.context, "Premium Durumu Güncellendi", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener {
+                holder.binding.switchPremium.isChecked = !isPremium
+                Toast.makeText(holder.itemView.context, "Hata: Güncellenemedi", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun updateIconColor(holder: UserViewHolder, isPremium: Boolean) {
+        if (isPremium) {
+            holder.binding.ivUserIcon.setColorFilter(Color.parseColor("#FFD700")) // Altın Rengi
+        } else {
+            holder.binding.ivUserIcon.setColorFilter(Color.GRAY)
         }
     }
 

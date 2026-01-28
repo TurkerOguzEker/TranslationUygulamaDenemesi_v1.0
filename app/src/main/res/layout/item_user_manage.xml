@@ -53,6 +53,12 @@
                 android:textColor="#757575"/>
         </LinearLayout>
 
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switchPremium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp" />
+
         <ImageButton
             android:id="@+id/btnDeleteUser"
             android:layout_width="40dp"
