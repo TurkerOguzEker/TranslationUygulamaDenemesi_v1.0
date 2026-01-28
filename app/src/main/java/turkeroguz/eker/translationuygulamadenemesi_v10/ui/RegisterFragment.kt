@@ -15,7 +15,6 @@ import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import turkeroguz.eker.translationuygulamadenemesi_v10.EmailSender
-import turkeroguz.eker.translationuygulamadenemesi_v10.HomeFragment
 import turkeroguz.eker.translationuygulamadenemesi_v10.MainActivity
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
@@ -140,11 +139,15 @@ class RegisterFragment : Fragment() {
     private fun completeRegistration(name: String, email: String, pass: String) {
         auth.createUserWithEmailAndPassword(email, pass).addOnSuccessListener { result ->
             val uid = result.user?.uid ?: ""
+            // Kayıt anında lastLoginDate 0 olarak oluşuyor, ama hemen altta checkUserAndNavigate çağırınca güncellenecek.
             val newUser = User(uid = uid, email = email, name = name, registrationDate = System.currentTimeMillis())
             db.collection("users").document(uid).set(newUser).addOnSuccessListener {
                 showModernMessage("🎉 Kayıt Başarılı!", false)
-                (activity as? MainActivity)?.setBottomNavVisibility(true)
-                parentFragmentManager.beginTransaction().replace(R.id.fragment_container, HomeFragment()).commit()
+
+                // --- DÜZELTİLEN KISIM ---
+                // Manuel fragment geçişi YERİNE MainActivity'yi tetikliyoruz.
+                // Böylece son giriş tarihi ve seri (streak) anında güncelleniyor.
+                (activity as? MainActivity)?.checkUserAndNavigate()
             }
         }.addOnFailureListener {
             if (it is FirebaseAuthUserCollisionException) showModernMessage("🚫 Bu e-posta zaten kullanımda.", true)

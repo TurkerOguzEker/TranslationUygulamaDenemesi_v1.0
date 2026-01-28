@@ -20,7 +20,6 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
-import turkeroguz.eker.translationuygulamadenemesi_v10.HomeFragment
 import turkeroguz.eker.translationuygulamadenemesi_v10.MainActivity
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
@@ -76,7 +75,6 @@ class LoginFragment : Fragment() {
                         goHome()
                     }
                     .addOnFailureListener { e ->
-                        // ÖZEL HATA YAKALAMA (Kullanıcı Dostu Mesaj)
                         if (e is FirebaseAuthInvalidUserException || e is FirebaseAuthInvalidCredentialsException) {
                             showModernMessage("🚫 E-posta veya şifrenizi kontrol edin.", true)
                         } else {
@@ -123,7 +121,6 @@ class LoginFragment : Fragment() {
                 val user = authResult.user
                 val uid = user?.uid ?: ""
 
-                // Kullanıcı var mı kontrol et, yoksa oluştur
                 val docRef = db.collection("users").document(uid)
                 docRef.get().addOnSuccessListener { document ->
                     if (!document.exists()) {
@@ -144,21 +141,20 @@ class LoginFragment : Fragment() {
             }
     }
 
+    // --- DÜZELTİLEN KISIM BURASI ---
     private fun goHome() {
-        (activity as? MainActivity)?.setBottomNavVisibility(true)
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, HomeFragment())
-            .commit()
+        // Doğrudan Fragment değiştirmek yerine MainActivity'deki kontrol fonksiyonunu çağırıyoruz.
+        // Bu fonksiyon hem yönlendirme yapar hem de son giriş tarihini günceller.
+        (activity as? MainActivity)?.checkUserAndNavigate()
     }
 
-    // MODERN MESAJ GÖSTERİCİ (Snackbar)
     private fun showModernMessage(message: String, isError: Boolean) {
         val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
         if (isError) {
-            snackbar.setBackgroundTint(Color.parseColor("#D32F2F")) // Kırmızı
+            snackbar.setBackgroundTint(Color.parseColor("#D32F2F"))
             snackbar.setTextColor(Color.WHITE)
         } else {
-            snackbar.setBackgroundTint(Color.parseColor("#388E3C")) // Yeşil
+            snackbar.setBackgroundTint(Color.parseColor("#388E3C"))
             snackbar.setTextColor(Color.WHITE)
         }
         snackbar.show()
