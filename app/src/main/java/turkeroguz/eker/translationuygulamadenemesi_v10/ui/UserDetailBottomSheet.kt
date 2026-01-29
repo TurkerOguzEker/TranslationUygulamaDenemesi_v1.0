@@ -35,17 +35,16 @@ class UserDetailBottomSheet(private val user: User) : BottomSheetDialogFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Canlı Takip Başlat
+        // Verileri Canlı İzlemeye Başla
         startRealtimeTracking(view)
 
-        // Logları Getir
+        // Log Listesini Hazırla
         setupRealtimeLogs(view.findViewById(R.id.rvUserLogs))
 
         view.findViewById<Button>(R.id.btnCloseSheet).setOnClickListener { dismiss() }
     }
 
     private fun startRealtimeTracking(view: View) {
-        // Kullanıcı verisini canlı dinle
         userListener = db.collection("users").document(user.uid)
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot != null && snapshot.exists()) {
@@ -54,61 +53,78 @@ class UserDetailBottomSheet(private val user: User) : BottomSheetDialogFragment(
                         updateUI(view, updatedUser)
                     }
                 } else {
-                    // Veri henüz gelmediyse eldekiyle doldur
                     updateUI(view, user)
                 }
             }
     }
 
     private fun updateUI(view: View, currentUser: User) {
+        // --- TEMEL BİLGİLER ---
         view.findViewById<TextView>(R.id.tvDetailName).text = currentUser.name
         view.findViewById<TextView>(R.id.tvDetailEmail).text = currentUser.email
         view.findViewById<TextView>(R.id.tvDetailUid).text = "UID: ${currentUser.uid}"
 
+        // --- TARİH FORMATLAMA ---
         val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
 
-        // --- TARİHLERİ KONTROL ET (ID'lerin doğru olduğundan emin ol) ---
+        // 1. Kayıt Tarihi
         view.findViewById<TextView>(R.id.tvDetailRegDate).text =
             if (currentUser.registrationDate > 0) dateFormat.format(Date(currentUser.registrationDate)) else "-"
 
+        // 2. Son Giriş Tarihi
         view.findViewById<TextView>(R.id.tvDetailLastLogin).text =
             if (currentUser.lastLoginDate > 0) dateFormat.format(Date(currentUser.lastLoginDate)) else "Henüz giriş yapmadı"
 
+        // --- İSTATİSTİKLER ---
+        // Kelime Sayısı
         view.findViewById<TextView>(R.id.tvStatWords).text = currentUser.totalWordsLearned.toString()
+        // Harcama (Revenue)
         view.findViewById<TextView>(R.id.tvStatRevenue).text = "₺${currentUser.totalRevenue}"
-        view.findViewById<TextView>(R.id.tvStatStreak).text = currentUser.streakDays.toString()
+        // Okunan Kitap Sayısı (Streak yerine bunu göstermek daha mantıklı olabilir veya ikisi de)
+        view.findViewById<TextView>(R.id.tvStatStreak).text = "${currentUser.storiesCompleted} Kitap"
 
-        // --- HATA ÇÖZÜMÜ: DEĞİŞKENİ BURADA TANIMLIYORUZ ---
+
+        // --- YETKİ VE BUTONLAR ---
         val btnChangeRole = view.findViewById<Button>(R.id.btnChangeRole)
-
         btnChangeRole.text = currentUser.role.replaceFirstChar { it.uppercase() }
-
-        // Artık 'btnChangeRole' değişkeni tanımlı olduğu için hata vermeyecek
         btnChangeRole.setOnClickListener { showRoleSelectionDialog(btnChangeRole) }
 
         val switchPremium = view.findViewById<MaterialSwitch>(R.id.switchPremiumDetail)
         val switchBan = view.findViewById<MaterialSwitch>(R.id.switchBan)
 
+        // Dinleyicileri geçici olarak kaldır (Sonsuz döngüyü önlemek için)
         switchPremium.setOnCheckedChangeListener(null)
         switchBan.setOnCheckedChangeListener(null)
 
         switchPremium.isChecked = currentUser.isPremium
         switchBan.isChecked = currentUser.isBanned
 
+        // --- PREMIUM SWITCH İŞLEMİ VE LOGLAMA ---
         switchPremium.setOnCheckedChangeListener { _, isChecked ->
             db.collection("users").document(currentUser.uid).update("isPremium", isChecked)
+                .addOnSuccessListener {
+                    val status = if (isChecked) "Premium Yapıldı" else "Premium İptal"
+                    logAdminAction(currentUser.uid, "YÖNETİCİ İŞLEMİ", "Kullanıcı $status.", "warning")
+                }
         }
+
+        // --- BAN SWITCH İŞLEMİ VE LOGLAMA ---
         switchBan.setOnCheckedChangeListener { _, isChecked ->
             db.collection("users").document(currentUser.uid).update("isBanned", isChecked)
+                .addOnSuccessListener {
+                    val status = if (isChecked) "Yasaklandı (BAN)" else "Yasağı Kaldırıldı"
+                    logAdminAction(currentUser.uid, "YÖNETİCİ İŞLEMİ", "Kullanıcı $status.", "error")
+                }
         }
     }
 
+    // --- LOG LİSTESİNİ ÇEKME ---
     private fun setupRealtimeLogs(rvLogs: RecyclerView) {
         rvLogs.layoutManager = LinearLayoutManager(context)
 
         logListener = db.collection("users").document(user.uid).collection("logs")
             .orderBy("timestamp", Query.Direction.DESCENDING)
-            .limit(20)
+            .limit(50) // Son 50 işlemi göster
             .addSnapshotListener { result, e ->
                 if (e != null) return@addSnapshotListener
 
@@ -119,6 +135,17 @@ class UserDetailBottomSheet(private val user: User) : BottomSheetDialogFragment(
             }
     }
 
+    // --- ADMİN İŞLEMLERİNİ LOGA KAYDETME FONKSİYONU ---
+    private fun logAdminAction(uid: String, action: String, details: String, type: String) {
+        val log = hashMapOf(
+            "action" to action,
+            "details" to details,
+            "timestamp" to com.google.firebase.Timestamp.now(),
+            "type" to type
+        )
+        db.collection("users").document(uid).collection("logs").add(log)
+    }
+
     private fun showRoleSelectionDialog(btn: Button) {
         val roles = arrayOf("user", "author", "admin")
         AlertDialog.Builder(context)
@@ -127,6 +154,7 @@ class UserDetailBottomSheet(private val user: User) : BottomSheetDialogFragment(
                 val newRole = roles[which]
                 db.collection("users").document(user.uid).update("role", newRole)
                     .addOnSuccessListener {
+                        logAdminAction(user.uid, "ROL DEĞİŞTİ", "Yeni rol: ${newRole.uppercase()}", "warning")
                         Toast.makeText(context, "Rol: $newRole yapıldı", Toast.LENGTH_SHORT).show()
                         btn.text = newRole.uppercase()
                     }
