@@ -1,6 +1,8 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,95 +12,100 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet // EKLENDİ: Detay penceresi importu
+import java.util.Locale
 
 class BooksFragment : Fragment() {
 
     private val db = FirebaseFirestore.getInstance()
-    // Veritabanından gelen tüm kitapları burada tutacağız
-    private val allBooks = ArrayList<Book>()
+    private val originalList = ArrayList<Book>()
+    private val displayList = ArrayList<Book>()
+    private lateinit var bookAdapter: BookAdapter
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_books, container, false)
 
-        // 1. RecyclerView Ayarları
+        // --- 1. NAVBAR'I GÖRÜNÜR YAP ---
+        // Kullanıcı bu sayfaya geldiğinde alt menünün kesinlikle göründüğünden emin olalım
+        (activity as? MainActivity)?.setBottomNavVisibility(true)
+
         val rvBooks: RecyclerView = view.findViewById(R.id.rvBooks)
-        // Yan yana 2 kitap olacak şekilde Grid Layout
+        val etSearch: TextInputEditText = view.findViewById(R.id.etSearch)
+        val actvLevel: AutoCompleteTextView = view.findViewById(R.id.autoCompleteTextView)
+
         rvBooks.layoutManager = GridLayoutManager(context, 2)
 
-        // 2. Dropdown (Seviye Seçimi) Ayarları
-        // Eğer strings.xml içinde levels_array yoksa, çökmemesi için manuel liste ekledim:
-        val levels = try {
-            resources.getStringArray(R.array.levels_array)
-        } catch (e: Exception) {
-            // Yedek liste
-            arrayOf("Tümü", "A1", "A2", "B1", "B1+", "B2", "C1", "C2")
+        // --- 2. TIKLAMA OLAYINI GÜNCELLEME ---
+        bookAdapter = BookAdapter(displayList) { selectedBook ->
+            // TIKLANINCA DETAY PENCERESİNİ AÇ
+            val detailSheet = BookDetailBottomSheet(selectedBook)
+            detailSheet.show(parentFragmentManager, "BookDetailSheet")
         }
+        rvBooks.adapter = bookAdapter
 
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, levels)
-        val autoCompleteTextView: AutoCompleteTextView = view.findViewById(R.id.autoCompleteTextView)
-        autoCompleteTextView.setAdapter(adapter)
+        // Dropdown Ayarları
+        val levels = arrayOf("Tümü", "A1", "A2", "B1", "B1+", "B2", "C1", "C2")
+        val levelAdapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, levels)
+        actvLevel.setAdapter(levelAdapter)
 
-        // 3. Kitapları Veritabanından Çek
-        fetchBooks(rvBooks)
+        // Verileri Çek
+        fetchBooks()
 
-        // 4. Seviye Seçilince Listeyi Filtrele
-        autoCompleteTextView.setOnItemClickListener { parent, _, position, _ ->
+        // Arama Dinleyicisi
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                val searchText = s.toString()
+                val currentLevel = actvLevel.text.toString()
+                filterCombined(if(currentLevel.isEmpty()) "Tümü" else currentLevel, searchText)
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+
+        // Seviye Dinleyicisi
+        actvLevel.setOnItemClickListener { parent, _, position, _ ->
             val selectedLevel = parent.getItemAtPosition(position).toString()
-            filterBooks(selectedLevel, rvBooks)
+            val currentSearchText = etSearch.text.toString()
+            filterCombined(selectedLevel, currentSearchText)
         }
 
         return view
     }
 
-    private fun fetchBooks(recyclerView: RecyclerView) {
-        db.collection("books")
-            .get()
-            .addOnSuccessListener { result ->
-                allBooks.clear()
-                for (document in result) {
-                    val book = document.toObject(Book::class.java)
-                    // Firestore ID'sini modele ekle
-                    book.bookId = document.id
-                    allBooks.add(book)
-                }
-                // İlk açılışta tüm kitapları göster
-                updateAdapter(allBooks, recyclerView)
-            }
-            .addOnFailureListener {
-                Toast.makeText(context, "Hata: ${it.message}", Toast.LENGTH_SHORT).show()
-            }
+    // Fragment tekrar ekrana geldiğinde de Navbar'ı kontrol et
+    override fun onResume() {
+        super.onResume()
+        (activity as? MainActivity)?.setBottomNavVisibility(true)
     }
 
-    private fun filterBooks(level: String, recyclerView: RecyclerView) {
-        // "Tümü" veya "All" seçilirse hepsini göster, yoksa filtrele
-        if (level.equals("Tümü", ignoreCase = true) || level.equals("All", ignoreCase = true)) {
-            updateAdapter(allBooks, recyclerView)
-        } else {
-            val filteredList = allBooks.filter { it.level == level }
-            updateAdapter(filteredList, recyclerView)
+    private fun fetchBooks() {
+        db.collection("books").get().addOnSuccessListener { result ->
+            originalList.clear()
+            displayList.clear()
+            for (document in result) {
+                val book = document.toObject(Book::class.java)
+                book.bookId = document.id // ID'yi kaydetmeyi unutma
+                originalList.add(book)
+            }
+            displayList.addAll(originalList)
+            bookAdapter.notifyDataSetChanged()
+        }.addOnFailureListener {
+            Toast.makeText(context, "Veriler alınamadı: ${it.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun updateAdapter(books: List<Book>, recyclerView: RecyclerView) {
-        // Yeni BookAdapter ile listeyi güncelle
-        val adapter = BookAdapter(books) { selectedBook ->
-            // Kitaba tıklanma olayı
-            Toast.makeText(context, "${selectedBook.title} seçildi", Toast.LENGTH_SHORT).show()
-
-            // İleride detay sayfasına gitmek için burayı kullanacağız:
-            /*
-            val intent = Intent(context, BookDetailActivity::class.java)
-            intent.putExtra("bookId", selectedBook.bookId)
-            startActivity(intent)
-            */
+    private fun filterCombined(level: String, query: String) {
+        displayList.clear()
+        val filtered = originalList.filter { book ->
+            val matchLevel = (level == "Tümü" || level == "All" || book.level == level)
+            val matchName = if (query.isEmpty()) true else book.title.lowercase(Locale.getDefault()).contains(query.lowercase(Locale.getDefault()))
+            matchLevel && matchName
         }
-        recyclerView.adapter = adapter
+        displayList.addAll(filtered)
+        bookAdapter.notifyDataSetChanged()
     }
 }

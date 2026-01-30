@@ -143,9 +143,11 @@ class LoginFragment : Fragment() {
 
     // --- DÜZELTİLEN KISIM BURASI ---
     private fun goHome() {
-        // Doğrudan Fragment değiştirmek yerine MainActivity'deki kontrol fonksiyonunu çağırıyoruz.
-        // Bu fonksiyon hem yönlendirme yapar hem de son giriş tarihini günceller.
-        (activity as? MainActivity)?.checkUserAndNavigate()
+        // Back Stack'i (Geri tuşu geçmişini) temizle
+        parentFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+
+        // Ana sayfaya yönlendir
+        (activity as? MainActivity)?.replaceFragment(turkeroguz.eker.translationuygulamadenemesi_v10.HomeFragment())
     }
 
     private fun showModernMessage(message: String, isError: Boolean) {

@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
-import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.ItemBookBinding
+import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.ItemBookCardBinding // DÜZELTME 1: Yeni Binding sınıfı
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
 
 class BookAdapter(
@@ -14,7 +14,8 @@ class BookAdapter(
 ) : RecyclerView.Adapter<BookAdapter.BookViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookViewHolder {
-        val binding = ItemBookBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        // DÜZELTME 2: ItemBookCardBinding inflate ediliyor (item_book_card.xml)
+        val binding = ItemBookCardBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return BookViewHolder(binding)
     }
 
@@ -24,17 +25,21 @@ class BookAdapter(
 
     override fun getItemCount(): Int = books.size
 
-    inner class BookViewHolder(private val binding: ItemBookBinding) : RecyclerView.ViewHolder(binding.root) {
+    // ViewHolder sınıfında da yeni Binding kullanılıyor
+    inner class BookViewHolder(private val binding: ItemBookCardBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(book: Book) {
-            // Kitap ismini yaz
-            binding.txtBookName.text = book.title
+            // DÜZELTME 3: txtBookName -> txtBookTitle (Yeni ID)
+            binding.txtBookTitle.text = book.title
+
+            // DÜZELTME 4: Yazar/Kategori kısmını da dolduralım
+            binding.txtBookAuthor.text = if (book.level.isNotEmpty()) book.level else "Genel"
 
             // Resmi Glide ile yükle
             if (book.imageUrl.isNotEmpty()) {
                 Glide.with(binding.root.context)
                     .load(book.imageUrl)
-                    .placeholder(R.drawable.ic_book) // Yüklenirken gösterilecek resim
-                    .error(R.drawable.ic_book)       // Hata olursa gösterilecek resim
+                    .placeholder(R.drawable.ic_book)
+                    .error(R.drawable.ic_book)
                     .into(binding.imgBookCover)
             } else {
                 binding.imgBookCover.setImageResource(R.drawable.ic_book)

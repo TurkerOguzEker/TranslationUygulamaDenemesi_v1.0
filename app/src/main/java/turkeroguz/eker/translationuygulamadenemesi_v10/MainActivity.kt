@@ -1,5 +1,6 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10
 
+import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -36,6 +37,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // --- 1. TEMA AYARINI HATIRLA VE UYGULA ---
+        // Uygulama açılır açılmaz, daha önce kaydedilen tercihi okuyoruz.
+        val sharedPreferences = getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
+        val isNightMode = sharedPreferences.getBoolean("NightMode", false) // Varsayılan: false (Açık Mod)
+        AppCompatDelegate.setDefaultNightMode(
+            if (isNightMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+        )
+        // ---------------------------------------
+
         setContentView(R.layout.activity_main)
 
         bottomNav = findViewById(R.id.bottomNav)
@@ -46,8 +57,6 @@ class MainActivity : AppCompatActivity() {
                 replaceFragment(HomeFragment())
             }
             setBottomNavVisibility(true)
-
-            // --- EKSİK OLAN PARÇA BURASIYDI: Giriş Tarihini Güncelle ---
             updateLastLoginAndStreak()
         } else {
             if (savedInstanceState == null) {
@@ -59,7 +68,6 @@ class MainActivity : AppCompatActivity() {
         setupBottomNav()
     }
 
-    // --- BU FONKSİYON SİZİN KODUNUZDA EKSİKTİ ---
     private fun updateLastLoginAndStreak() {
         val currentUser = auth.currentUser ?: return
         val userRef = db.collection("users").document(currentUser.uid)
@@ -69,10 +77,8 @@ class MainActivity : AppCompatActivity() {
                 val user = document.toObject(User::class.java) ?: return@addOnSuccessListener
                 val now = System.currentTimeMillis()
 
-                // 1. Son Giriş Tarihini Kesinlikle Güncelle
                 val updates = hashMapOf<String, Any>("lastLoginDate" to now)
 
-                // 2. Seri (Streak) Kontrolü
                 val lastDate = java.util.Calendar.getInstance().apply { timeInMillis = if(user.lastLoginDate > 0) user.lastLoginDate else 0 }
                 val today = java.util.Calendar.getInstance()
 
@@ -93,8 +99,6 @@ class MainActivity : AppCompatActivity() {
                     }
                     updates["streakDays"] = newStreak
                 }
-
-                // 3. Veritabanına Yaz
                 userRef.update(updates)
             }
         }
@@ -118,7 +122,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnSettings).setOnClickListener { replaceFragment(SettingsFragment()) }
     }
 
-    // --- DİĞER STANDART FONKSİYONLAR ---
     override fun onNewIntent(intent: android.content.Intent?) {
         super.onNewIntent(intent)
         intent?.let { handleDeepLink(it) }
@@ -214,18 +217,27 @@ class MainActivity : AppCompatActivity() {
             tvId?.text = "Giriş Yapılmadı"
         }
 
+        // --- 2. TEMA DEĞİŞTİRME VE KAYDETME ---
         val themeSwitch = view.findViewById<MaterialSwitch>(R.id.themeSwitch)
         val themeSwitchContainer = view.findViewById<LinearLayout>(R.id.themeSwitchContainer)
+
+        // Mevcut tercihi oku ve switch'i ayarla
+        val sharedPreferences = getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
+        val isNightModePref = sharedPreferences.getBoolean("NightMode", false)
+        themeSwitch?.isChecked = isNightModePref
+
         themeSwitchContainer?.setOnClickListener { themeSwitch.isChecked = !themeSwitch.isChecked }
-        themeSwitch?.let {
-            val isNightMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-            it.isChecked = isNightMode
-            it.setOnCheckedChangeListener { _, isChecked ->
-                AppCompatDelegate.setDefaultNightMode(
-                    if (isChecked) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
-                )
-            }
+
+        themeSwitch?.setOnCheckedChangeListener { _, isChecked ->
+            // Tercihi Kaydet
+            sharedPreferences.edit().putBoolean("NightMode", isChecked).apply()
+
+            // Temayı Uygula
+            AppCompatDelegate.setDefaultNightMode(
+                if (isChecked) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+            )
         }
+        // --------------------------------------
 
         view.findViewById<View>(R.id.btnClose)?.setOnClickListener { dialog.dismiss() }
         view.findViewById<View>(R.id.btnSheetLogout)?.setOnClickListener {
