@@ -10,7 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import com.bumptech.glide.Glide
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.android.material.button.MaterialButton // EKLENDİ
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -36,9 +36,8 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         val tvAuthor = view.findViewById<TextView>(R.id.tvDetailAuthor)
         val tvDesc = view.findViewById<TextView>(R.id.tvDetailDescription)
         val chipLevel = view.findViewById<Chip>(R.id.chipDetailLevel)
-
-        // DÜZELTME: Button yerine MaterialButton olarak tanımlıyoruz
         val btnFavorite = view.findViewById<MaterialButton>(R.id.btnAddToFavorites)
+        val btnReadNow = view.findViewById<MaterialButton>(R.id.btnReadNow) // Yeni Buton
         val btnClose = view.findViewById<Button>(R.id.btnCloseDetail)
 
         // Verileri Doldur
@@ -46,7 +45,7 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         tvAuthor.text = book.author ?: "Bilinmeyen Yazar"
         chipLevel.text = if (book.level.isNotEmpty()) book.level else "Genel"
 
-        tvDesc.text = if (!book.description.isNullOrEmpty()) book.description else "Bu kitap için yazar tarafından henüz bir tanıtım yazısı veya kelime bilgisi girilmemiş."
+        tvDesc.text = if (!book.description.isNullOrEmpty()) book.description else "Bu kitap için açıklama girilmemiş."
 
         // Resmi Yükle
         if (book.imageUrl.isNotEmpty()) {
@@ -56,31 +55,38 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         // Favori Durumunu Kontrol Et
         checkIfFavorite(btnFavorite)
 
-        // Favori Butonu Tıklaması
+        // Favori Ekle/Çıkar
         btnFavorite.setOnClickListener {
             toggleFavorite(btnFavorite)
+        }
+
+        // --- ŞİMDİ OKU BUTONU İŞLEMİ ---
+        btnReadNow.setOnClickListener {
+            // İleride buraya PDF görüntüleyiciyi başlatacak kodu yazacağız.
+            // Şimdilik sadece mesaj veriyoruz.
+            dismiss() // Pencereyi kapat
+            Toast.makeText(context, "${book.title} okunuyor... (PDF Özelliği Eklenecek)", Toast.LENGTH_LONG).show()
+
+            // Buraya PDF okuma Activity'sine geçiş kodunu (Intent) ekleyebilirsin.
+            // Örneğin:
+            // val intent = Intent(context, PdfViewerActivity::class.java)
+            // intent.putExtra("pdfUrl", book.pdfUrl)
+            // startActivity(intent)
         }
 
         btnClose.setOnClickListener { dismiss() }
     }
 
-    // Parametre tipi Button -> MaterialButton olarak değiştirildi
     private fun checkIfFavorite(btn: MaterialButton) {
         val uid = auth.currentUser?.uid ?: return
         db.collection("users").document(uid).collection("favorites").document(book.bookId)
             .get()
             .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    isFavorite = true
-                    updateFavoriteButtonUI(btn)
-                } else {
-                    isFavorite = false
-                    updateFavoriteButtonUI(btn)
-                }
+                isFavorite = document.exists()
+                updateFavoriteButtonUI(btn)
             }
     }
 
-    // Parametre tipi Button -> MaterialButton olarak değiştirildi
     private fun toggleFavorite(btn: MaterialButton) {
         val uid = auth.currentUser?.uid ?: return
         val favRef = db.collection("users").document(uid).collection("favorites").document(book.bookId)
@@ -88,7 +94,6 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         btn.isEnabled = false
 
         if (isFavorite) {
-            // Favorilerden Çıkar
             favRef.delete().addOnSuccessListener {
                 isFavorite = false
                 updateFavoriteButtonUI(btn)
@@ -96,7 +101,6 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
                 btn.isEnabled = true
             }
         } else {
-            // Favorilere Ekle
             favRef.set(book).addOnSuccessListener {
                 isFavorite = true
                 updateFavoriteButtonUI(btn)
@@ -106,16 +110,15 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         }
     }
 
-    // Parametre tipi Button -> MaterialButton olarak değiştirildi
     private fun updateFavoriteButtonUI(btn: MaterialButton) {
         if (isFavorite) {
             btn.text = "Favorilerden Çıkar"
-            btn.setIconResource(R.drawable.ic_delete) // Artık hata vermeyecek
+            btn.setIconResource(R.drawable.ic_delete)
             btn.setBackgroundColor(android.graphics.Color.parseColor("#D32F2F"))
         } else {
             btn.text = "Favorilere Ekle"
-            btn.setIconResource(R.drawable.ic_favorite_star) // Artık hata vermeyecek
-            btn.setBackgroundColor(android.graphics.Color.parseColor("#212121"))
+            btn.setIconResource(R.drawable.ic_favorite_star)
+            btn.setBackgroundColor(android.graphics.Color.parseColor("#424242"))
         }
     }
 }

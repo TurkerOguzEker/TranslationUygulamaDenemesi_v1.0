@@ -12,7 +12,6 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,6 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet // EKLENDİ: Detay penceresi için gerekli
 
 class HomeFragment : Fragment() {
 
@@ -39,7 +39,11 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Profil Butonu ve Kitaplar
+        // --- 1. DÜZELTME: NAVBAR'I HERKES İÇİN GÖRÜNÜR YAP ---
+        // Kullanıcı giriş yapıp bu sayfaya düştüğünde alt menü kesinlikle açılmalı.
+        (activity as? MainActivity)?.setBottomNavVisibility(true)
+
+        // Profil Butonu
         val btnProfile = view.findViewById<ImageButton>(R.id.btnProfile)
         loadProfileImage(btnProfile)
 
@@ -47,10 +51,14 @@ class HomeFragment : Fragment() {
             (activity as? MainActivity)?.showProfileDialog()
         }
 
-        // --- KRİTİK NOKTA: CANLI TAKİP BAŞLAT ---
         startRealtimeTracking(view)
-
         fetchBooks(view)
+    }
+
+    // --- 2. DÜZELTME: SAYFAYA GERİ DÖNÜLÜNCE NAVBAR'I TEKRAR AÇ ---
+    override fun onResume() {
+        super.onResume()
+        (activity as? MainActivity)?.setBottomNavVisibility(true)
     }
 
     private fun startRealtimeTracking(view: View) {
@@ -59,29 +67,22 @@ class HomeFragment : Fragment() {
         val currentUser = auth.currentUser
 
         if (currentUser != null) {
-            // .addSnapshotListener: Veri değiştiği an burası çalışır (Sayfa yenilemeye gerek kalmaz)
             userListener = db.collection("users").document(currentUser.uid)
                 .addSnapshotListener { doc, _ ->
                     if (doc != null && doc.exists()) {
-
-                        // Premium Kontrolü
-                        // Eğer isPremium true ise GÖRÜNÜR yap, değilse GİZLE
                         val isPremium = doc.getBoolean("isPremium") ?: false
                         layoutPremium?.visibility = if (isPremium) View.VISIBLE else View.GONE
 
-                        // Admin Kontrolü
                         val role = doc.getString("role")
                         tvAdmin?.visibility = if (role == "admin") View.VISIBLE else View.GONE
                     }
                 }
         } else {
-            // Kullanıcı yoksa rozetleri gizle
             layoutPremium?.visibility = View.GONE
             tvAdmin?.visibility = View.GONE
         }
     }
 
-    // Uygulama kapanınca veya sayfa değişince dinlemeyi durdur (Performans için)
     override fun onDestroyView() {
         super.onDestroyView()
         userListener?.remove()
@@ -98,16 +99,27 @@ class HomeFragment : Fragment() {
                     bookList.add(book)
                 }
 
+                // --- 3. DÜZELTME: TIKLAMA OLAYINI BOŞ BIRAKMA, PENCEREYİ AÇ ---
                 val rvFeatured = view.findViewById<RecyclerView>(R.id.rvFeaturedBooks)
                 if (rvFeatured != null && bookList.isNotEmpty()) {
                     rvFeatured.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-                    rvFeatured.adapter = BookAdapter(bookList.take(5)) { _ -> }
+
+                    // { _ -> } yerine aşağıdaki kodu yazdık:
+                    rvFeatured.adapter = BookAdapter(bookList.take(5)) { selectedBook ->
+                        val detailSheet = BookDetailBottomSheet(selectedBook)
+                        detailSheet.show(parentFragmentManager, "BookDetailSheet")
+                    }
                 }
 
                 val rvAll = view.findViewById<RecyclerView>(R.id.rvAllBooks)
                 if (rvAll != null) {
                     rvAll.layoutManager = LinearLayoutManager(context)
-                    rvAll.adapter = BookAdapter(bookList) { _ -> }
+
+                    // { _ -> } yerine aşağıdaki kodu yazdık:
+                    rvAll.adapter = BookAdapter(bookList) { selectedBook ->
+                        val detailSheet = BookDetailBottomSheet(selectedBook)
+                        detailSheet.show(parentFragmentManager, "BookDetailSheet")
+                    }
                 }
             }
     }

@@ -159,6 +159,22 @@
                 android:layout_height="wrap_content"
                 android:text="İyileştirme Öner" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAuthorPanel"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Yazar Paneli (İçerik Yönetimi)"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                app:icon="@drawable/ic_book"
+                app:iconTint="@android:color/white"
+                app:iconGravity="textStart"
+                app:cornerRadius="12dp"
+                android:backgroundTint="#FF9800"
+                android:layout_marginTop="12dp"
+                android:visibility="gone"/>
+
 
 
             <com.google.android.material.button.MaterialButton
