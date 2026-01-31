@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
-import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.ItemBookCardBinding // DÜZELTME 1: Yeni Binding sınıfı
+import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.ItemBookCardBinding
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
 
 class BookAdapter(
@@ -14,7 +14,6 @@ class BookAdapter(
 ) : RecyclerView.Adapter<BookAdapter.BookViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookViewHolder {
-        // DÜZELTME 2: ItemBookCardBinding inflate ediliyor (item_book_card.xml)
         val binding = ItemBookCardBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return BookViewHolder(binding)
     }
@@ -25,16 +24,13 @@ class BookAdapter(
 
     override fun getItemCount(): Int = books.size
 
-    // ViewHolder sınıfında da yeni Binding kullanılıyor
     inner class BookViewHolder(private val binding: ItemBookCardBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(book: Book) {
-            // DÜZELTME 3: txtBookName -> txtBookTitle (Yeni ID)
             binding.txtBookTitle.text = book.title
-
-            // DÜZELTME 4: Yazar/Kategori kısmını da dolduralım
             binding.txtBookAuthor.text = if (book.level.isNotEmpty()) book.level else "Genel"
 
-            // Resmi Glide ile yükle
+            // GITHUB SADELEŞTİRMESİ:
+            // Artık link düzeltme koduna gerek yok. GitHub 'Raw' linki doğrudan çalışır.
             if (book.imageUrl.isNotEmpty()) {
                 Glide.with(binding.root.context)
                     .load(book.imageUrl)
@@ -45,7 +41,6 @@ class BookAdapter(
                 binding.imgBookCover.setImageResource(R.drawable.ic_book)
             }
 
-            // Tıklama olayı
             binding.root.setOnClickListener {
                 onClick(book)
             }
