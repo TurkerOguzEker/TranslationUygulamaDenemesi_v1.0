@@ -70,15 +70,6 @@
             android:layout_marginBottom="12dp"/>
 
         <EditText
-            android:id="@+id/etBookPdf"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="PDF Dosya URL'si"
-            android:inputType="textUri"
-            android:background="@android:drawable/edit_text"
-            android:layout_marginBottom="12dp"/>
-
-        <EditText
             android:id="@+id/etBookDesc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -86,6 +77,60 @@
             android:gravity="top"
             android:minLines="4"
             android:background="@android:drawable/edit_text"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="BÖLÜM 1: HİKAYE VE SORUSU"
+            android:textStyle="bold"
+            android:textColor="#1976D2"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/etStory1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="1. Hikaye PDF Linki"
+            android:inputType="textUri"
+            android:background="@android:drawable/edit_text"
+            android:layout_marginBottom="12dp"/>
+
+        <EditText
+            android:id="@+id/etQuestionPdf1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="1. Soru PDF Linki"
+            android:inputType="textUri"
+            android:background="@android:drawable/edit_text"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+            <EditText android:id="@+id/etOpt1A" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="A Şıkkı" android:background="@android:drawable/edit_text" android:layout_marginEnd="4dp"/>
+            <EditText android:id="@+id/etOpt1B" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="B Şıkkı" android:background="@android:drawable/edit_text" android:layout_marginStart="4dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+            <EditText android:id="@+id/etOpt1C" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="C Şıkkı" android:background="@android:drawable/edit_text" android:layout_marginEnd="4dp"/>
+            <EditText android:id="@+id/etOpt1D" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="D Şıkkı" android:background="@android:drawable/edit_text" android:layout_marginStart="4dp"/>
+        </LinearLayout>
+
+        <TextView android:text="Doğru Cevap:" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#616161"/>
+        <Spinner
+            android:id="@+id/spCorrect1"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:entries="@array/options_array"
+            android:background="@android:drawable/btn_dropdown"
             android:layout_marginBottom="24dp"/>
 
         <Button

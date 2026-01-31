@@ -41,4 +41,12 @@
     <string name="my_books">Kitaplarım</string>
     <string name="favorites">Favorilerim</string>
     <string name="finished">Bitirdiklerim</string>
+
+        <string-array name="options_array">
+            <item>A</item>
+            <item>B</item>
+            <item>C</item>
+            <item>D</item>
+        </string-array>
+
 </resources>
