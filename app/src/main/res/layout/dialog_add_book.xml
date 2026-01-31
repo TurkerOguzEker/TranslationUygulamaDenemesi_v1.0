@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="20dp">
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,140 +14,50 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Kitap Ekle / Düzenle"
-            android:textSize="22sp"
+            android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="#212121"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="16dp"/>
 
         <TextView
             android:id="@+id/tvBookIdInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="ID: Yeni Kitap"
+            android:text="ID: ..."
             android:textSize="12sp"
-            android:textColor="#757575"
-            android:background="#EEEEEE"
-            android:padding="8dp"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText android:id="@+id/etBookTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Kitap Başlığı" android:layout_marginBottom="8dp"/>
+        <EditText android:id="@+id/etBookAuthor" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Yazar" android:layout_marginBottom="8dp"/>
+
+        <Spinner android:id="@+id/spBookLevel" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginBottom="8dp"/>
+
+        <EditText android:id="@+id/etBookImage" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Kapak Resmi URL" android:layout_marginBottom="8dp"/>
+        <EditText android:id="@+id/etBookDesc" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Açıklama" android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="BÖLÜMLER (Hikaye ve Soru)"
+            android:textStyle="bold"
+            android:textColor="#333"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/llChaptersContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+
+        <Button
+            android:id="@+id/btnAddChapter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="+ Yeni Bölüm Ekle"
+            android:backgroundTint="#2196F3"
             android:layout_marginBottom="16dp"/>
 
-        <EditText
-            android:id="@+id/etBookTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Kitap Başlığı"
-            android:background="@android:drawable/edit_text"
-            android:layout_marginBottom="12dp"/>
-
-        <EditText
-            android:id="@+id/etBookAuthor"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Yazar Adı"
-            android:background="@android:drawable/edit_text"
-            android:layout_marginBottom="12dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Kitap Seviyesi:"
-            android:textColor="#616161"
-            android:textSize="14sp"/>
-
-        <Spinner
-            android:id="@+id/spBookLevel"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginBottom="12dp"
-            android:background="@android:drawable/btn_dropdown"/>
-
-        <EditText
-            android:id="@+id/etBookImage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Kapak Resmi URL'si"
-            android:inputType="textUri"
-            android:background="@android:drawable/edit_text"
-            android:layout_marginBottom="12dp"/>
-
-        <EditText
-            android:id="@+id/etBookDesc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Kitap Açıklaması / Tanıtım"
-            android:gravity="top"
-            android:minLines="4"
-            android:background="@android:drawable/edit_text"
-            android:layout_marginBottom="24dp"/>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="BÖLÜM 1: HİKAYE VE SORUSU"
-            android:textStyle="bold"
-            android:textColor="#1976D2"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp"/>
-
-        <EditText
-            android:id="@+id/etStory1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="1. Hikaye PDF Linki"
-            android:inputType="textUri"
-            android:background="@android:drawable/edit_text"
-            android:layout_marginBottom="12dp"/>
-
-        <EditText
-            android:id="@+id/etQuestionPdf1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="1. Soru PDF Linki"
-            android:inputType="textUri"
-            android:background="@android:drawable/edit_text"
-            android:layout_marginBottom="8dp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="4dp">
-            <EditText android:id="@+id/etOpt1A" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="A Şıkkı" android:background="@android:drawable/edit_text" android:layout_marginEnd="4dp"/>
-            <EditText android:id="@+id/etOpt1B" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="B Şıkkı" android:background="@android:drawable/edit_text" android:layout_marginStart="4dp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
-            <EditText android:id="@+id/etOpt1C" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="C Şıkkı" android:background="@android:drawable/edit_text" android:layout_marginEnd="4dp"/>
-            <EditText android:id="@+id/etOpt1D" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="D Şıkkı" android:background="@android:drawable/edit_text" android:layout_marginStart="4dp"/>
-        </LinearLayout>
-
-        <TextView android:text="Doğru Cevap:" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#616161"/>
-        <Spinner
-            android:id="@+id/spCorrect1"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:entries="@array/options_array"
-            android:background="@android:drawable/btn_dropdown"
-            android:layout_marginBottom="24dp"/>
-
-        <Button
-            android:id="@+id/btnSaveBook"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Kaydet"
-            android:backgroundTint="#4CAF50"/>
-
-        <Button
-            android:id="@+id/btnDeleteBook"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Bu Kitabı Sil"
-            android:backgroundTint="#F44336"
-            android:visibility="gone"
-            android:layout_marginTop="8dp"/>
+        <Button android:id="@+id/btnSaveBook" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Kaydet" android:backgroundTint="#4CAF50"/>
+        <Button android:id="@+id/btnDeleteBook" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Kitabı Sil" android:backgroundTint="#F44336" android:visibility="gone"/>
 
     </LinearLayout>
 </ScrollView>

@@ -62,16 +62,12 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
 
         // --- ŞİMDİ OKU BUTONU İŞLEMİ ---
         btnReadNow.setOnClickListener {
-            // İleride buraya PDF görüntüleyiciyi başlatacak kodu yazacağız.
-            // Şimdilik sadece mesaj veriyoruz.
             dismiss() // Pencereyi kapat
-            Toast.makeText(context, "${book.title} okunuyor... (PDF Özelliği Eklenecek)", Toast.LENGTH_LONG).show()
 
-            // Buraya PDF okuma Activity'sine geçiş kodunu (Intent) ekleyebilirsin.
-            // Örneğin:
-            // val intent = Intent(context, PdfViewerActivity::class.java)
-            // intent.putExtra("pdfUrl", book.pdfUrl)
-            // startActivity(intent)
+            // Okuma ekranını başlat
+            val intent = android.content.Intent(requireContext(), turkeroguz.eker.translationuygulamadenemesi_v10.BookReaderActivity::class.java)
+            intent.putExtra("BOOK_DATA", book) // Kitap verisini gönder
+            startActivity(intent)
         }
 
         btnClose.setOnClickListener { dismiss() }
