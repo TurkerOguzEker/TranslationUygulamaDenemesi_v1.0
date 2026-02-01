@@ -82,4 +82,7 @@ dependencies {
     implementation("com.sun.mail:android-activation:1.6.7")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    implementation("com.github.mhiew:android-pdf-viewer:3.2.0-beta.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }

@@ -4,37 +4,43 @@ import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.github.barteksc.pdfviewer.PDFView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Question
+import java.io.BufferedInputStream
+import java.net.HttpURLConnection
+import java.net.URL
 
 class BookReaderActivity : AppCompatActivity() {
 
-    // Görünümler
-    private lateinit var webViewContainer: LinearLayout // Hikaye alanı
-    private lateinit var questionContainer: LinearLayout // Soru alanı
+    private lateinit var layoutStory: LinearLayout
+    private lateinit var layoutQuestion: LinearLayout
 
-    private lateinit var webView: WebView // Hikaye için PDF Okuyucu
+    // Modern PDF Görüntüleyiciler
+    private lateinit var pdfViewStory: PDFView
+    private lateinit var pdfViewQuestion: PDFView
+    private lateinit var progressBarStory: ProgressBar
+
     private lateinit var tvInfo: TextView
     private lateinit var btnNext: Button
-
-    // Soru Görünümleri
-    private lateinit var wvQuestion: WebView // YENİ: Soru için PDF Okuyucu
-    private lateinit var btnOptA: Button
-    private lateinit var btnOptB: Button
-    private lateinit var btnOptC: Button
-    private lateinit var btnOptD: Button
     private lateinit var tvResult: TextView
 
-    private var currentBook: Book? = null
+    private lateinit var btnA: Button
+    private lateinit var btnB: Button
+    private lateinit var btnC: Button
+    private lateinit var btnD: Button
 
-    // Akış Listesi: Pair("STORY", index) veya Pair("QUESTION", index)
+    private var currentBook: Book? = null
     private val flowList = ArrayList<Pair<String, Int>>()
     private var currentIndex = 0
     private var totalCorrect = 0
@@ -43,56 +49,45 @@ class BookReaderActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_book_reader_split)
 
-        // Kitap verisini al
+        // Veriyi al
         currentBook = intent.getSerializableExtra("BOOK_DATA") as? Book
         if (currentBook == null) {
-            Toast.makeText(this, "Kitap verisi alınamadı!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Hata: Kitap verisi bulunamadı!", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        // --- GÖRÜNÜMLERİ BAĞLA ---
-        webViewContainer = findViewById(R.id.layoutStoryContainer)
-        questionContainer = findViewById(R.id.layoutQuestionContainer)
-        webView = findViewById(R.id.webViewReader)
-        tvInfo = findViewById(R.id.tvStepInfo)
-        btnNext = findViewById(R.id.btnReaderNext)
-
-        // Soru bileşenleri
-        wvQuestion = findViewById(R.id.wvQuestion) // YENİ: Soru WebView
-        btnOptA = findViewById(R.id.btnOptA)
-        btnOptB = findViewById(R.id.btnOptB)
-        btnOptC = findViewById(R.id.btnOptC)
-        btnOptD = findViewById(R.id.btnOptD)
-        tvResult = findViewById(R.id.tvResult)
-
-        // WebView Ayarları (Hikaye)
-        setupWebView(webView)
-
-        // WebView Ayarları (Soru)
-        setupWebView(wvQuestion)
-
-        // Akışı hazırla ve başlat
+        initViews()
         prepareFlow()
         loadContent(currentIndex)
 
         btnNext.setOnClickListener {
-            // Eğer soru ekranındaysak ve cevap verilmediyse uyar
             if (flowList.isNotEmpty() && flowList[currentIndex].first == "QUESTION" && tvResult.text.isEmpty()) {
-                Toast.makeText(this, "Lütfen bir cevap seçin!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Lütfen bir şık seçin!", Toast.LENGTH_SHORT).show()
             } else {
-                moveToNext()
+                moveNext()
             }
         }
     }
 
-    private fun setupWebView(wv: WebView) {
-        wv.settings.javaScriptEnabled = true
-        wv.webViewClient = WebViewClient()
+    private fun initViews() {
+        layoutStory = findViewById(R.id.layoutStoryContainer)
+        layoutQuestion = findViewById(R.id.layoutQuestionContainer)
+        pdfViewStory = findViewById(R.id.pdfViewStory)
+        pdfViewQuestion = findViewById(R.id.pdfViewQuestion)
+        progressBarStory = findViewById(R.id.progressBarStory)
+
+        tvInfo = findViewById(R.id.tvStepInfo)
+        btnNext = findViewById(R.id.btnReaderNext)
+        tvResult = findViewById(R.id.tvResult)
+
+        btnA = findViewById(R.id.btnOptA)
+        btnB = findViewById(R.id.btnOptB)
+        btnC = findViewById(R.id.btnOptC)
+        btnD = findViewById(R.id.btnOptD)
     }
 
     private fun prepareFlow() {
-        // Sıra: Hikaye 1 -> Soru 1 -> Hikaye 2 -> Soru 2 ...
         val maxLen = maxOf(currentBook!!.storyUrls.size, currentBook!!.questions.size)
         for (i in 0 until maxLen) {
             if (i < currentBook!!.storyUrls.size) flowList.add(Pair("STORY", i))
@@ -104,93 +99,120 @@ class BookReaderActivity : AppCompatActivity() {
         if (index >= flowList.size) return
 
         val type = flowList[index].first
-        val dataIndex = flowList[index].second
+        val listIndex = flowList[index].second
 
         if (type == "STORY") {
             // --- HİKAYE MODU ---
-            webViewContainer.visibility = View.VISIBLE
-            questionContainer.visibility = View.GONE
+            layoutStory.visibility = View.VISIBLE
+            layoutQuestion.visibility = View.GONE
 
-            val url = currentBook!!.storyUrls[dataIndex]
-            val driveUrl = "https://docs.google.com/gview?embedded=true&url=$url"
-            webView.loadUrl(driveUrl)
-
-            tvInfo.text = "Hikaye Okuma (${dataIndex + 1}. Bölüm)"
+            tvInfo.text = "${currentBook?.title} - ${listIndex + 1}. Bölüm"
             btnNext.text = "Soruyu Çöz"
+
+            val rawUrl = currentBook!!.storyUrls[listIndex]
+            loadPdfFromUrl(rawUrl, pdfViewStory, progressBarStory)
 
         } else {
             // --- SORU MODU ---
-            webViewContainer.visibility = View.GONE
-            questionContainer.visibility = View.VISIBLE
+            layoutStory.visibility = View.GONE
+            layoutQuestion.visibility = View.VISIBLE
 
-            val question = currentBook!!.questions[dataIndex]
-            loadQuestion(question)
-
-            tvInfo.text = "Test Zamanı (${dataIndex + 1}. Soru)"
+            tvInfo.text = "Soru Zamanı! (${listIndex + 1})"
             btnNext.text = if (index == flowList.size - 1) "Bitir" else "Sonraki Bölüm"
+
+            val questionData = currentBook!!.questions[listIndex]
+            loadQuestionUI(questionData)
         }
     }
 
-    private fun loadQuestion(q: Question) {
-        // YENİ: Soru metni yerine PDF Linkini WebView'e yükle
-        val driveUrl = "https://docs.google.com/gview?embedded=true&url=${q.questionPdfUrl}"
-        wvQuestion.loadUrl(driveUrl)
+    // --- MODERN PDF YÜKLEME FONKSİYONU ---
+    private fun loadPdfFromUrl(url: String, pdfView: PDFView, progressBar: ProgressBar? = null) {
+        progressBar?.visibility = View.VISIBLE
 
-        tvResult.text = "" // Sonucu temizle
+        // Link Düzeltme (GitHub Pages için gerekmez ama yedek olsun)
+        var fixedUrl = url
+        if (fixedUrl.contains("github.com") && fixedUrl.contains("/blob/")) {
+            fixedUrl = fixedUrl.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+        }
 
-        // Şık butonlarını ayarla
-        val options = listOf(btnOptA, btnOptB, btnOptC, btnOptD)
-        for (i in 0..3) {
-            if (i < q.options.size) {
-                options[i].text = q.options[i]
-                options[i].visibility = View.VISIBLE
-                options[i].isEnabled = true
-                options[i].setBackgroundColor(Color.WHITE) // Rengi sıfırla
-
-                // Tıklama Olayı
-                options[i].setOnClickListener {
-                    checkAnswer(i, q.correctOptionIndex, options)
+        // Arka Planda İndir, Ön Planda Göster
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val inputStream = URL(fixedUrl).openStream()
+                withContext(Dispatchers.Main) {
+                    pdfView.fromStream(inputStream)
+                        .enableSwipe(true) // Kaydırma Açık
+                        .swipeHorizontal(false) // Dikey Kaydırma (Kitap gibi)
+                        .enableDoubletap(true) // Çift tıkla zoom
+                        .defaultPage(0)
+                        .onLoad {
+                            progressBar?.visibility = View.GONE
+                        }
+                        .onError {
+                            Toast.makeText(this@BookReaderActivity, "PDF Hatası: ${it.message}", Toast.LENGTH_SHORT).show()
+                            progressBar?.visibility = View.GONE
+                        }
+                        .load()
                 }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@BookReaderActivity, "Yükleme Hatası. İnternetinizi kontrol edin.", Toast.LENGTH_SHORT).show()
+                    progressBar?.visibility = View.GONE
+                }
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun loadQuestionUI(q: Question) {
+        loadPdfFromUrl(q.questionPdfUrl, pdfViewQuestion)
+
+        tvResult.text = ""
+        val buttons = listOf(btnA, btnB, btnC, btnD)
+
+        for (i in buttons.indices) {
+            val btn = buttons[i]
+            btn.isEnabled = true
+            btn.setBackgroundColor(Color.parseColor("#E0E0E0")) // Gri (Varsayılan)
+            btn.setTextColor(Color.BLACK)
+
+            if (i < q.options.size) {
+                btn.visibility = View.VISIBLE
+                btn.text = q.options[i]
+                btn.setOnClickListener { checkAnswer(i, q.correctOptionIndex, buttons) }
             } else {
-                options[i].visibility = View.GONE
+                btn.visibility = View.GONE
             }
         }
     }
 
     private fun checkAnswer(selectedIndex: Int, correctIndex: Int, buttons: List<Button>) {
-        // Tüm butonları kilitle (Bir kere cevap verilebilir)
         buttons.forEach { it.isEnabled = false }
 
         if (selectedIndex == correctIndex) {
-            // DOĞRU
-            buttons[selectedIndex].setBackgroundColor(Color.GREEN)
+            buttons[selectedIndex].setBackgroundColor(Color.parseColor("#4CAF50")) // Yeşil
             tvResult.text = "Doğru Cevap! 🎉"
-            tvResult.setTextColor(Color.GREEN)
+            tvResult.setTextColor(Color.parseColor("#4CAF50"))
             totalCorrect++
         } else {
-            // YANLIŞ
-            buttons[selectedIndex].setBackgroundColor(Color.RED)
-            buttons[correctIndex].setBackgroundColor(Color.GREEN) // Doğruyu da göster
+            buttons[selectedIndex].setBackgroundColor(Color.parseColor("#F44336")) // Kırmızı
+            buttons[correctIndex].setBackgroundColor(Color.parseColor("#4CAF50")) // Yeşil
             tvResult.text = "Yanlış Cevap 😔"
-            tvResult.setTextColor(Color.RED)
+            tvResult.setTextColor(Color.parseColor("#F44336"))
         }
     }
 
-    private fun moveToNext() {
+    private fun moveNext() {
         if (currentIndex < flowList.size - 1) {
             currentIndex++
             loadContent(currentIndex)
         } else {
-            showFinalResult()
+            AlertDialog.Builder(this)
+                .setTitle("Tebrikler!")
+                .setMessage("Kitabı tamamladınız!\nSkorunuz: $totalCorrect")
+                .setPositiveButton("Tamam") { _, _ -> finish() }
+                .setCancelable(false)
+                .show()
         }
-    }
-
-    private fun showFinalResult() {
-        AlertDialog.Builder(this)
-            .setTitle("Tebrikler!")
-            .setMessage("Kitabı bitirdiniz.\nSkorunuz: $totalCorrect / ${currentBook!!.questions.size}")
-            .setPositiveButton("Tamam") { _, _ -> finish() }
-            .setCancelable(false)
-            .show()
     }
 }

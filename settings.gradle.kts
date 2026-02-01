@@ -10,7 +10,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") } // BU SATIRIN OLDUĞUNDAN EMEİN OL
+        maven { url = uri("https://jitpack.io") }
+
+        // jcenter() yerine bunu kullanıyoruz:
+        maven { url = uri("https://jcenter.bintray.com/") }
     }
 }
 
