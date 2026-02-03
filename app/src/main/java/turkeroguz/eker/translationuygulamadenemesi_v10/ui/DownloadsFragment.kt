@@ -27,7 +27,6 @@ class DownloadsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // XML dosyasında RecyclerView ID'si 'rvDownloads' olmalı
         binding.rvDownloads.layoutManager = LinearLayoutManager(context)
 
         adapter = DownloadsAdapter(emptyList(),
@@ -43,13 +42,9 @@ class DownloadsFragment : Fragment() {
                     .setTitle("Sil")
                     .setMessage("${book.title} cihazdan silinsin mi?")
                     .setPositiveButton("Sil") { _, _ ->
-                        val isDeleted = LocalLibraryManager.deleteBook(requireContext(), book)
-                        if (isDeleted) {
-                            loadBooks() // Listeyi Yenile
-                            Toast.makeText(context, "Kitap silindi", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, "Hata oluştu", Toast.LENGTH_SHORT).show()
-                        }
+                        LocalLibraryManager.deleteBook(requireContext(), book)
+                        loadBooks() // Listeyi Yenile
+                        Toast.makeText(context, "Kitap silindi", Toast.LENGTH_SHORT).show()
                     }
                     .setNegativeButton("İptal", null)
                     .show()
@@ -64,13 +59,8 @@ class DownloadsFragment : Fragment() {
     }
 
     private fun loadBooks() {
-        context?.let { ctx ->
-            val books = LocalLibraryManager.getDownloadedBooks(ctx)
-            adapter.updateList(books)
-
-            // Eğer liste boşsa ve XML'de tvEmptyDownloads varsa görünür yap (Opsiyonel)
-            // if (books.isEmpty()) binding.tvEmptyDownloads.visibility = View.VISIBLE
-        }
+        val books = LocalLibraryManager.getDownloadedBooks(requireContext())
+        adapter.updateList(books)
     }
 
     override fun onDestroyView() {

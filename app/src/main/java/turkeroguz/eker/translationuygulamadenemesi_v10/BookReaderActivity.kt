@@ -248,14 +248,21 @@ class BookReaderActivity : AppCompatActivity() {
 
     private fun loadPdfFromUrl(url: String, pdfView: PDFView, progressBar: ProgressBar? = null) {
         progressBar?.visibility = View.VISIBLE
-        var fixedUrl = url
-        if (fixedUrl.contains("github.com") && fixedUrl.contains("/blob/")) {
-            fixedUrl = fixedUrl.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
-        }
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val inputStream = URL(fixedUrl).openStream()
+                // EĞER URL BİR DOSYA YOLUYSA (Çevrimdışı Mod)
+                val inputStream = if (url.startsWith("/") || url.startsWith("file")) {
+                    java.io.FileInputStream(java.io.File(url))
+                } else {
+                    // EĞER URL BİR İNTERNET LİNKİYSE (Çevrimiçi Mod)
+                    var fixedUrl = url
+                    if (fixedUrl.contains("github.com") && fixedUrl.contains("/blob/")) {
+                        fixedUrl = fixedUrl.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+                    }
+                    java.net.URL(fixedUrl).openStream()
+                }
+
                 withContext(Dispatchers.Main) {
                     pdfView.fromStream(inputStream)
                         .enableSwipe(true)
@@ -267,6 +274,10 @@ class BookReaderActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    progressBar?.visibility = View.GONE
+                    Toast.makeText(this@BookReaderActivity, "Hata: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
