@@ -42,11 +42,19 @@ android {
     // --- EKLENEN KISIM BAŞLANGIÇ ---
     packaging {
         resources {
-            // Çakışan lisans dosyalarını dahil etme
             excludes += "META-INF/NOTICE.md"
             excludes += "META-INF/LICENSE.md"
             excludes += "META-INF/NOTICE.txt"
             excludes += "META-INF/LICENSE.txt"
+        }
+        // 👇 İŞTE BU KISIM EKSİKTİ, BUNU EKLEMEZSEN ÇALIŞMAZ!
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
     // --- EKLENEN KISIM BİTİŞ ---
