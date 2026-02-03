@@ -3,20 +3,36 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="#F5F5F5"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <TextView
-        android:id="@+id/tvStepInfo"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:background="#2196F3"
-        android:padding="12dp"
-        android:text="Yükleniyor..."
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:elevation="4dp"/>
+        android:paddingHorizontal="16dp">
+
+        <ImageButton
+            android:id="@+id/btnCloseReader"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_close"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_centerVertical="true"
+            android:contentDescription="Kapat"
+            app:tint="#FFFFFF"/>
+
+        <TextView
+            android:id="@+id/tvStepInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bölüm 1"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_centerInParent="true"/>
+
+    </RelativeLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -61,24 +77,25 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="10dp"
-                android:background="#F0F0F0">
+                android:padding="16dp"
+                android:background="#FAFAFA"
+                android:elevation="8dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:layout_marginBottom="8dp">
-                    <Button android:id="@+id/btnOptA" android:layout_width="0dp" android:layout_weight="1" android:layout_height="55dp" android:text="A" android:layout_marginEnd="4dp" android:textSize="16sp"/>
-                    <Button android:id="@+id/btnOptB" android:layout_width="0dp" android:layout_weight="1" android:layout_height="55dp" android:text="B" android:layout_marginStart="4dp" android:textSize="16sp"/>
+                    <Button android:id="@+id/btnOptA" android:layout_width="0dp" android:layout_weight="1" android:layout_height="60dp" android:text="A" android:layout_marginEnd="8dp"/>
+                    <Button android:id="@+id/btnOptB" android:layout_width="0dp" android:layout_weight="1" android:layout_height="60dp" android:text="B" android:layout_marginStart="8dp"/>
                 </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
-                    <Button android:id="@+id/btnOptC" android:layout_width="0dp" android:layout_weight="1" android:layout_height="55dp" android:text="C" android:layout_marginEnd="4dp" android:textSize="16sp"/>
-                    <Button android:id="@+id/btnOptD" android:layout_width="0dp" android:layout_weight="1" android:layout_height="55dp" android:text="D" android:layout_marginStart="4dp" android:textSize="16sp"/>
+                    <Button android:id="@+id/btnOptC" android:layout_width="0dp" android:layout_weight="1" android:layout_height="60dp" android:text="C" android:layout_marginEnd="8dp"/>
+                    <Button android:id="@+id/btnOptD" android:layout_width="0dp" android:layout_weight="1" android:layout_height="60dp" android:text="D" android:layout_marginStart="8dp"/>
                 </LinearLayout>
 
                 <TextView
@@ -89,19 +106,44 @@
                     android:text=""
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:layout_marginTop="5dp"/>
+                    android:layout_marginTop="10dp"/>
             </LinearLayout>
         </LinearLayout>
 
     </FrameLayout>
 
-    <Button
-        android:id="@+id/btnReaderNext"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="Sonraki"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:backgroundTint="#4CAF50"
-        android:layout_margin="0dp"
-        android:stateListAnimator="@null"/> </LinearLayout>
+        android:layout_height="65dp"
+        android:orientation="horizontal"
+        android:background="#E0E0E0">
+
+        <Button
+            android:id="@+id/btnReaderPrev"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="GERİ"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="#757575"
+            android:layout_marginEnd="1dp"
+            android:textColor="#FFFFFF"
+            android:shape="rectangle"/>
+
+        <Button
+            android:id="@+id/btnReaderNext"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="İLERİ"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="#4CAF50"
+            android:layout_marginStart="1dp"
+            android:textColor="#FFFFFF"
+            android:shape="rectangle"/>
+
+    </LinearLayout>
+
+</LinearLayout>

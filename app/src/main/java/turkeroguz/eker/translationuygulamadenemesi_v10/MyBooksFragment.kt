@@ -31,19 +31,20 @@ class MyBooksFragment : Fragment() {
 
         viewPager.adapter = MyBooksPagerAdapter(this)
 
+        // Sekme Başlıklarını ve İkonlarını Ayarla
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             when (position) {
-                0 -> {
-                    tab.text = getString(R.string.favorites)
-                    tab.setIcon(R.drawable.ic_favorite_star)
+                0 -> { // ARTIK İLK SIRADA: İndirilenler
+                    tab.text = getString(R.string.downloads) // "İndirilenler"
+                    tab.setIcon(R.drawable.ic_download)
                 }
-                1 -> {
-                    tab.text = getString(R.string.finished)
+                1 -> { // ORTA: Bitirilenler (Aynı kaldı)
+                    tab.text = getString(R.string.finished) // "Bitirilenler"
                     tab.setIcon(R.drawable.ic_finished_flag)
                 }
-                else -> {
-                    tab.text = getString(R.string.downloads)
-                    tab.setIcon(R.drawable.ic_download)
+                else -> { // SON: Favoriler
+                    tab.text = getString(R.string.favorites) // "Favoriler"
+                    tab.setIcon(R.drawable.ic_favorite_star)
                 }
             }
         }.attach()
@@ -54,14 +55,15 @@ class MyBooksFragment : Fragment() {
         _binding = null
     }
 
+    // Fragment Sıralamasını Ayarlayan Adapter
     private inner class MyBooksPagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
         override fun getItemCount(): Int = 3
 
         override fun createFragment(position: Int): Fragment {
             return when (position) {
-                0 -> FavoritesFragment()
+                0 -> DownloadsFragment() // İlk açılışta burası gelecek
                 1 -> FinishedFragment()
-                else -> DownloadsFragment()
+                else -> FavoritesFragment() // Sona kaydırdık
             }
         }
     }
