@@ -33,21 +33,27 @@ class DownloadsAdapter(
         val book = books[position]
         holder.title.text = book.title
 
-        // Resim yükleme (İnternet varsa URL, yoksa placeholder)
+        // Resim yükleme: Cihaz çevrimdışı olsa bile önbellekten veya placeholder'dan gösterir
         Glide.with(holder.itemView.context)
             .load(book.imageUrl)
-            .placeholder(R.drawable.ic_book)
+            .placeholder(R.drawable.ic_book) // Yüklenirken görünecek ikon
+            .error(R.drawable.ic_book)       // Hata durumunda görünecek ikon
             .into(holder.image)
 
-        // Tıklama: Oku
-        holder.itemView.setOnClickListener { onBookClick(book) }
+        // Tüm karta tıklandığında (DownloadsFragment'tan gelen mantığı çalıştırır)
+        holder.itemView.setOnClickListener {
+            onBookClick(book)
+        }
 
-        // Tıklama: Sil
-        holder.btnDelete.setOnClickListener { onDeleteClick(book) }
+        // Sadece silme butonuna tıklandığında
+        holder.btnDelete.setOnClickListener {
+            onDeleteClick(book)
+        }
     }
 
     override fun getItemCount() = books.size
 
+    // Liste güncellendiğinde RecyclerView'ı yenilemek için
     fun updateList(newBooks: List<Book>) {
         books = newBooks
         notifyDataSetChanged()
