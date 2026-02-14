@@ -1,5 +1,6 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -18,6 +19,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import turkeroguz.eker.translationuygulamadenemesi_v10.BookReaderActivity
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
 import turkeroguz.eker.translationuygulamadenemesi_v10.util.LocalLibraryManager
@@ -35,7 +38,6 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Görünümleri Bağla
         val ivCover = view.findViewById<ImageView>(R.id.ivDetailCover)
         val tvTitle = view.findViewById<TextView>(R.id.tvDetailTitle)
         val tvAuthor = view.findViewById<TextView>(R.id.tvDetailAuthor)
@@ -45,62 +47,49 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         val btnReadNow = view.findViewById<MaterialButton>(R.id.btnReadNow)
         val btnClose = view.findViewById<Button>(R.id.btnCloseDetail)
 
-        // Verileri Doldur
         tvTitle.text = book.title
         tvAuthor.text = book.author ?: "Bilinmeyen Yazar"
         chipLevel.text = if (book.level.isNotEmpty()) book.level else "Genel"
         tvDesc.text = if (!book.description.isNullOrEmpty()) book.description else "Bu kitap için açıklama girilmemiş."
 
-        // Resmi Yükle
         if (book.imageUrl.isNotEmpty()) {
             Glide.with(this).load(book.imageUrl).into(ivCover)
         }
 
-        // Favori Durumunu Kontrol Et
         checkIfFavorite(btnFavorite)
 
-        // Favori Ekle/Çıkar
         btnFavorite.setOnClickListener {
             toggleFavorite(btnFavorite)
         }
 
-        // --- GÜNCELLENMİŞ İNDİRME VE OKUMA MANTIĞI ---
-
-        // 1. Önce kitabın indirilip indirilmediğini kontrol et
+        // --- OKUMA VE İNDİRME MANTIĞI ---
         val isDownloaded = LocalLibraryManager.isBookDownloaded(requireContext(), book.bookId)
 
-        // 2. Butonun şeklini buna göre ayarla
         if (isDownloaded) {
-            btnReadNow.text = "Kütüphanemde Aç"
-            btnReadNow.setIconResource(R.drawable.ic_check) // (Varsa) Tik işareti koy
+            btnReadNow.text = "Oku"
+            btnReadNow.setIconResource(R.drawable.ic_check)
         } else {
             btnReadNow.text = "İndir ve Oku"
-            btnReadNow.setIconResource(R.drawable.ic_download) // (Varsa) İndirme ikonu koy
+            btnReadNow.setIconResource(R.drawable.ic_download)
         }
 
-        // 3. Tıklama İşlemi
         btnReadNow.setOnClickListener {
-
             if (isDownloaded) {
-                // Zaten inmişse direkt kütüphaneye git
-                dismiss() // Pencereyi kapat
-                navigateToMyBooks()
+                openDownloadedBook()
             } else {
-                // İndirme işlemini başlat
-                btnReadNow.isEnabled = false // Tıklamayı engelle
+                btnReadNow.isEnabled = false
                 btnReadNow.text = "İndiriliyor..."
 
                 CoroutineScope(Dispatchers.Main).launch {
                     val success = LocalLibraryManager.downloadAndSaveBook(requireContext(), book)
 
                     if (success) {
-                        Toast.makeText(context, "İndirme Tamamlandı! Kitaplarıma gidiliyor...", Toast.LENGTH_SHORT).show()
-                        dismiss()
-                        navigateToMyBooks()
+                        Toast.makeText(context, "İndirme Tamamlandı!", Toast.LENGTH_SHORT).show()
+                        openDownloadedBook()
                     } else {
                         btnReadNow.isEnabled = true
                         btnReadNow.text = "Hata! Tekrar Dene"
-                        Toast.makeText(context, "İndirme başarısız oldu. İnternetinizi kontrol edin.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "İndirme başarısız oldu.", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -109,19 +98,36 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         btnClose.setOnClickListener { dismiss() }
     }
 
-    // --- YARDIMCI FONKSİYON: Kitaplarım Sekmesine Git ---
-    private fun navigateToMyBooks() {
-        // MainActivity'deki alt menüyü (BottomNavigation) buluyoruz
-        // NOT: Eğer activity_main.xml içindeki ID farklıysa (örn: bottomNavigationView) burayı değiştir!
-        val bottomNav = activity?.findViewById<BottomNavigationView>(R.id.bottomNav)
+    private fun openDownloadedBook() {
+        // İndirilenler listesinden yerel dosya yollarına sahip güncel kitap objesini çek
+        val downloadedBooks = LocalLibraryManager.getDownloadedBooks(requireContext())
+        val localBook = downloadedBooks.find { it.bookId == book.bookId } ?: book
 
-        if (bottomNav != null) {
-            bottomNav.selectedItemId = R.id.nav_my_books // Kitaplarım sekmesini seçtir
-        } else {
-            // Eğer ID bulunamazsa normal okuma ekranını açmayı dene (Yedek plan)
-            val intent = android.content.Intent(requireContext(), turkeroguz.eker.translationuygulamadenemesi_v10.BookReaderActivity::class.java)
-            intent.putExtra("BOOK_DATA", book)
-            startActivity(intent)
+        // Okuma ekranını başlat
+        val intent = Intent(requireContext(), BookReaderActivity::class.java)
+        intent.putExtra("BOOK_DATA", localBook)
+        startActivity(intent)
+
+        // Arka planda sekmeyi değiştir ve pencereyi kapat
+        navigateToMyBooks()
+        dismiss()
+    }
+
+    // --- GÜVENLİ NAVİGASYON FONKSİYONU (Çökmeyi Önler) ---
+    private fun navigateToMyBooks() {
+        try {
+            // activity_main içindeki View'ı tip belirtmeden bul
+            val navView = activity?.findViewById<View>(R.id.bottomNav)
+
+            // Eğer bulunan View gerçekten bir BottomNavigationView ise işlem yap
+            if (navView is BottomNavigationView) {
+                navView.selectedItemId = R.id.nav_my_books
+            } else {
+                // Eğer tip hatası varsa (LinearLayout ise vb.), log bas ama çökme
+                android.util.Log.e("NavigationError", "bottomNav bir BottomNavigationView değil!")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 

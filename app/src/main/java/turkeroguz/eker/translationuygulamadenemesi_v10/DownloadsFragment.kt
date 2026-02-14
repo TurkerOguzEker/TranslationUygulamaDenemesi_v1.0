@@ -1,4 +1,4 @@
-package turkeroguz.eker.translationuygulamadenemesi_v10
+package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
 import android.app.AlertDialog
 import android.content.Intent
@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import turkeroguz.eker.translationuygulamadenemesi_v10.BookReaderActivity
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.DownloadsAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.FragmentDownloadsBinding
 import turkeroguz.eker.translationuygulamadenemesi_v10.util.LocalLibraryManager
@@ -27,29 +28,22 @@ class DownloadsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // XML dosyasında RecyclerView ID'si 'rvDownloads' olmalı
         binding.rvDownloads.layoutManager = LinearLayoutManager(context)
 
         adapter = DownloadsAdapter(emptyList(),
             onBookClick = { book ->
-                // Çevrimdışı Oku
                 val intent = Intent(requireContext(), BookReaderActivity::class.java)
                 intent.putExtra("BOOK_DATA", book)
                 startActivity(intent)
             },
             onDeleteClick = { book ->
-                // Silme Onayı
                 AlertDialog.Builder(requireContext())
                     .setTitle("Sil")
                     .setMessage("${book.title} cihazdan silinsin mi?")
                     .setPositiveButton("Sil") { _, _ ->
-                        val isDeleted = LocalLibraryManager.deleteBook(requireContext(), book)
-                        if (isDeleted) {
-                            loadBooks() // Listeyi Yenile
-                            Toast.makeText(context, "Kitap silindi", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, "Hata oluştu", Toast.LENGTH_SHORT).show()
-                        }
+                        LocalLibraryManager.deleteBook(requireContext(), book)
+                        loadBooks()
+                        Toast.makeText(context, "Kitap silindi", Toast.LENGTH_SHORT).show()
                     }
                     .setNegativeButton("İptal", null)
                     .show()
@@ -67,9 +61,6 @@ class DownloadsFragment : Fragment() {
         context?.let { ctx ->
             val books = LocalLibraryManager.getDownloadedBooks(ctx)
             adapter.updateList(books)
-
-            // Eğer liste boşsa ve XML'de tvEmptyDownloads varsa görünür yap (Opsiyonel)
-            // if (books.isEmpty()) binding.tvEmptyDownloads.visibility = View.VISIBLE
         }
     }
 
