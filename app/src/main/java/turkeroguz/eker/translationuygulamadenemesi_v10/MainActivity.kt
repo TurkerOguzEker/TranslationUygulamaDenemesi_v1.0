@@ -1,5 +1,5 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10
-
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.MyBooksFragment
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Bitmap

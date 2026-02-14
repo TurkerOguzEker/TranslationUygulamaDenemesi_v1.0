@@ -9,7 +9,6 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -38,7 +37,6 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // UI Elemanlarını Bağla
         val ivCover = view.findViewById<ImageView>(R.id.ivDetailCover)
         val tvTitle = view.findViewById<TextView>(R.id.tvDetailTitle)
         val tvAuthor = view.findViewById<TextView>(R.id.tvDetailAuthor)
@@ -48,21 +46,17 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         val btnReadNow = view.findViewById<MaterialButton>(R.id.btnReadNow)
         val btnClose = view.findViewById<Button>(R.id.btnCloseDetail)
 
-        // Verileri Doldur
         tvTitle.text = book.title
         tvAuthor.text = book.author ?: "Bilinmeyen Yazar"
         chipLevel.text = if (book.level.isNotEmpty()) book.level else "Genel"
         tvDesc.text = if (!book.description.isNullOrEmpty()) book.description else "Bu kitap için açıklama girilmemiş."
 
-        // Resmi Yükle
         if (book.imageUrl.isNotEmpty()) {
             Glide.with(this).load(book.imageUrl).into(ivCover)
         }
 
-        // Favori Durumunu Kontrol Et
         checkIfFavorite(btnFavorite)
 
-        // Favori Butonuna Tıklama Olayı
         btnFavorite.setOnClickListener {
             toggleFavorite(btnFavorite)
         }
@@ -111,27 +105,21 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         intent.putExtra("BOOK_DATA", localBook)
         startActivity(intent)
 
-        navigateToMyBooks(0) // İndirilenler sekmesi (Index: 0)
+        // İndirilenler sekmesine git (Index 0)
+        navigateToMyBooks(0)
         dismiss()
     }
 
-    // --- ÖZEL NAVİGASYON FONKSİYONU ---
-    // tabIndex: 0 = İndirilenler, 1 = Bitirilenler, 2 = Favoriler
-    private fun navigateToMyBooks(tabIndex: Int = 0) {
+    // --- GARANTİ ÇALIŞAN NAVİGASYON ---
+    private fun navigateToMyBooks(tabIndex: Int) {
         try {
-            val navView = activity?.findViewById<BottomNavigationView>(R.id.bottomNav)
-            if (navView != null) {
-                // 1. Önce "Kitaplarım" ana menüsüne git
-                navView.selectedItemId = R.id.nav_my_books
+            // 1. Önce MyBooksFragment'a not bırakıyoruz: "Açıldığında şu sekmeye git"
+            MyBooksFragment.pendingTabIndex = tabIndex
 
-                // 2. Sayfanın (Fragment'ın) yüklenmesi için ufak bir bekleme süresi koy
-                // Ardından ilgili sekmeye (ViewPager) kaydır
-                navView.postDelayed({
-                    // DÜZELTİLDİ: R.id.viewPager yerine R.id.viewPagerBooks kullanıldı.
-                    val viewPager = activity?.findViewById<ViewPager2>(R.id.viewPagerBooks)
-                    viewPager?.currentItem = tabIndex
-                }, 200)
-            }
+            // 2. Sonra Ana Menüden "Kitaplarım"a tıklatıyoruz.
+            val navView = activity?.findViewById<BottomNavigationView>(R.id.bottomNav)
+            navView?.selectedItemId = R.id.nav_my_books
+
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -150,29 +138,27 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
     private fun toggleFavorite(btn: MaterialButton) {
         val uid = auth.currentUser?.uid ?: return
         val favRef = db.collection("users").document(uid).collection("favorites").document(book.bookId)
+        val safeContext = requireContext().applicationContext
 
         btn.isEnabled = false
 
         if (isFavorite) {
-            // Favorilerden Çıkar
             favRef.delete().addOnSuccessListener {
                 isFavorite = false
                 updateFavoriteButtonUI(btn)
-                Toast.makeText(context, "Favorilerden çıkarıldı", Toast.LENGTH_SHORT).show()
+                Toast.makeText(safeContext, "Kitap favorilerden çıkarıldı", Toast.LENGTH_SHORT).show()
                 btn.isEnabled = true
             }
         } else {
-            // Favorilere Ekle
             favRef.set(book).addOnSuccessListener {
                 isFavorite = true
                 updateFavoriteButtonUI(btn)
-                Toast.makeText(context, "Favorilere eklendi ❤️", Toast.LENGTH_SHORT).show()
+                Toast.makeText(safeContext, "Kitap favorilere eklendi", Toast.LENGTH_SHORT).show()
                 btn.isEnabled = true
 
-                // --- İSTEĞİN ÜZERİNE EKLENEN KISIM ---
-                // Ekleme başarılı olunca pencereyi kapat ve Favoriler sekmesine git
-                dismiss()
-                navigateToMyBooks(2) // 2 -> Favoriler sekmesinin indexi
+                // --- FAVORİLER SEKMESİNE GİT ---
+                dismiss() // Pencereyi kapat
+                navigateToMyBooks(2) // 2 Numaralı Sekme (Favoriler)
             }
         }
     }

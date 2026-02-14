@@ -1,12 +1,12 @@
-package turkeroguz.eker.translationuygulamadenemesi_v10
+package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.tabs.TabLayoutMediator
+import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.FragmentMyBooksBinding
 
 class MyBooksFragment : Fragment() {
@@ -14,9 +14,14 @@ class MyBooksFragment : Fragment() {
     private var _binding: FragmentMyBooksBinding? = null
     private val binding get() = _binding!!
 
+    // --- BU KISIM EKLENDİ: HEDEF SEKME KONTROLÜ İÇİN ---
+    companion object {
+        // 0: İndirilenler, 1: Bitirilenler, 2: Favoriler
+        var pendingTabIndex: Int? = null
+    }
+
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentMyBooksBinding.inflate(inflater, container, false)
@@ -26,45 +31,36 @@ class MyBooksFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val viewPager = binding.viewPager
-        val tabLayout = binding.tabLayout
+        // ViewPager Adapter Ayarları
+        val adapter = turkeroguz.eker.translationuygulamadenemesi_v10.adapter.MyBooksPagerAdapter(this)
+        binding.viewPagerBooks.adapter = adapter
 
-        viewPager.adapter = MyBooksPagerAdapter(this)
-
-        // Sekme Başlıklarını ve İkonlarını Ayarla
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            when (position) {
-                0 -> { // ARTIK İLK SIRADA: İndirilenler
-                    tab.text = getString(R.string.downloads) // "İndirilenler"
-                    tab.setIcon(R.drawable.ic_download)
-                }
-                1 -> { // ORTA: Bitirilenler (Aynı kaldı)
-                    tab.text = getString(R.string.finished) // "Bitirilenler"
-                    tab.setIcon(R.drawable.ic_finished_flag)
-                }
-                else -> { // SON: Favoriler
-                    tab.text = getString(R.string.favorites) // "Favoriler"
-                    tab.setIcon(R.drawable.ic_favorite_star)
-                }
+        // TabLayout Başlıkları
+        TabLayoutMediator(binding.tabLayoutBooks, binding.viewPagerBooks) { tab, position ->
+            tab.text = when (position) {
+                0 -> "İndirilenler"
+                1 -> "Bitirilenler"
+                2 -> "Favoriler"
+                else -> "Sekme $position"
             }
         }.attach()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Fragment ekrana geldiğinde bekleyen bir sekme değişimi var mı kontrol et
+        pendingTabIndex?.let { index ->
+            // viewPagerBooks hazırsa sekmeyi değiştir
+            binding.viewPagerBooks.post {
+                binding.viewPagerBooks.currentItem = index
+            }
+            // İşlem yapıldıktan sonra isteği sıfırla
+            pendingTabIndex = null
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    // Fragment Sıralamasını Ayarlayan Adapter
-    private inner class MyBooksPagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
-        override fun getItemCount(): Int = 3
-
-        override fun createFragment(position: Int): Fragment {
-            return when (position) {
-                0 -> DownloadsFragment() // İlk açılışta burası gelecek
-                1 -> FinishedFragment()
-                else -> FavoritesFragment() // Sona kaydırdık
-            }
-        }
     }
 }
