@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.google.android.material.tabs.TabLayoutMediator
-import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
+import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.MyBooksPagerAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.FragmentMyBooksBinding
 
 class MyBooksFragment : Fragment() {
@@ -14,7 +14,6 @@ class MyBooksFragment : Fragment() {
     private var _binding: FragmentMyBooksBinding? = null
     private val binding get() = _binding!!
 
-    // --- BU KISIM EKLENDİ: HEDEF SEKME KONTROLÜ İÇİN ---
     companion object {
         // 0: İndirilenler, 1: Bitirilenler, 2: Favoriler
         var pendingTabIndex: Int? = null
@@ -32,11 +31,11 @@ class MyBooksFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // ViewPager Adapter Ayarları
-        val adapter = turkeroguz.eker.translationuygulamadenemesi_v10.adapter.MyBooksPagerAdapter(this)
-        binding.viewPagerBooks.adapter = adapter
+        val adapter = MyBooksPagerAdapter(this)
+        binding.viewPager.adapter = adapter
 
         // TabLayout Başlıkları
-        TabLayoutMediator(binding.tabLayoutBooks, binding.viewPagerBooks) { tab, position ->
+        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = when (position) {
                 0 -> "İndirilenler"
                 1 -> "Bitirilenler"
@@ -50,9 +49,9 @@ class MyBooksFragment : Fragment() {
         super.onResume()
         // Fragment ekrana geldiğinde bekleyen bir sekme değişimi var mı kontrol et
         pendingTabIndex?.let { index ->
-            // viewPagerBooks hazırsa sekmeyi değiştir
-            binding.viewPagerBooks.post {
-                binding.viewPagerBooks.currentItem = index
+            // viewPager hazırsa sekmeyi değiştir
+            binding.viewPager.post {
+                binding.viewPager.currentItem = index
             }
             // İşlem yapıldıktan sonra isteği sıfırla
             pendingTabIndex = null

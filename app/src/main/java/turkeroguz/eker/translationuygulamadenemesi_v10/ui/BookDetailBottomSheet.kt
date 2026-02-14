@@ -143,17 +143,21 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         btn.isEnabled = false
 
         if (isFavorite) {
+            // MESAJI ANINDA GÖSTER
+            Toast.makeText(safeContext, "Kitap favorilerden çıkarıldı", Toast.LENGTH_SHORT).show()
+
             favRef.delete().addOnSuccessListener {
                 isFavorite = false
                 updateFavoriteButtonUI(btn)
-                Toast.makeText(safeContext, "Kitap favorilerden çıkarıldı", Toast.LENGTH_SHORT).show()
                 btn.isEnabled = true
             }
         } else {
+            // MESAJI ANINDA GÖSTER
+            Toast.makeText(safeContext, "Kitap favorilere eklendi! ⭐", Toast.LENGTH_SHORT).show()
+
             favRef.set(book).addOnSuccessListener {
                 isFavorite = true
                 updateFavoriteButtonUI(btn)
-                Toast.makeText(safeContext, "Kitap favorilere eklendi", Toast.LENGTH_SHORT).show()
                 btn.isEnabled = true
 
                 // --- FAVORİLER SEKMESİNE GİT ---
