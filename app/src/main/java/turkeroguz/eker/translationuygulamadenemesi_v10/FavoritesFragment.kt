@@ -13,6 +13,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet // EKSİK OLAN İÇE AKTARMA EKLENDİ
 
 class FavoritesFragment : Fragment() {
 
@@ -48,7 +49,6 @@ class FavoritesFragment : Fragment() {
         loadFavorites()
     }
 
-    // Bu sekme (Fragment) her ekrana geldiğinde listeyi yeniler
     override fun onResume() {
         super.onResume()
         loadFavorites()

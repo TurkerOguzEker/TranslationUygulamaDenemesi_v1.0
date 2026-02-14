@@ -110,15 +110,15 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         dismiss()
     }
 
-    // --- GARANTİ ÇALIŞAN NAVİGASYON ---
+    // --- DÜZELTİLMİŞ NAVİGASYON ---
     private fun navigateToMyBooks(tabIndex: Int) {
         try {
-            // 1. Önce MyBooksFragment'a not bırakıyoruz: "Açıldığında şu sekmeye git"
+            // 1. MyBooksFragment açıldığında favoriler sekmesine (Tab 2) gitmesi için not bırakıyoruz
             MyBooksFragment.pendingTabIndex = tabIndex
 
-            // 2. Sonra Ana Menüden "Kitaplarım"a tıklatıyoruz.
-            val navView = activity?.findViewById<BottomNavigationView>(R.id.bottomNav)
-            navView?.selectedItemId = R.id.nav_my_books
+            // 2. MainActivity'deki menü yapınız LinearLayout olduğu için
+            // doğrudan "btnMyBooks" ID'li butonu bulup tıklatıyoruz.
+            activity?.findViewById<View>(R.id.btnMyBooks)?.performClick()
 
         } catch (e: Exception) {
             e.printStackTrace()
