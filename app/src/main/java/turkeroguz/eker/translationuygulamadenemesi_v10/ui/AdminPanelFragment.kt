@@ -1,6 +1,5 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
-import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
@@ -15,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.*
+import com.google.android.material.dialog.MaterialAlertDialogBuilder // YENİ EKLENDİ (Modern Dialog)
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -88,16 +88,14 @@ class AdminPanelFragment : Fragment() {
                 revenue += user.totalRevenue
             }
 
-            // --- YENİ SIRALAMA MANTIĞI ---
-            // 1. Adminler, 2. Yazarlar (author), 3. Normal Kullanıcılar
             userList.sortWith(Comparator { u1, u2 ->
                 val rolePriority1 = getRolePriority(u1.role)
                 val rolePriority2 = getRolePriority(u2.role)
 
                 if (rolePriority1 != rolePriority2) {
-                    rolePriority1.compareTo(rolePriority2) // Düşük sayı (yüksek öncelik) önce gelir
+                    rolePriority1.compareTo(rolePriority2)
                 } else {
-                    u1.name.compareTo(u2.name, ignoreCase = true) // İsim sırasına göre ikincil sıralama
+                    u1.name.compareTo(u2.name, ignoreCase = true)
                 }
             })
 
@@ -113,12 +111,11 @@ class AdminPanelFragment : Fragment() {
         }
     }
 
-    // Rol önceliğini belirleyen yardımcı fonksiyon (Küçük sayı = Üst sıra)
     private fun getRolePriority(role: String): Int {
         return when (role.lowercase()) {
             "admin" -> 1
             "author" -> 2
-            else -> 3 // "user" ve diğerleri
+            else -> 3
         }
     }
 
@@ -163,13 +160,20 @@ class AdminPanelFragment : Fragment() {
 
     private fun deleteUser(user: User) {
         if (user.role == "admin") {
-            Toast.makeText(context, "Admin silinemez!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Güvenlik Engeli: Admin yetkisine sahip kullanıcılar silinemez!", Toast.LENGTH_LONG).show()
             return
         }
-        AlertDialog.Builder(context)
+
+        // --- DAHA GÜVENLİ VE MODERN SİLME ONAYI ---
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle("Kullanıcıyı Sil")
-            .setMessage("${user.email} silinsin mi?")
-            .setPositiveButton("Evet") { _, _ -> db.collection("users").document(user.uid).delete() }
+            .setMessage("${user.name} (${user.email}) isimli kullanıcıyı kalıcı olarak silmek istediğinize emin misiniz? \n\nBu işlem geri alınamaz ve kullanıcının tüm ilerlemesi kaybolur.")
+            .setIcon(R.drawable.ic_delete) // Çöp kutusu ikonu
+            .setPositiveButton("Evet, Sil") { _, _ ->
+                db.collection("users").document(user.uid).delete().addOnSuccessListener {
+                    Toast.makeText(context, "Kullanıcı başarıyla silindi.", Toast.LENGTH_SHORT).show()
+                }
+            }
             .setNegativeButton("İptal", null)
             .show()
     }

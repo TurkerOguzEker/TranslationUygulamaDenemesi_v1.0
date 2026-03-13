@@ -21,7 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
-import turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet // EKLENDİ: Detay penceresi için gerekli
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet
 
 class HomeFragment : Fragment() {
 
@@ -29,7 +29,6 @@ class HomeFragment : Fragment() {
     private val auth = FirebaseAuth.getInstance()
     private val bookList = ArrayList<Book>()
 
-    // Canlı veri dinleyicisi
     private var userListener: ListenerRegistration? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -39,8 +38,7 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // --- 1. DÜZELTME: NAVBAR'I HERKES İÇİN GÖRÜNÜR YAP ---
-        // Kullanıcı giriş yapıp bu sayfaya düştüğünde alt menü kesinlikle açılmalı.
+        // NAVBAR'I GÖRÜNÜR YAP
         (activity as? MainActivity)?.setBottomNavVisibility(true)
 
         // Profil Butonu
@@ -55,7 +53,6 @@ class HomeFragment : Fragment() {
         fetchBooks(view)
     }
 
-    // --- 2. DÜZELTME: SAYFAYA GERİ DÖNÜLÜNCE NAVBAR'I TEKRAR AÇ ---
     override fun onResume() {
         super.onResume()
         (activity as? MainActivity)?.setBottomNavVisibility(true)
@@ -85,7 +82,7 @@ class HomeFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        userListener?.remove()
+        userListener?.remove() // Sayfa kapanınca dinlemeyi durdur ki RAM yemesin
     }
 
     private fun fetchBooks(view: View) {
@@ -95,27 +92,26 @@ class HomeFragment : Fragment() {
                 bookList.clear()
                 for (document in result) {
                     val book = document.toObject(Book::class.java)
-                    book.bookId = document.id
+                    book.bookId = document.id // Firebase ID'si
                     bookList.add(book)
                 }
 
-                // --- 3. DÜZELTME: TIKLAMA OLAYINI BOŞ BIRAKMA, PENCEREYİ AÇ ---
+                // --- ÖNE ÇIKAN (FEATURED) KİTAPLAR (YATAY) ---
                 val rvFeatured = view.findViewById<RecyclerView>(R.id.rvFeaturedBooks)
                 if (rvFeatured != null && bookList.isNotEmpty()) {
                     rvFeatured.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
 
-                    // { _ -> } yerine aşağıdaki kodu yazdık:
                     rvFeatured.adapter = BookAdapter(bookList.take(5)) { selectedBook ->
                         val detailSheet = BookDetailBottomSheet(selectedBook)
                         detailSheet.show(parentFragmentManager, "BookDetailSheet")
                     }
                 }
 
+                // --- TÜM KİTAPLAR (DİKEY/YATAY) ---
                 val rvAll = view.findViewById<RecyclerView>(R.id.rvAllBooks)
                 if (rvAll != null) {
-                    rvAll.layoutManager = LinearLayoutManager(context)
+                    rvAll.layoutManager = LinearLayoutManager(context) // veya yatay istiyorsan ona göre ayarlayabilirsin
 
-                    // { _ -> } yerine aşağıdaki kodu yazdık:
                     rvAll.adapter = BookAdapter(bookList) { selectedBook ->
                         val detailSheet = BookDetailBottomSheet(selectedBook)
                         detailSheet.show(parentFragmentManager, "BookDetailSheet")

@@ -1,6 +1,5 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10.ui
 
-import android.app.AlertDialog
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -11,12 +10,13 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder // YENİ EKLENDİ (Modern Dialog)
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
-import turkeroguz.eker.translationuygulamadenemesi_v10.model.Chapter // YENİ EKLENDİ
+import turkeroguz.eker.translationuygulamadenemesi_v10.model.Chapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Question
 import java.util.Locale
 
@@ -93,7 +93,7 @@ class AuthorPanelFragment : Fragment() {
 
     private fun showAddEditDialog(bookToEdit: Book?) {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_add_book, null)
-        val builder = AlertDialog.Builder(context).setView(dialogView)
+        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext()).setView(dialogView)
         val dialog = builder.create()
 
         val etTitle = dialogView.findViewById<EditText>(R.id.etBookTitle)
@@ -109,14 +109,12 @@ class AuthorPanelFragment : Fragment() {
 
         spLevel.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, levels)
 
-        // YENİ: Bölüm Ekleme Fonksiyonu (Artık URL değil, Chapter nesnesi alıyor)
         fun addChapterView(chapter: Chapter? = null, question: Question? = null) {
             val chapterView = LayoutInflater.from(context).inflate(R.layout.layout_chapter_item, null)
             val index = llChapters.childCount + 1
 
             chapterView.findViewById<TextView>(R.id.tvChapterTitle).text = "$index. Bölüm"
 
-            // Not: ID'ler eski (Pdf) kalmış olabilir ama biz içlerine metin (Text) basacağız
             val etStory = chapterView.findViewById<EditText>(R.id.etChapterStoryPdf)
             val etQuestion = chapterView.findViewById<EditText>(R.id.etChapterQuestionPdf)
             val etA = chapterView.findViewById<EditText>(R.id.etOptA)
@@ -128,12 +126,9 @@ class AuthorPanelFragment : Fragment() {
 
             spCorrect.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, optionLetters)
 
-            // Var olan metinleri doldur
-            if (chapter != null) {
-                etStory.setText(chapter.chapterText) // Artık PDF linki değil, koca hikaye metni!
-            }
+            if (chapter != null) { etStory.setText(chapter.chapterText) }
             if (question != null) {
-                etQuestion.setText(question.questionText) // Artık soru PDF'i değil, soru metni!
+                etQuestion.setText(question.questionText)
                 if (question.options.size >= 4) {
                     etA.setText(question.options[0])
                     etB.setText(question.options[1])
@@ -143,14 +138,10 @@ class AuthorPanelFragment : Fragment() {
                 spCorrect.setSelection(question.correctOptionIndex)
             }
 
-            btnRemove.setOnClickListener {
-                llChapters.removeView(chapterView)
-            }
-
+            btnRemove.setOnClickListener { llChapters.removeView(chapterView) }
             llChapters.addView(chapterView)
         }
 
-        // --- VERİLERİ YÜKLE ---
         if (bookToEdit != null) {
             tvIdInfo.text = "ID: ${bookToEdit.bookId}"
             etTitle.setText(bookToEdit.title)
@@ -161,7 +152,6 @@ class AuthorPanelFragment : Fragment() {
             spLevel.setSelection(pos)
             btnDelete.visibility = View.VISIBLE
 
-            // YENİ: Var olan bölümleri ve soruları yükle
             val maxLen = maxOf(bookToEdit.chapters.size, bookToEdit.questions.size)
             for (i in 0 until maxLen) {
                 val chapterData = if (i < bookToEdit.chapters.size) bookToEdit.chapters[i] else null
@@ -169,87 +159,104 @@ class AuthorPanelFragment : Fragment() {
                 addChapterView(chapterData, qData)
             }
         } else {
-            // Yeni kitap ise 1 tane boş bölüm ekle
             addChapterView()
         }
 
-        // --- BUTON İŞLEMLERİ ---
         btnAddChapter.setOnClickListener { addChapterView() }
 
+        // --- KAYDETME / GÜNCELLEME İÇİN MODERN ONAY PENCERESİ ---
         btnSave.setOnClickListener {
             val selectedLevel = spLevel.selectedItem.toString()
             if (selectedLevel == "Seçiniz") {
-                Toast.makeText(context, "Seviye seçiniz!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Lütfen bir seviye seçiniz!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // YENİ: Metin tabanlı bölümleri topla
-            val chapterList = ArrayList<Chapter>()
-            val questionList = ArrayList<Question>()
+            val isNewBook = (bookToEdit == null)
+            val titleStr = if (isNewBook) "Yeni Kitap Ekle" else "Kitabı Güncelle"
+            val messageStr = if (isNewBook) "Bu kitabı veritabanına eklemek istediğinize emin misiniz?"
+            else "Kitaptaki değişiklikleri kaydetmek istediğinize emin misiniz?"
 
-            for (i in 0 until llChapters.childCount) {
-                val view = llChapters.getChildAt(i)
-                val etS = view.findViewById<EditText>(R.id.etChapterStoryPdf)
-                val etQ = view.findViewById<EditText>(R.id.etChapterQuestionPdf)
-                val etA = view.findViewById<EditText>(R.id.etOptA)
-                val etB = view.findViewById<EditText>(R.id.etOptB)
-                val etC = view.findViewById<EditText>(R.id.etOptC)
-                val etD = view.findViewById<EditText>(R.id.etOptD)
-                val spC = view.findViewById<Spinner>(R.id.spChapterCorrect)
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(titleStr)
+                .setMessage(messageStr)
+                .setIcon(R.drawable.ic_check) // Varsa uygun bir ikon koyabilirsin
+                .setPositiveButton("Evet, Kaydet") { _, _ ->
 
-                val storyText = etS.text.toString()
-                if (storyText.isNotEmpty()) {
-                    chapterList.add(Chapter(
-                        chapterTitle = "${i + 1}. Bölüm", // Otomatik başlık atadık
-                        chapterText = storyText,          // Hikayenin tamamı
-                        chapterImageUrl = ""              // Şimdilik boş resim
-                    ))
-                }
+                    val chapterList = ArrayList<Chapter>()
+                    val questionList = ArrayList<Question>()
 
-                val questionText = etQ.text.toString()
-                if (questionText.isNotEmpty()) {
-                    val q = Question(
-                        questionText = questionText,      // Sorunun tamamı
-                        options = listOf(etA.text.toString(), etB.text.toString(), etC.text.toString(), etD.text.toString()),
-                        correctOptionIndex = spC.selectedItemPosition
+                    for (i in 0 until llChapters.childCount) {
+                        val view = llChapters.getChildAt(i)
+                        val etS = view.findViewById<EditText>(R.id.etChapterStoryPdf)
+                        val etQ = view.findViewById<EditText>(R.id.etChapterQuestionPdf)
+                        val etA = view.findViewById<EditText>(R.id.etOptA)
+                        val etB = view.findViewById<EditText>(R.id.etOptB)
+                        val etC = view.findViewById<EditText>(R.id.etOptC)
+                        val etD = view.findViewById<EditText>(R.id.etOptD)
+                        val spC = view.findViewById<Spinner>(R.id.spChapterCorrect)
+
+                        val storyText = etS.text.toString()
+                        if (storyText.isNotEmpty()) {
+                            chapterList.add(Chapter("${i + 1}. Bölüm", storyText, ""))
+                        }
+
+                        val questionText = etQ.text.toString()
+                        if (questionText.isNotEmpty()) {
+                            questionList.add(Question(
+                                questionText,
+                                listOf(etA.text.toString(), etB.text.toString(), etC.text.toString(), etD.text.toString()),
+                                spC.selectedItemPosition
+                            ))
+                        }
+                    }
+
+                    val bookData = hashMapOf(
+                        "title" to etTitle.text.toString(),
+                        "author" to etAuthor.text.toString(),
+                        "level" to selectedLevel,
+                        "imageUrl" to etImage.text.toString(),
+                        "description" to etDesc.text.toString(),
+                        "chapters" to chapterList,
+                        "questions" to questionList
                     )
-                    questionList.add(q)
-                }
-            }
 
-            // Veritabanına gidecek olan yapı
-            val bookData = hashMapOf(
-                "title" to etTitle.text.toString(),
-                "author" to etAuthor.text.toString(),
-                "level" to selectedLevel,
-                "imageUrl" to etImage.text.toString(),
-                "description" to etDesc.text.toString(),
-                "chapters" to chapterList, // YENİ: storyUrls gitti, chapters geldi!
-                "questions" to questionList
-            )
+                    btnSave.isEnabled = false
 
-            btnSave.isEnabled = false
-
-            if (bookToEdit == null) {
-                db.collection("books").add(bookData).addOnSuccessListener {
-                    Toast.makeText(context, "Kitap Kaydedildi! ✅", Toast.LENGTH_SHORT).show()
-                    loadBooks()
-                    dialog.dismiss()
+                    if (isNewBook) {
+                        db.collection("books").add(bookData).addOnSuccessListener {
+                            Toast.makeText(context, "Kitap Başarıyla Eklendi! ✅", Toast.LENGTH_SHORT).show()
+                            loadBooks()
+                            dialog.dismiss()
+                        }
+                    } else {
+                        db.collection("books").document(bookToEdit!!.bookId).update(bookData as Map<String, Any>).addOnSuccessListener {
+                            Toast.makeText(context, "Kitap Güncellendi! 🔄", Toast.LENGTH_SHORT).show()
+                            loadBooks()
+                            dialog.dismiss()
+                        }
+                    }
                 }
-            } else {
-                db.collection("books").document(bookToEdit.bookId).update(bookData as Map<String, Any>).addOnSuccessListener {
-                    Toast.makeText(context, "Kitap Güncellendi! 🔄", Toast.LENGTH_SHORT).show()
-                    loadBooks()
-                    dialog.dismiss()
-                }
-            }
+                .setNegativeButton("İptal", null)
+                .show()
         }
 
+        // --- SİLME İÇİN MODERN ONAY PENCERESİ ---
         btnDelete.setOnClickListener {
             if (bookToEdit != null) {
-                db.collection("books").document(bookToEdit.bookId).delete().addOnSuccessListener {
-                    loadBooks(); dialog.dismiss()
-                }
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Kitabı Tamamen Sil")
+                    .setMessage("Bu kitabı kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz ve kullanıcıların bu kitaba erişimi tamamen kesilir.")
+                    .setIcon(R.drawable.ic_delete) // Çöp kutusu ikonu
+                    .setPositiveButton("Evet, Sil") { _, _ ->
+                        db.collection("books").document(bookToEdit.bookId).delete().addOnSuccessListener {
+                            Toast.makeText(context, "Kitap başarıyla silindi.", Toast.LENGTH_SHORT).show()
+                            loadBooks()
+                            dialog.dismiss()
+                        }
+                    }
+                    .setNegativeButton("İptal", null)
+                    .show()
             }
         }
         dialog.show()

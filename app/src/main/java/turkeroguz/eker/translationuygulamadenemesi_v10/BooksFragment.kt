@@ -16,7 +16,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
-import turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet // EKLENDİ: Detay penceresi importu
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet
 import java.util.Locale
 
 class BooksFragment : Fragment() {
@@ -29,8 +29,7 @@ class BooksFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_books, container, false)
 
-        // --- 1. NAVBAR'I GÖRÜNÜR YAP ---
-        // Kullanıcı bu sayfaya geldiğinde alt menünün kesinlikle göründüğünden emin olalım
+        // --- NAVBAR'I GÖRÜNÜR YAP ---
         (activity as? MainActivity)?.setBottomNavVisibility(true)
 
         val rvBooks: RecyclerView = view.findViewById(R.id.rvBooks)
@@ -39,10 +38,9 @@ class BooksFragment : Fragment() {
 
         rvBooks.layoutManager = GridLayoutManager(context, 2)
 
-        // --- 2. TIKLAMA OLAYINI GÜNCELLEME ---
+        // --- TIKLAMA OLAYI: DETAY PENCERESİNİ AÇ (FIREBASE VERİSİ İLE) ---
         bookAdapter = BookAdapter(displayList) { selectedBook ->
-            // TIKLANINCA DETAY PENCERESİNİ AÇ
-            val detailSheet = BookDetailBottomSheet(selectedBook)
+            val detailSheet = BookDetailBottomSheet(selectedBook) // Veya BookDetailBottomSheet.newInstance(selectedBook)
             detailSheet.show(parentFragmentManager, "BookDetailSheet")
         }
         rvBooks.adapter = bookAdapter
@@ -76,19 +74,19 @@ class BooksFragment : Fragment() {
         return view
     }
 
-    // Fragment tekrar ekrana geldiğinde de Navbar'ı kontrol et
     override fun onResume() {
         super.onResume()
         (activity as? MainActivity)?.setBottomNavVisibility(true)
     }
 
     private fun fetchBooks() {
+        // Doğrudan Firebase'den çekiliyor, GitHub veya PDF yok!
         db.collection("books").get().addOnSuccessListener { result ->
             originalList.clear()
             displayList.clear()
             for (document in result) {
                 val book = document.toObject(Book::class.java)
-                book.bookId = document.id // ID'yi kaydetmeyi unutma
+                book.bookId = document.id
                 originalList.add(book)
             }
             displayList.addAll(originalList)

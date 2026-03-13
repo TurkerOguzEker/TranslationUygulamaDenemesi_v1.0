@@ -64,11 +64,13 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
             toggleFavorite(btnFavorite)
         }
 
-        // --- OKUMA VE İNDİRME MANTIĞI ---
-        val isDownloaded = LocalLibraryManager.isBookDownloaded(requireContext(), book.bookId)
+        // --- İNDİRME MANTIĞINDA DÜZELTME ---
+        // Sadece dosyanın adının olup olmadığına değil, GERÇEKTEN listeye girip giremediğine bakıyoruz.
+        val downloadedBooks = LocalLibraryManager.getDownloadedBooks(requireContext())
+        val isDownloaded = downloadedBooks.any { it.bookId == book.bookId }
 
         if (isDownloaded) {
-            btnReadNow.text = "Oku"
+            btnReadNow.text = "İndirildi (Çevrimdışı Oku)"
             btnReadNow.setIconResource(R.drawable.ic_check)
         } else {
             btnReadNow.text = "İndir ve Oku"
@@ -86,12 +88,12 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
                     val success = LocalLibraryManager.downloadAndSaveBook(requireContext(), book)
 
                     if (success) {
-                        showModernToast("İndirme Tamamlandı!", R.drawable.ic_check, "#4CAF50") // Yeşil başarılı mesajı
+                        showModernToast("İndirme Tamamlandı! Çevrimdışı okuyabilirsiniz.", R.drawable.ic_check, "#4CAF50")
                         openDownloadedBook()
                     } else {
                         btnReadNow.isEnabled = true
                         btnReadNow.text = "Hata! Tekrar Dene"
-                        showModernToast("İndirme başarısız oldu.", R.drawable.ic_close, "#F44336") // Kırmızı hata mesajı
+                        showModernToast("İndirme başarısız oldu.", R.drawable.ic_close, "#F44336")
                     }
                 }
             }
@@ -101,6 +103,7 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
     }
 
     private fun openDownloadedBook() {
+        // İndirilen kitaplardan güncel veriyi bul, yoksa mevcut kitabı kullan
         val downloadedBooks = LocalLibraryManager.getDownloadedBooks(requireContext())
         val localBook = downloadedBooks.find { it.bookId == book.bookId } ?: book
 
@@ -108,6 +111,7 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         intent.putExtra("BOOK_DATA", localBook)
         startActivity(intent)
 
+        // Okuma ekranından geri çıkıldığında doğrudan "İndirilenler" sekmesine atsın
         navigateToMyBooks(0)
         dismiss()
     }
@@ -123,7 +127,7 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
 
     private fun checkIfFavorite(btn: MaterialButton) {
         val uid = auth.currentUser?.uid ?: return
-        if (book.bookId.isEmpty()) return // ID boşsa çökmesin
+        if (book.bookId.isEmpty()) return
 
         db.collection("users").document(uid).collection("favorites").document(book.bookId)
             .get()
@@ -153,7 +157,7 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
                 btn.isEnabled = true
             }
         } else {
-            showModernToast("Kitap favorilere eklendi!", R.drawable.ic_favorite_star, "#FF9800") // Turuncu/Sarı uyarı rengi
+            showModernToast("Kitap favorilere eklendi!", R.drawable.ic_favorite_star, "#FF9800")
 
             favRef.set(book).addOnSuccessListener {
                 isFavorite = true
@@ -161,7 +165,7 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
                 btn.isEnabled = true
 
                 dismiss()
-                navigateToMyBooks(2)
+                navigateToMyBooks(2) // Favoriler sekmesi
             }.addOnFailureListener { e ->
                 showModernToast("Kayıt Hatası: ${e.message}", R.drawable.ic_close, "#F44336")
                 btn.isEnabled = true
@@ -181,7 +185,6 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         }
     }
 
-    // --- MODERN VE ÖZELLEŞTİRİLMİŞ UYARI MESAJI (TOAST) FONKSİYONU ---
     private fun showModernToast(message: String, iconResId: Int, colorHex: String = "#424242") {
         val ctx = context ?: return
 
@@ -191,7 +194,7 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
             setPadding(48, 32, 48, 32)
             background = GradientDrawable().apply {
                 setColor(Color.parseColor(colorHex))
-                cornerRadius = 100f // Tam yuvarlak hap (pill) tasarımı
+                cornerRadius = 100f
             }
         }
 
