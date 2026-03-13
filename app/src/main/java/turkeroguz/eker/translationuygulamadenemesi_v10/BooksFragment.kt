@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet
@@ -25,6 +26,9 @@ class BooksFragment : Fragment() {
     private val originalList = ArrayList<Book>()
     private val displayList = ArrayList<Book>()
     private lateinit var bookAdapter: BookAdapter
+
+    // YENİ EKLENDİ: Kitapları dinlemek için Listener
+    private var booksListener: ListenerRegistration? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_books, container, false)
@@ -40,7 +44,7 @@ class BooksFragment : Fragment() {
 
         // --- TIKLAMA OLAYI: DETAY PENCERESİNİ AÇ (FIREBASE VERİSİ İLE) ---
         bookAdapter = BookAdapter(displayList) { selectedBook ->
-            val detailSheet = BookDetailBottomSheet(selectedBook) // Veya BookDetailBottomSheet.newInstance(selectedBook)
+            val detailSheet = BookDetailBottomSheet(selectedBook)
             detailSheet.show(parentFragmentManager, "BookDetailSheet")
         }
         rvBooks.adapter = bookAdapter
@@ -79,20 +83,30 @@ class BooksFragment : Fragment() {
         (activity as? MainActivity)?.setBottomNavVisibility(true)
     }
 
+    // GÜNCELLENDİ: Gerçek Zamanlı (Realtime) Kitap Çekme
     private fun fetchBooks() {
-        // Doğrudan Firebase'den çekiliyor, GitHub veya PDF yok!
-        db.collection("books").get().addOnSuccessListener { result ->
+        booksListener = db.collection("books").addSnapshotListener { snapshot, error ->
+            if (error != null || snapshot == null) {
+                Toast.makeText(context, "Veriler güncellenemedi: ${error?.message}", Toast.LENGTH_SHORT).show()
+                return@addSnapshotListener
+            }
+
             originalList.clear()
             displayList.clear()
-            for (document in result) {
+
+            for (document in snapshot.documents) {
                 val book = document.toObject(Book::class.java)
-                book.bookId = document.id
-                originalList.add(book)
+                if (book != null) {
+                    book.bookId = document.id
+                    originalList.add(book)
+                }
             }
-            displayList.addAll(originalList)
-            bookAdapter.notifyDataSetChanged()
-        }.addOnFailureListener {
-            Toast.makeText(context, "Veriler alınamadı: ${it.message}", Toast.LENGTH_SHORT).show()
+
+            // Veriler anlık değiştiğinde mevcut arama ve filtreleme kurallarını tekrar uygula
+            val currentSearchText = view?.findViewById<TextInputEditText>(R.id.etSearch)?.text.toString()
+            val currentLevel = view?.findViewById<AutoCompleteTextView>(R.id.autoCompleteTextView)?.text.toString()
+
+            filterCombined(if(currentLevel.isEmpty()) "Tümü" else currentLevel, currentSearchText)
         }
     }
 
@@ -105,5 +119,11 @@ class BooksFragment : Fragment() {
         }
         displayList.addAll(filtered)
         bookAdapter.notifyDataSetChanged()
+    }
+
+    // YENİ EKLENDİ: Sayfa kapanınca dinlemeyi durdur ki RAM yemesin
+    override fun onDestroyView() {
+        super.onDestroyView()
+        booksListener?.remove()
     }
 }

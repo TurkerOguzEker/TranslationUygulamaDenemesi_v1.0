@@ -21,9 +21,11 @@ class DownloadsAdapter(
     private val onDeleteClick: (Book) -> Unit
 ) : RecyclerView.Adapter<DownloadsAdapter.ViewHolder>() {
 
-    // Firebase bağlantıları eklendi
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+
+    // YENİ: İlerleme durumlarını hafızada tutacağımız Önbellek (Cache)
+    private val progressCache = HashMap<String, Int>()
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.tvBookTitle)
@@ -31,7 +33,6 @@ class DownloadsAdapter(
         val image: ImageView = view.findViewById(R.id.imgBookCover)
         val btnDelete: ImageButton = view.findViewById(R.id.btnDeleteBook)
 
-        // YENİ EKLENENLER: Çember ve Yüzde yazısı
         val pbProgress: CircularProgressIndicator = view.findViewById(R.id.pbBookProgress)
         val tvProgress: TextView = view.findViewById(R.id.tvBookProgress)
     }
@@ -46,42 +47,57 @@ class DownloadsAdapter(
         val book = books[position]
         holder.title.text = book.title
 
-        // Kitap seviyesinin dinamik olarak atanması
         if (book.level.isNotEmpty()) {
             holder.level.text = "Seviye ${book.level}"
         } else {
             holder.level.text = "Genel Seviye"
         }
 
-        // Resim yükleme
         Glide.with(holder.itemView.context)
             .load(book.imageUrl)
             .placeholder(R.drawable.ic_book)
             .error(R.drawable.ic_book)
             .into(holder.image)
 
-        // --- İLERLEME YÜZDESİNİ ÇEKME ---
-        // Önce varsayılan olarak %0 göster
-        holder.pbProgress.progress = 0
-        holder.tvProgress.text = "%0"
-        holder.pbProgress.setIndicatorColor(Color.parseColor("#FF9800")) // Turuncu
+        // --- İLERLEME YÜZDESİNİ ÇEKME (OPTİMİZE EDİLDİ) ---
 
-        val uid = auth.currentUser?.uid
-        if (uid != null && book.bookId.isNotEmpty()) {
-            db.collection("users").document(uid).collection("book_progress").document(book.bookId)
-                .get()
-                .addOnSuccessListener { doc ->
-                    if (doc.exists()) {
-                        val progressInt = doc.getLong("progress")?.toInt() ?: 0
-                        holder.pbProgress.progress = progressInt
-                        holder.tvProgress.text = "%$progressInt"
+        // 1. Eğer bu kitabın ilerlemesi daha önce çekilip hafızaya alındıysa direkt onu kullan
+        if (progressCache.containsKey(book.bookId)) {
+            val progressInt = progressCache[book.bookId] ?: 0
+            holder.pbProgress.progress = progressInt
+            holder.tvProgress.text = "%$progressInt"
 
-                        // %100 olunca rengi yeşil yap
-                        if (progressInt == 100) {
-                            holder.pbProgress.setIndicatorColor(Color.parseColor("#4CAF50"))
+            if (progressInt == 100) {
+                holder.pbProgress.setIndicatorColor(Color.parseColor("#4CAF50")) // Yeşil
+            } else {
+                holder.pbProgress.setIndicatorColor(Color.parseColor("#FF9800")) // Turuncu
+            }
+        }
+        // 2. Eğer hafızada yoksa, önce varsayılanı göster, sonra arkaplanda SADECE 1 KERE Firebase'den çek
+        else {
+            holder.pbProgress.progress = 0
+            holder.tvProgress.text = "%0"
+            holder.pbProgress.setIndicatorColor(Color.parseColor("#FF9800"))
+
+            val uid = auth.currentUser?.uid
+            if (uid != null && book.bookId.isNotEmpty()) {
+                db.collection("users").document(uid).collection("book_progress").document(book.bookId)
+                    .get()
+                    .addOnSuccessListener { doc ->
+                        if (doc.exists()) {
+                            val progressInt = doc.getLong("progress")?.toInt() ?: 0
+
+                            // Çekilen veriyi hafızaya kaydet ki bir daha çekmesin
+                            progressCache[book.bookId] = progressInt
+
+                            // Sadece bu satırı ekranda güncelle (Tüm listeyi yenilemeden)
+                            notifyItemChanged(position)
+                        } else {
+                            // Belge yoksa bile 0 olarak kaydet ki sürekli sorgu atmasın
+                            progressCache[book.bookId] = 0
                         }
                     }
-                }
+            }
         }
 
         // Tıklama olayları

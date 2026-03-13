@@ -30,6 +30,8 @@ class HomeFragment : Fragment() {
     private val bookList = ArrayList<Book>()
 
     private var userListener: ListenerRegistration? = null
+    // YENİ EKLENDİ: Kitapları dinlemek için Listener
+    private var booksListener: ListenerRegistration? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_home, container, false)
@@ -80,27 +82,27 @@ class HomeFragment : Fragment() {
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        userListener?.remove() // Sayfa kapanınca dinlemeyi durdur ki RAM yemesin
-    }
-
+    // GÜNCELLENDİ: Gerçek Zamanlı (Realtime) Kitap Çekme
     private fun fetchBooks(view: View) {
-        db.collection("books")
-            .get()
-            .addOnSuccessListener { result ->
+        booksListener = db.collection("books")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+
                 bookList.clear()
-                for (document in result) {
+                for (document in snapshot.documents) {
                     val book = document.toObject(Book::class.java)
-                    book.bookId = document.id // Firebase ID'si
-                    bookList.add(book)
+                    if (book != null) {
+                        book.bookId = document.id // Firebase ID'si
+                        bookList.add(book)
+                    }
                 }
 
                 // --- ÖNE ÇIKAN (FEATURED) KİTAPLAR (YATAY) ---
                 val rvFeatured = view.findViewById<RecyclerView>(R.id.rvFeaturedBooks)
                 if (rvFeatured != null && bookList.isNotEmpty()) {
-                    rvFeatured.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-
+                    if (rvFeatured.layoutManager == null) {
+                        rvFeatured.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+                    }
                     rvFeatured.adapter = BookAdapter(bookList.take(5)) { selectedBook ->
                         val detailSheet = BookDetailBottomSheet(selectedBook)
                         detailSheet.show(parentFragmentManager, "BookDetailSheet")
@@ -109,9 +111,10 @@ class HomeFragment : Fragment() {
 
                 // --- TÜM KİTAPLAR (DİKEY/YATAY) ---
                 val rvAll = view.findViewById<RecyclerView>(R.id.rvAllBooks)
-                if (rvAll != null) {
-                    rvAll.layoutManager = LinearLayoutManager(context) // veya yatay istiyorsan ona göre ayarlayabilirsin
-
+                if (rvAll != null && bookList.isNotEmpty()) {
+                    if (rvAll.layoutManager == null) {
+                        rvAll.layoutManager = LinearLayoutManager(context)
+                    }
                     rvAll.adapter = BookAdapter(bookList) { selectedBook ->
                         val detailSheet = BookDetailBottomSheet(selectedBook)
                         detailSheet.show(parentFragmentManager, "BookDetailSheet")
@@ -155,5 +158,12 @@ class HomeFragment : Fragment() {
         val yPos = (canvas.height / 2 - (paint.descent() + paint.ascent()) / 2)
         canvas.drawText(text, xPos, yPos, paint)
         return bitmap
+    }
+
+    // YENİ EKLENDİ: Sayfa kapanınca dinlemeyi durdur ki RAM yemesin
+    override fun onDestroyView() {
+        super.onDestroyView()
+        userListener?.remove()
+        booksListener?.remove()
     }
 }
