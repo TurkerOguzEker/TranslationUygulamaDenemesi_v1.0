@@ -15,10 +15,14 @@
         android:id="@+id/tvNoFavorites"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Henüz favori kitabınız bulunmuyor. ⭐"
+        android:text="Henüz favori kitabınız bulunmuyor."
         android:layout_centerInParent="true"
         android:textSize="16sp"
         android:textColor="#757575"
+        android:gravity="center"
+        android:drawableTop="@drawable/ic_favorite_star"
+        android:drawableTint="#757575"
+        android:drawablePadding="12dp"
         android:visibility="gone"/>
 
 </RelativeLayout>

@@ -3,7 +3,7 @@ package turkeroguz.eker.translationuygulamadenemesi_v10.model
 import java.io.Serializable
 
 data class Question(
-    var questionPdfUrl: String = "",  // DEĞİŞTİ: Artık metin değil PDF Linki
-    var options: List<String> = listOf(), // Şıklar buton metni olarak kalıyor
-    var correctOptionIndex: Int = 0
+    val questionText: String = "",           // Soru metni (HATA VEREN KISIM BURASIYDI, EKLENDİ)
+    val options: List<String> = ArrayList(), // Şıklar: ["A", "B", "C", "D"]
+    val correctOptionIndex: Int = 0          // Doğru şıkkın sırası (0=A, 1=B)
 ) : Serializable

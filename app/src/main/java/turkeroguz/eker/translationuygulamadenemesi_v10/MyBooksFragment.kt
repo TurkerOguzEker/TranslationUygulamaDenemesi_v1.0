@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.google.android.material.tabs.TabLayoutMediator
+import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.MyBooksPagerAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.databinding.FragmentMyBooksBinding
 
@@ -34,13 +35,24 @@ class MyBooksFragment : Fragment() {
         val adapter = MyBooksPagerAdapter(this)
         binding.viewPager.adapter = adapter
 
-        // TabLayout Başlıkları
+        // TabLayout Başlıkları ve İkonları
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
-            tab.text = when (position) {
-                0 -> "İndirilenler"
-                1 -> "Bitirilenler"
-                2 -> "Favoriler"
-                else -> "Sekme $position"
+            when (position) {
+                0 -> {
+                    tab.text = "İndirilenler"
+                    tab.setIcon(R.drawable.ic_downloads)
+                }
+                1 -> {
+                    tab.text = "Bitirilenler"
+                    tab.setIcon(R.drawable.ic_finished_flag)
+                }
+                2 -> {
+                    tab.text = "Favoriler"
+                    tab.setIcon(R.drawable.ic_favorite_star)
+                }
+                else -> {
+                    tab.text = "Sekme $position"
+                }
             }
         }.attach()
     }

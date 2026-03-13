@@ -20,20 +20,22 @@
         android:id="@+id/etChapterStoryPdf"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Hikaye PDF Linki"
-        android:inputType="textUri"
+        android:hint="Hikaye Metnini Buraya Yapıştırın (Link Değil)"
+        android:inputType="textMultiLine"
+        android:gravity="top|start"
+        android:minLines="5"
         android:background="@android:drawable/edit_text"
-        android:minHeight="48dp"
         android:layout_marginBottom="8dp"/>
 
     <EditText
         android:id="@+id/etChapterQuestionPdf"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Soru PDF Linki"
-        android:inputType="textUri"
+        android:hint="Soru Metnini Buraya Yazın (Link Değil)"
+        android:inputType="textMultiLine"
+        android:gravity="top|start"
+        android:minLines="2"
         android:background="@android:drawable/edit_text"
-        android:minHeight="48dp"
         android:layout_marginBottom="8dp"/>
 
     <LinearLayout

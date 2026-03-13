@@ -8,43 +8,20 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import java.net.URL
 
 object LocalLibraryManager {
 
     private const val DIR_BOOKS = "downloaded_books"
-    private const val DIR_PDFS = "book_pdfs"
+    // Artık DIR_PDFS klasörüne ihtiyacımız kalmadı, uçurduk!
 
-    // 1. Kitabı ve PDF'lerini İndirip Kaydetme
+    // 1. Kitabı İndirip Kaydetme (Işık Hızında!)
     suspend fun downloadAndSaveBook(context: Context, book: Book): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                // PDF'leri saklayacağımız klasör
-                val pdfDir = File(context.filesDir, DIR_PDFS)
-                if (!pdfDir.exists()) pdfDir.mkdirs()
-
-                // Yeni yerel yolları tutacak liste
-                val localStoryPaths = ArrayList<String>()
-
-                // Her bir hikaye parçasını indir
-                book.storyUrls.forEachIndexed { index, url ->
-                    val fileName = "${book.bookId}_part_$index.pdf"
-                    val file = File(pdfDir, fileName)
-
-                    // İnternetten çek ve dosyaya yaz
-                    URL(url).openStream().use { input ->
-                        FileOutputStream(file).use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                    localStoryPaths.add(file.absolutePath)
-                }
-
-                // Kitap objesinin kopyasını oluştur ve linkleri yerel dosya yollarıyla değiştir
-                val localBook = book.copy(storyUrls = localStoryPaths)
-
-                // Kitap Bilgisini (Metadata) Kaydet
-                saveBookMetadata(context, localBook)
+                // Eskiden burada PDF linklerini arayıp internetten indirmeye çalışıyorduk.
+                // Artık kitap objesi (Book) zaten tüm metinleri (Chapters) kendi içinde taşıyor.
+                // Tek yapmamız gereken bu objeyi direkt telefonun hafızasına yazmak!
+                saveBookMetadata(context, book)
                 true
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -62,7 +39,7 @@ object LocalLibraryManager {
         ObjectOutputStream(FileOutputStream(bookFile)).use { it.writeObject(book) }
     }
 
-    // 2. İndirilen Kitapları Listeleme
+    // 2. İndirilen Kitapları Listeleme (Aynen Kalıyor)
     fun getDownloadedBooks(context: Context): List<Book> {
         val books = ArrayList<Book>()
         val booksDir = File(context.filesDir, DIR_BOOKS)
@@ -80,26 +57,19 @@ object LocalLibraryManager {
         return books
     }
 
-    // 3. Kitabı Silme (Hem PDF hem Bilgi)
+    // 3. Kitabı Silme (Artık silinecek PDF dosyaları yok!)
     fun deleteBook(context: Context, book: Book): Boolean {
-        try {
-            // PDF Dosyalarını Sil
-            book.storyUrls.forEach { path ->
-                val file = File(path)
-                if (file.exists()) file.delete()
-            }
-
-            // Kitap Bilgi Dosyasını Sil
+        return try {
+            // Sadece kaydettiğimiz tek bir veri dosyasını (.dat) siliyoruz, bitti gitti!
             val metaFile = File(context.filesDir, "$DIR_BOOKS/book_${book.bookId}.dat")
             if (metaFile.exists()) metaFile.delete()
-
-            return true
+            true
         } catch (e: Exception) {
-            return false
+            false
         }
     }
 
-    // Kitap zaten indirilmiş mi kontrolü
+    // Kitap zaten indirilmiş mi kontrolü (Aynen Kalıyor)
     fun isBookDownloaded(context: Context, bookId: String): Boolean {
         val file = File(context.filesDir, "$DIR_BOOKS/book_$bookId.dat")
         return file.exists()

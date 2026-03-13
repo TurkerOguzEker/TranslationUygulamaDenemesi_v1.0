@@ -5,15 +5,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
-import turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet // EKSİK OLAN İÇE AKTARMA EKLENDİ
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet
 
 class FavoritesFragment : Fragment() {
 
@@ -35,17 +35,14 @@ class FavoritesFragment : Fragment() {
         rvFavorites = view.findViewById(R.id.rvFavorites)
         tvNoFavorites = view.findViewById(R.id.tvNoFavorites)
 
-        // Kitapları yan yana 2'li sütun halinde göstermek için
         rvFavorites.layoutManager = GridLayoutManager(requireContext(), 2)
 
-        // Tıklanan kitabı tekrar detay sayfasında açmak için adaptörü bağlıyoruz
         adapter = BookAdapter(favoriteList) { selectedBook ->
             val bottomSheet = BookDetailBottomSheet(selectedBook)
             bottomSheet.show(parentFragmentManager, "BookDetail")
         }
         rvFavorites.adapter = adapter
 
-        // İlk açılışta favorileri yükle
         loadFavorites()
     }
 
@@ -57,18 +54,24 @@ class FavoritesFragment : Fragment() {
     private fun loadFavorites() {
         val uid = auth.currentUser?.uid ?: return
 
-        // Firebase'den kullanıcının favorilerini çek
         db.collection("users").document(uid).collection("favorites")
             .get()
             .addOnSuccessListener { documents ->
-                favoriteList.clear() // Önce eski listeyi temizle
-                for (doc in documents) {
-                    val book = doc.toObject(Book::class.java)
-                    favoriteList.add(book)
-                }
-                adapter.notifyDataSetChanged() // Adaptöre veri geldiğini haber ver
+                favoriteList.clear()
 
-                // Eğer liste boşsa uyarı yazısını göster
+                try {
+                    for (doc in documents) {
+                        val book = doc.toObject(Book::class.java)
+                        // Bazen bookId Firestore'a boş kaydedilebilir, ID'yi manuel de verelim garanti olsun
+                        book.bookId = doc.id
+                        favoriteList.add(book)
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Veri dönüştürme hatası!", Toast.LENGTH_SHORT).show()
+                }
+
+                adapter.notifyDataSetChanged()
+
                 if (favoriteList.isEmpty()) {
                     tvNoFavorites.visibility = View.VISIBLE
                     rvFavorites.visibility = View.GONE
@@ -76,6 +79,9 @@ class FavoritesFragment : Fragment() {
                     tvNoFavorites.visibility = View.GONE
                     rvFavorites.visibility = View.VISIBLE
                 }
+            }
+            .addOnFailureListener {
+                Toast.makeText(context, "Favoriler yüklenemedi!", Toast.LENGTH_SHORT).show()
             }
     }
 }

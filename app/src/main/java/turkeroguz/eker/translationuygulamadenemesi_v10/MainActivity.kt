@@ -1,4 +1,5 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10
+
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.MyBooksFragment
 import android.content.Context
 import android.content.res.Configuration
@@ -8,6 +9,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Bundle
+import android.util.Log // YENİ EKLENDİ
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -26,6 +28,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.LanguageAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Language
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
+// YENİ EKLENDİ (Model Dosyaları)
+import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
+import turkeroguz.eker.translationuygulamadenemesi_v10.model.Chapter
+import turkeroguz.eker.translationuygulamadenemesi_v10.model.Question
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.LoginFragment
 import java.util.Locale
 
@@ -39,15 +45,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         // --- 1. TEMA AYARINI HATIRLA VE UYGULA ---
-        // Uygulama açılır açılmaz, daha önce kaydedilen tercihi okuyoruz.
         val sharedPreferences = getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
-        val isNightMode = sharedPreferences.getBoolean("NightMode", false) // Varsayılan: false (Açık Mod)
+        val isNightMode = sharedPreferences.getBoolean("NightMode", false)
         AppCompatDelegate.setDefaultNightMode(
             if (isNightMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
         )
-        // ---------------------------------------
 
         setContentView(R.layout.activity_main)
+
+        // DİKKAT: METİNLİ KİTABI FİREBASE'E KAYDETMEK İÇİN BU FONKSİYONU ÇAĞIRIYORUZ
+        // Kitap Firebase'e yüklendikten sonra bu satırı silebilir veya başına // koyabilirsin.
+        addTestBookToDatabase()
 
         bottomNav = findViewById(R.id.bottomNav)
 
@@ -67,6 +75,53 @@ class MainActivity : AppCompatActivity() {
 
         setupBottomNav()
     }
+
+    // --- KİTABI FİREBASE'E GÖNDEREN FONKSİYON ---
+    private fun addTestBookToDatabase() {
+        // İŞTE SIR BURADA: """ (3 tırnak) kullanarak istediğin kadar uzun metni yapıştırabilirsin!
+        val uzunHikayeMetni = """
+            Bir zamanlar küçük bir kasabada yaşayan genç bir kız vardı. Her gün ormana gider ve saatlerce kitap okurdu. 
+            
+            PDF'ten kopyaladığın onlarca satırlık yazıyı direkt buraya yapıştırabilirsin. 
+            Hiçbir şekilde \n yazmana veya kodları düzeltmene gerek kalmaz. 
+            Enter'a bastığın yerler Firebase'e paragraf olarak gider.
+            
+            İstersen buraya 500 satır yazı koy, üç tırnak arasında olduğu sürece hiçbir sorun yaşamazsın!
+        """.trimIndent()
+
+        val chapter1 = Chapter(
+            chapterTitle = "Bölüm 1: Ormandaki Sır",
+            chapterText = uzunHikayeMetni, // Yukarıdaki uzun metni buraya bağladık
+            chapterImageUrl = "https://i.ibb.co/ornek_resim.jpg" // ImgBB gibi bir siteden aldığın resim linki
+        )
+
+        val question1 = Question(
+            questionText = "Genç kız her gün nereye giderdi?",
+            options = listOf("Ormana", "Denize", "Okula", "Kütüphaneye"),
+            correctOptionIndex = 0 // A şıkkı doğru
+        )
+
+        val testBook = Book(
+            bookId = "test_hikaye_01",
+            title = "Ormandaki Sır",
+            author = "Türker Oğuz",
+            level = "A2",
+            imageUrl = "https://i.ibb.co/ornek_kapak.jpg",
+            description = "İlk metin tabanlı hikayemiz!",
+            chapters = listOf(chapter1),
+            questions = listOf(question1)
+        )
+
+        db.collection("books").document(testBook.bookId)
+            .set(testBook)
+            .addOnSuccessListener {
+                Log.d("FIREBASE_TEST", "BAŞARILI! Metin tabanlı kitap Firebase'e eklendi.")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FIREBASE_TEST", "Hata oluştu: ${e.message}")
+            }
+    }
+    // --------------------------------------------
 
     private fun updateLastLoginAndStreak() {
         val currentUser = auth.currentUser ?: return
@@ -221,7 +276,6 @@ class MainActivity : AppCompatActivity() {
         val themeSwitch = view.findViewById<MaterialSwitch>(R.id.themeSwitch)
         val themeSwitchContainer = view.findViewById<LinearLayout>(R.id.themeSwitchContainer)
 
-        // Mevcut tercihi oku ve switch'i ayarla
         val sharedPreferences = getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
         val isNightModePref = sharedPreferences.getBoolean("NightMode", false)
         themeSwitch?.isChecked = isNightModePref
@@ -229,15 +283,11 @@ class MainActivity : AppCompatActivity() {
         themeSwitchContainer?.setOnClickListener { themeSwitch.isChecked = !themeSwitch.isChecked }
 
         themeSwitch?.setOnCheckedChangeListener { _, isChecked ->
-            // Tercihi Kaydet
             sharedPreferences.edit().putBoolean("NightMode", isChecked).apply()
-
-            // Temayı Uygula
             AppCompatDelegate.setDefaultNightMode(
                 if (isChecked) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
             )
         }
-        // --------------------------------------
 
         view.findViewById<View>(R.id.btnClose)?.setOnClickListener { dialog.dismiss() }
         view.findViewById<View>(R.id.btnSheetLogout)?.setOnClickListener {

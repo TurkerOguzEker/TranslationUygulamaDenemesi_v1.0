@@ -19,7 +19,10 @@ class DownloadsFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var adapter: DownloadsAdapter
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentDownloadsBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -27,24 +30,27 @@ class DownloadsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.rvDownloads.layoutManager = LinearLayoutManager(context)
+        // RecyclerView için LayoutManager ayarlanıyor
+        binding.rvDownloads.layoutManager = LinearLayoutManager(requireContext())
 
-        adapter = DownloadsAdapter(emptyList(),
+        // Adapter tanımlanıyor ve RecyclerView'a bağlanıyor
+        adapter = DownloadsAdapter(
+            books = emptyList(),
             onBookClick = { book ->
-                // Çevrimdışı Oku
+                // Çevrimdışı Oku: Tıklanan kitabı BookReaderActivity'e gönderiyoruz
                 val intent = Intent(requireContext(), BookReaderActivity::class.java)
                 intent.putExtra("BOOK_DATA", book)
                 startActivity(intent)
             },
             onDeleteClick = { book ->
-                // Silme Onayı
+                // Silme Onayı Dialog'u
                 AlertDialog.Builder(requireContext())
-                    .setTitle("Sil")
-                    .setMessage("${book.title} cihazdan silinsin mi?")
+                    .setTitle("Kitabı Sil")
+                    .setMessage("'${book.title}' cihazdan silinsin mi?")
                     .setPositiveButton("Sil") { _, _ ->
                         LocalLibraryManager.deleteBook(requireContext(), book)
-                        loadBooks() // Listeyi Yenile
-                        Toast.makeText(context, "Kitap silindi", Toast.LENGTH_SHORT).show()
+                        loadBooks() // Silme işleminden sonra listeyi yenile
+                        Toast.makeText(requireContext(), "Kitap silindi", Toast.LENGTH_SHORT).show()
                     }
                     .setNegativeButton("İptal", null)
                     .show()
@@ -55,16 +61,19 @@ class DownloadsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        // Sayfa her açıldığında (veya geri dönüldüğünde) listeyi yenile
         loadBooks()
     }
 
     private fun loadBooks() {
+        // Cihazdaki kitapları çek ve Adapter'ı güncelle
         val books = LocalLibraryManager.getDownloadedBooks(requireContext())
         adapter.updateList(books)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Memory leak (bellek sızıntısı) olmaması için binding'i temizliyoruz
         _binding = null
     }
 }

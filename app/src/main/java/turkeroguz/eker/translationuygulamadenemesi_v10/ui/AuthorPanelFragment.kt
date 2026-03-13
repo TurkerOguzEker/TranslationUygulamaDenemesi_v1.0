@@ -16,6 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
+import turkeroguz.eker.translationuygulamadenemesi_v10.model.Chapter // YENİ EKLENDİ
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Question
 import java.util.Locale
 
@@ -27,7 +28,7 @@ class AuthorPanelFragment : Fragment() {
     private lateinit var adapter: BookAdapter
     private val levels = arrayOf("Seçiniz", "A1", "A2", "B1", "B1+", "B2", "C1", "C2")
     private val filterLevels = arrayOf("Tümü", "A1", "A2", "B1", "B1+", "B2", "C1", "C2")
-    private val optionLetters = arrayOf("A", "B", "C", "D") // Spinner için
+    private val optionLetters = arrayOf("A", "B", "C", "D")
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_author_panel, container, false)
@@ -108,13 +109,14 @@ class AuthorPanelFragment : Fragment() {
 
         spLevel.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, levels)
 
-        // Bölüm Ekleme Fonksiyonu
-        fun addChapterView(storyUrl: String = "", question: Question? = null) {
+        // YENİ: Bölüm Ekleme Fonksiyonu (Artık URL değil, Chapter nesnesi alıyor)
+        fun addChapterView(chapter: Chapter? = null, question: Question? = null) {
             val chapterView = LayoutInflater.from(context).inflate(R.layout.layout_chapter_item, null)
             val index = llChapters.childCount + 1
 
             chapterView.findViewById<TextView>(R.id.tvChapterTitle).text = "$index. Bölüm"
 
+            // Not: ID'ler eski (Pdf) kalmış olabilir ama biz içlerine metin (Text) basacağız
             val etStory = chapterView.findViewById<EditText>(R.id.etChapterStoryPdf)
             val etQuestion = chapterView.findViewById<EditText>(R.id.etChapterQuestionPdf)
             val etA = chapterView.findViewById<EditText>(R.id.etOptA)
@@ -126,10 +128,12 @@ class AuthorPanelFragment : Fragment() {
 
             spCorrect.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, optionLetters)
 
-            // Var olan veriyi doldur
-            etStory.setText(storyUrl)
+            // Var olan metinleri doldur
+            if (chapter != null) {
+                etStory.setText(chapter.chapterText) // Artık PDF linki değil, koca hikaye metni!
+            }
             if (question != null) {
-                etQuestion.setText(question.questionPdfUrl)
+                etQuestion.setText(question.questionText) // Artık soru PDF'i değil, soru metni!
                 if (question.options.size >= 4) {
                     etA.setText(question.options[0])
                     etB.setText(question.options[1])
@@ -157,12 +161,12 @@ class AuthorPanelFragment : Fragment() {
             spLevel.setSelection(pos)
             btnDelete.visibility = View.VISIBLE
 
-            // Var olan bölümleri yükle
-            val maxLen = maxOf(bookToEdit.storyUrls.size, bookToEdit.questions.size)
+            // YENİ: Var olan bölümleri ve soruları yükle
+            val maxLen = maxOf(bookToEdit.chapters.size, bookToEdit.questions.size)
             for (i in 0 until maxLen) {
-                val sUrl = if (i < bookToEdit.storyUrls.size) bookToEdit.storyUrls[i] else ""
+                val chapterData = if (i < bookToEdit.chapters.size) bookToEdit.chapters[i] else null
                 val qData = if (i < bookToEdit.questions.size) bookToEdit.questions[i] else null
-                addChapterView(sUrl, qData)
+                addChapterView(chapterData, qData)
             }
         } else {
             // Yeni kitap ise 1 tane boş bölüm ekle
@@ -179,8 +183,8 @@ class AuthorPanelFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // Bölümleri Topla
-            val storyList = ArrayList<String>()
+            // YENİ: Metin tabanlı bölümleri topla
+            val chapterList = ArrayList<Chapter>()
             val questionList = ArrayList<Question>()
 
             for (i in 0 until llChapters.childCount) {
@@ -193,11 +197,19 @@ class AuthorPanelFragment : Fragment() {
                 val etD = view.findViewById<EditText>(R.id.etOptD)
                 val spC = view.findViewById<Spinner>(R.id.spChapterCorrect)
 
-                if (etS.text.isNotEmpty()) storyList.add(etS.text.toString())
+                val storyText = etS.text.toString()
+                if (storyText.isNotEmpty()) {
+                    chapterList.add(Chapter(
+                        chapterTitle = "${i + 1}. Bölüm", // Otomatik başlık atadık
+                        chapterText = storyText,          // Hikayenin tamamı
+                        chapterImageUrl = ""              // Şimdilik boş resim
+                    ))
+                }
 
-                if (etQ.text.isNotEmpty()) {
+                val questionText = etQ.text.toString()
+                if (questionText.isNotEmpty()) {
                     val q = Question(
-                        questionPdfUrl = etQ.text.toString(),
+                        questionText = questionText,      // Sorunun tamamı
                         options = listOf(etA.text.toString(), etB.text.toString(), etC.text.toString(), etD.text.toString()),
                         correctOptionIndex = spC.selectedItemPosition
                     )
@@ -205,13 +217,14 @@ class AuthorPanelFragment : Fragment() {
                 }
             }
 
+            // Veritabanına gidecek olan yapı
             val bookData = hashMapOf(
                 "title" to etTitle.text.toString(),
                 "author" to etAuthor.text.toString(),
                 "level" to selectedLevel,
                 "imageUrl" to etImage.text.toString(),
                 "description" to etDesc.text.toString(),
-                "storyUrls" to storyList,
+                "chapters" to chapterList, // YENİ: storyUrls gitti, chapters geldi!
                 "questions" to questionList
             )
 
@@ -224,7 +237,6 @@ class AuthorPanelFragment : Fragment() {
                     dialog.dismiss()
                 }
             } else {
-                // HATA DÜZELTİLDİ: 'as Map<String, Any>' eklendi
                 db.collection("books").document(bookToEdit.bookId).update(bookData as Map<String, Any>).addOnSuccessListener {
                     Toast.makeText(context, "Kitap Güncellendi! 🔄", Toast.LENGTH_SHORT).show()
                     loadBooks()
