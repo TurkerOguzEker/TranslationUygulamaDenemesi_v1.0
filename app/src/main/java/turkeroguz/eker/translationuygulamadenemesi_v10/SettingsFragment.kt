@@ -10,12 +10,11 @@ import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.AdminPanelFragment
-import turkeroguz.eker.translationuygulamadenemesi_v10.ui.AuthorPanelFragment // YENİ: Yazar paneli importu
 
 class SettingsFragment : Fragment() {
 
     private var btnAdminPanel: MaterialButton? = null
-    private var btnAuthorPanel: MaterialButton? = null // YENİ: Yazar butonu değişkeni
+    // NOT: btnAuthorPanel tamamen kaldırıldı.
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,9 +27,8 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 1. Butonları Bağla
+        // 1. Sadece Admin Butonunu Bağla
         btnAdminPanel = view.findViewById(R.id.btnAdminPanel)
-        btnAuthorPanel = view.findViewById(R.id.btnAuthorPanel) // YENİ: XML'deki butonla eşleştirme
 
         // 2. Uygulama Sürümünü Yazdır
         val tvVersion = view.findViewById<TextView>(R.id.txt_app_version)
@@ -42,27 +40,21 @@ class SettingsFragment : Fragment() {
             tvVersion.text = "v1.0"
         }
 
-        // 3. Yetki Kontrolünü Başlat (Hem Admin Hem Yazar kontrolü)
+        // 3. Yetki Kontrolünü Başlat (Sadece Admin için)
         checkUserRole()
 
         // 4. Admin Paneline Geçiş Tıklaması
         btnAdminPanel?.setOnClickListener {
             (activity as? MainActivity)?.replaceFragment(AdminPanelFragment())
         }
-
-        // 5. Yazar Paneline Geçiş Tıklaması (YENİ)
-        btnAuthorPanel?.setOnClickListener {
-            (activity as? MainActivity)?.replaceFragment(AuthorPanelFragment())
-        }
     }
 
     private fun checkUserRole() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
 
-        // Eğer kullanıcı yoksa butonları gizle ve çık
+        // Eğer kullanıcı yoksa butonu gizle ve çık
         if (userId == null) {
             btnAdminPanel?.visibility = View.GONE
-            btnAuthorPanel?.visibility = View.GONE
             return
         }
 
@@ -72,26 +64,19 @@ class SettingsFragment : Fragment() {
                 if (document.exists()) {
                     val role = document.getString("role")
 
-                    // Önce hepsini gizle (Varsayılan durum)
-                    btnAdminPanel?.visibility = View.GONE
-                    btnAuthorPanel?.visibility = View.GONE
-
-                    // Rol kontrolüne göre aç
+                    // Rol kontrolüne göre sadece Admin butonunu aç
                     if (role == "admin") {
                         btnAdminPanel?.visibility = View.VISIBLE
-                        btnAuthorPanel?.visibility = View.VISIBLE // Admin her şeyi görebilir
-                    } else if (role == "author") {
-                        btnAuthorPanel?.visibility = View.VISIBLE // Yazar sadece kendi panelini görür
+                    } else {
+                        btnAdminPanel?.visibility = View.GONE
                     }
                 } else {
                     btnAdminPanel?.visibility = View.GONE
-                    btnAuthorPanel?.visibility = View.GONE
                 }
             }
             .addOnFailureListener {
-                // Hata durumunda butonları gizle
+                // Hata durumunda butonu gizle
                 btnAdminPanel?.visibility = View.GONE
-                btnAuthorPanel?.visibility = View.GONE
             }
     }
 }
