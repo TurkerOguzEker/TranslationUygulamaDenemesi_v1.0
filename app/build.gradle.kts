@@ -47,12 +47,6 @@ android {
             excludes += "META-INF/NOTICE.txt"
             excludes += "META-INF/LICENSE.txt"
         }
-        // 👇 İŞTE BU KISIM EKSİKTİ, BUNU EKLEMEZSEN ÇALIŞMAZ!
-        jniLibs {
-            useLegacyPackaging = true
-        }
-    }
-    packaging {
         jniLibs {
             useLegacyPackaging = true
         }
@@ -91,8 +85,6 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    implementation("com.github.mhiew:android-pdf-viewer:3.2.0-beta.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-
-
+    // NOT: PDF Kütüphanesi ve onun uyarıya sebep olan C++ dosyaları (libpdfium vb.)
+    // projeyi hafifletmek ve Android 15 uyumluluğunu sağlamak için tamamen kaldırıldı! 🚀
 }
