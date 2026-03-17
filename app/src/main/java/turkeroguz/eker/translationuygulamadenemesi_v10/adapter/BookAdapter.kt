@@ -15,20 +15,23 @@ import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
 
 class BookAdapter(
-    private val bookList: List<Book>,
+    private var bookList: List<Book>, // 'val' yerine 'var' yaptık ki güncelleyebilelim
     private val onItemClick: (Book) -> Unit
 ) : RecyclerView.Adapter<BookAdapter.BookViewHolder>() {
 
-    // YENİ: Firebase bağlantıları
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+
+    // YENİ: Listeyi dışarıdan, adapteri baştan yaratmadan güncellemek için
+    fun updateBooks(newBooks: List<Book>) {
+        this.bookList = newBooks
+        notifyDataSetChanged()
+    }
 
     class BookViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val ivCover: ImageView = itemView.findViewById(R.id.imgBookCover)
         val tvTitle: TextView = itemView.findViewById(R.id.txtBookTitle)
         val tvAuthor: TextView = itemView.findViewById(R.id.txtBookAuthor)
-
-        // YENİ EKLENEN: Çember ve Yüzde yazısı
         val pbProgress: CircularProgressIndicator = itemView.findViewById(R.id.pbBookProgress)
         val tvProgress: TextView = itemView.findViewById(R.id.tvBookProgress)
     }
@@ -44,7 +47,6 @@ class BookAdapter(
         holder.tvTitle.text = book.title
         holder.tvAuthor.text = book.author ?: "Yazar Bilinmiyor"
 
-        // Glide ile resmi yükle
         if (book.imageUrl.isNotEmpty()) {
             Glide.with(holder.itemView.context)
                 .load(book.imageUrl)
@@ -54,11 +56,9 @@ class BookAdapter(
             holder.ivCover.setImageResource(R.drawable.ic_launcher_background)
         }
 
-        // --- İLERLEME YÜZDESİNİ ÇEKME ---
-        // Liste kaydırıldığında eski verilerin karışmaması için önce sıfırla
         holder.pbProgress.progress = 0
         holder.tvProgress.text = "%0"
-        holder.pbProgress.setIndicatorColor(Color.parseColor("#FF9800")) // Varsayılan: Turuncu
+        holder.pbProgress.setIndicatorColor(Color.parseColor("#FF9800"))
 
         val uid = auth.currentUser?.uid
         if (uid != null && book.bookId.isNotEmpty()) {
@@ -70,7 +70,6 @@ class BookAdapter(
                         holder.pbProgress.progress = progressInt
                         holder.tvProgress.text = "%$progressInt"
 
-                        // %100 olunca rengi yeşil yap
                         if (progressInt == 100) {
                             holder.pbProgress.setIndicatorColor(Color.parseColor("#4CAF50"))
                         }
@@ -78,7 +77,6 @@ class BookAdapter(
                 }
         }
 
-        // Tıklama özelliği
         holder.itemView.setOnClickListener {
             onItemClick(book)
         }

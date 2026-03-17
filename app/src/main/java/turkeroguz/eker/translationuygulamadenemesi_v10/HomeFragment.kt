@@ -27,11 +27,13 @@ class HomeFragment : Fragment() {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    private val bookList = ArrayList<Book>()
 
     private var userListener: ListenerRegistration? = null
-    // YENİ EKLENDİ: Kitapları dinlemek için Listener
     private var booksListener: ListenerRegistration? = null
+
+    // Adaptörleri sayfa açılışında tanımlıyoruz
+    private lateinit var featuredAdapter: BookAdapter
+    private lateinit var allBooksAdapter: BookAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_home, container, false)
@@ -40,10 +42,8 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // NAVBAR'I GÖRÜNÜR YAP
         (activity as? MainActivity)?.setBottomNavVisibility(true)
 
-        // Profil Butonu
         val btnProfile = view.findViewById<ImageButton>(R.id.btnProfile)
         loadProfileImage(btnProfile)
 
@@ -51,8 +51,33 @@ class HomeFragment : Fragment() {
             (activity as? MainActivity)?.showProfileDialog()
         }
 
+        // 1. ADAPTÖRLERİ SADECE BİR KERE BAĞLA (Init)
+        setupRecyclerViews(view)
+
         startRealtimeTracking(view)
-        fetchBooks(view)
+        fetchBooks()
+    }
+
+    // RecyclerView'ları bir kez kuran fonksiyon
+    private fun setupRecyclerViews(view: View) {
+        val rvFeatured = view.findViewById<RecyclerView>(R.id.rvFeaturedBooks)
+        val rvAll = view.findViewById<RecyclerView>(R.id.rvAllBooks)
+
+        // Öne Çıkanlar Adaptörü Kurulumu
+        featuredAdapter = BookAdapter(emptyList()) { selectedBook ->
+            val detailSheet = BookDetailBottomSheet(selectedBook)
+            detailSheet.show(parentFragmentManager, "BookDetailSheet")
+        }
+        rvFeatured?.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        rvFeatured?.adapter = featuredAdapter
+
+        // Tüm Kitaplar Adaptörü Kurulumu
+        allBooksAdapter = BookAdapter(emptyList()) { selectedBook ->
+            val detailSheet = BookDetailBottomSheet(selectedBook)
+            detailSheet.show(parentFragmentManager, "BookDetailSheet")
+        }
+        rvAll?.layoutManager = LinearLayoutManager(context)
+        rvAll?.adapter = allBooksAdapter
     }
 
     override fun onResume() {
@@ -82,44 +107,36 @@ class HomeFragment : Fragment() {
         }
     }
 
-    // GÜNCELLENDİ: Gerçek Zamanlı (Realtime) Kitap Çekme
-    private fun fetchBooks(view: View) {
+    // GÜNCELLENDİ: Hataları engelleyen Kurşun Geçirmez Kitap Çekme Sistemi
+    private fun fetchBooks() {
         booksListener = db.collection("books")
             .addSnapshotListener { snapshot, error ->
                 if (error != null || snapshot == null) return@addSnapshotListener
 
-                bookList.clear()
+                // Eski listeyi clear() yapmak yerine HER SEFERİNDE TERTEMİZ BİR LİSTE oluşturuyoruz
+                val safeBookList = mutableListOf<Book>()
+
                 for (document in snapshot.documents) {
-                    val book = document.toObject(Book::class.java)
-                    if (book != null) {
-                        book.bookId = document.id // Firebase ID'si
-                        bookList.add(book)
+                    try {
+                        val book = document.toObject(Book::class.java)
+                        if (book != null) {
+                            if (book.bookId.isEmpty()) book.bookId = document.id // Garanti olsun
+                            safeBookList.add(book)
+                        }
+                    } catch (e: Exception) {
+                        // Eğer web'den eklenen bir kitap formatı hatalıysa,
+                        // sistemi çökertmeden o kitabı atlar ve diğerlerini göstermeye devam eder.
+                        e.printStackTrace()
                     }
                 }
 
-                // --- ÖNE ÇIKAN (FEATURED) KİTAPLAR (YATAY) ---
-                val rvFeatured = view.findViewById<RecyclerView>(R.id.rvFeaturedBooks)
-                if (rvFeatured != null && bookList.isNotEmpty()) {
-                    if (rvFeatured.layoutManager == null) {
-                        rvFeatured.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-                    }
-                    rvFeatured.adapter = BookAdapter(bookList.take(5)) { selectedBook ->
-                        val detailSheet = BookDetailBottomSheet(selectedBook)
-                        detailSheet.show(parentFragmentManager, "BookDetailSheet")
-                    }
-                }
+                // Adapter'lere eski listenin üstüne yazmak yerine tamamen YENİ LİSTEYİ veriyoruz
+                val finalBooks = safeBookList.toList()
+                allBooksAdapter.updateBooks(finalBooks)
 
-                // --- TÜM KİTAPLAR (DİKEY/YATAY) ---
-                val rvAll = view.findViewById<RecyclerView>(R.id.rvAllBooks)
-                if (rvAll != null && bookList.isNotEmpty()) {
-                    if (rvAll.layoutManager == null) {
-                        rvAll.layoutManager = LinearLayoutManager(context)
-                    }
-                    rvAll.adapter = BookAdapter(bookList) { selectedBook ->
-                        val detailSheet = BookDetailBottomSheet(selectedBook)
-                        detailSheet.show(parentFragmentManager, "BookDetailSheet")
-                    }
-                }
+                // Öne Çıkanları Güncelle (İlk 5 kitap)
+                val featuredList = finalBooks.take(5)
+                featuredAdapter.updateBooks(featuredList)
             }
     }
 
@@ -160,7 +177,6 @@ class HomeFragment : Fragment() {
         return bitmap
     }
 
-    // YENİ EKLENDİ: Sayfa kapanınca dinlemeyi durdur ki RAM yemesin
     override fun onDestroyView() {
         super.onDestroyView()
         userListener?.remove()

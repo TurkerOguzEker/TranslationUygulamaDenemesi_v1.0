@@ -7,13 +7,10 @@
     android:orientation="vertical"
     android:background="#F5F5F5">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:padding="16dp"
-        android:gravity="center_vertical"
-
         android:elevation="4dp">
 
         <LinearLayout
@@ -21,13 +18,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
             android:background="@drawable/bg_profile_button_round"
             android:paddingStart="8dp"
             android:paddingEnd="12dp"
             android:paddingTop="4dp"
             android:paddingBottom="4dp"
-            android:layout_marginEnd="12dp"
             android:visibility="gone">
 
             <ImageView
@@ -40,49 +37,54 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Premium Aktif"
+                android:text="Premium"
                 android:textColor="#FFD700"
                 android:textStyle="bold"
                 android:textSize="12sp"/>
         </LinearLayout>
 
         <TextView
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_centerInParent="true"
             android:text="Hikayeler"
             android:textSize="22sp"
             android:textStyle="bold"
             android:textColor="#333"/>
 
+        <ImageButton
+            android:id="@+id/btnProfile"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_launcher_foreground"
+            android:background="@drawable/bg_profile_button_round"
+            android:padding="8dp"
+            android:scaleType="centerCrop"/>
+
         <TextView
             android:id="@+id/tvAdminBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="(ADMIN)"
+            android:layout_toStartOf="@id/btnProfile"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="8dp"
+            android:text="ADMIN"
             android:textColor="#D32F2F"
             android:textStyle="bold"
-            android:textSize="12sp"
+            android:textSize="9sp"
             android:background="#20D32F2F"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             android:paddingTop="4dp"
             android:paddingBottom="4dp"
-            android:layout_marginEnd="8dp"
             android:visibility="gone"
             tools:visibility="visible"/>
 
-        <ImageButton
-            android:id="@+id/btnProfile"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/ic_launcher_foreground"
-            android:background="@drawable/bg_profile_button_round"
-            android:padding="8dp"
-            android:scaleType="centerCrop"/>
-    </LinearLayout>
+    </RelativeLayout>
 
-    <ScrollView
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <LinearLayout
@@ -128,5 +130,5 @@
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"/>
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 </LinearLayout>
