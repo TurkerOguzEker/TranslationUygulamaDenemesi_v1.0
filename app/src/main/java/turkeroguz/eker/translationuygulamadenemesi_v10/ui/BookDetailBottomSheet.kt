@@ -20,6 +20,7 @@ import com.google.android.material.chip.Chip
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions // YENİ EKLENDİ
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -47,7 +48,7 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         val tvDesc = view.findViewById<TextView>(R.id.tvDetailDescription)
 
         val chipLevel = view.findViewById<Chip>(R.id.chipDetailLevel)
-        val chipGenre = view.findViewById<Chip>(R.id.chipDetailGenre) // YENİ EKLENDİ
+        val chipGenre = view.findViewById<Chip>(R.id.chipDetailGenre)
 
         val btnFavorite = view.findViewById<MaterialButton>(R.id.btnAddToFavorites)
         val btnReadNow = view.findViewById<MaterialButton>(R.id.btnReadNow)
@@ -58,7 +59,6 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         chipLevel.text = if (book.level.isNotEmpty()) book.level else "Genel"
         tvDesc.text = if (!book.description.isNullOrEmpty()) book.description else "Bu kitap için açıklama girilmemiş."
 
-        // YENİ EKLENDİ: Tür bilgisini ekrana bas, yoksa çipi gizle
         if (book.genre.isNotEmpty()) {
             chipGenre.visibility = View.VISIBLE
             chipGenre.text = book.genre
@@ -90,6 +90,9 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         btnReadNow.setOnClickListener {
             incrementReadCount()
 
+            // YENİ: OKU BUTONUNA TIKLANDIĞI AN VERİTABANINA ZAMANI KAYDET!
+            saveInitialTimestampToProgress()
+
             if (isDownloaded) {
                 openDownloadedBook()
             } else {
@@ -114,13 +117,24 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         btnClose.setOnClickListener { dismiss() }
     }
 
+    // YENİ EKLENEN FONKSİYON: Butona tıklandığı an ana sayfada gözükmesi için saati kaydeder
+    private fun saveInitialTimestampToProgress() {
+        val uid = auth.currentUser?.uid ?: return
+        if (book.bookId.isNotEmpty()) {
+            val progressData = hashMapOf(
+                "lastReadTimestamp" to System.currentTimeMillis()
+            )
+            // SetOptions.merge() kullanarak sadece son açılma saatini güncelleriz, ilerlemeyi sıfırlamayız.
+            db.collection("users").document(uid).collection("book_progress").document(book.bookId)
+                .set(progressData, SetOptions.merge())
+        }
+    }
+
     private fun incrementReadCount() {
         if (book.bookId.isNotEmpty()) {
             db.collection("books").document(book.bookId)
                 .update("readCount", FieldValue.increment(1))
-                .addOnFailureListener { e ->
-                    e.printStackTrace()
-                }
+                .addOnFailureListener { e -> e.printStackTrace() }
         }
     }
 
@@ -207,7 +221,6 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
 
     private fun showModernToast(message: String, iconResId: Int, colorHex: String = "#424242") {
         val ctx = context ?: return
-
         val layout = LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -217,22 +230,17 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
                 cornerRadius = 100f
             }
         }
-
         val icon = ImageView(ctx).apply {
             setImageResource(iconResId)
             setColorFilter(Color.WHITE)
-            layoutParams = LinearLayout.LayoutParams(60, 60).apply {
-                setMargins(0, 0, 24, 0)
-            }
+            layoutParams = LinearLayout.LayoutParams(60, 60).apply { setMargins(0, 0, 24, 0) }
         }
-
         val text = TextView(ctx).apply {
             this.text = message
             setTextColor(Color.WHITE)
             textSize = 14f
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
-
         layout.addView(icon)
         layout.addView(text)
 

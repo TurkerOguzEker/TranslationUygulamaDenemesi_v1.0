@@ -20,7 +20,6 @@ import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.Query
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet
@@ -135,55 +134,73 @@ class HomeFragment : Fragment() {
 
         if (layoutContinueReading == null || flContinueReadingBook == null) return
 
-        // Progress koleksiyonundan okuması devam eden (progress > 0 ve < 100) en son kitabı bul
+        // 1. .get() YERİNE .addSnapshotListener() KULLANIYORUZ! (Anlık canlı güncelleme için)
         db.collection("users").document(uid).collection("book_progress")
-            .whereGreaterThan("progress", 0)
-            .whereLessThan("progress", 100)
-            .orderBy("progress", Query.Direction.DESCENDING)
-            .limit(1)
-            .get()
-            .addOnSuccessListener { querySnapshot ->
-                if (!querySnapshot.isEmpty) {
-                    val lastReadDoc = querySnapshot.documents[0]
-                    val lastReadBookId = lastReadDoc.id
+            .addSnapshotListener { querySnapshot, error ->
+                if (error != null) {
+                    layoutContinueReading.visibility = View.GONE
+                    return@addSnapshotListener
+                }
 
-                    val lastReadBook = allBooks.find { it.bookId == lastReadBookId }
+                if (querySnapshot != null && !querySnapshot.isEmpty) {
 
-                    if (lastReadBook != null) {
-                        layoutContinueReading.visibility = View.VISIBLE
-                        flContinueReadingBook.removeAllViews()
+                    // 2. Yüzdesi 100'den küçük olanları al (%0 olanlar da dahil, çünkü yeni başlanmış olabilir)
+                    val inProgressBooks = querySnapshot.documents.filter { doc ->
+                        val prog = doc.getLong("progress")?.toInt() ?: 0
+                        prog < 100
+                    }
 
-                        val inflater = LayoutInflater.from(context)
-                        val singleBookView = inflater.inflate(R.layout.item_book_card, flContinueReadingBook, false)
+                    // 3. En güncel (son okunan / lastReadTimestamp) kitabı bul
+                    val lastReadDoc = inProgressBooks.maxByOrNull { doc ->
+                        doc.getLong("lastReadTimestamp") ?: 0L
+                    }
 
-                        // Ana kapak olduğu için yüksekliği biraz daha dar, genişliği tam ekran yapalım
-                        singleBookView.layoutParams = FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            (220 * resources.displayMetrics.density).toInt() // Yüksekliği sabitledik
-                        )
+                    if (lastReadDoc != null) {
+                        val lastReadBookId = lastReadDoc.id
+                        val lastReadBook = allBooks.find { it.bookId == lastReadBookId }
 
-                        val ivCover = singleBookView.findViewById<android.widget.ImageView>(R.id.imgBookCover)
-                        val tvTitle = singleBookView.findViewById<TextView>(R.id.txtBookTitle)
-                        val tvAuthor = singleBookView.findViewById<TextView>(R.id.txtBookAuthor)
-                        val pbProgress = singleBookView.findViewById<com.google.android.material.progressindicator.CircularProgressIndicator>(R.id.pbBookProgress)
-                        val tvProgress = singleBookView.findViewById<TextView>(R.id.tvBookProgress)
+                        if (lastReadBook != null) {
+                            layoutContinueReading.visibility = View.VISIBLE
+                            flContinueReadingBook.removeAllViews()
 
-                        tvTitle?.text = lastReadBook.title
-                        tvAuthor?.text = lastReadBook.author ?: "Bilinmiyor"
-                        val currentProgress = lastReadDoc.getLong("progress")?.toInt() ?: 0
-                        pbProgress?.progress = currentProgress
-                        tvProgress?.text = "%$currentProgress"
+                            val inflater = LayoutInflater.from(context)
+                            val continueReadingView = inflater.inflate(R.layout.item_continue_reading_card, flContinueReadingBook, false)
 
-                        if (lastReadBook.imageUrl.isNotEmpty() && ivCover != null) {
-                            Glide.with(this).load(lastReadBook.imageUrl).into(ivCover)
+                            val ivCover = continueReadingView.findViewById<android.widget.ImageView>(R.id.imgContinueCover)
+                            val tvTitle = continueReadingView.findViewById<TextView>(R.id.txtContinueTitle)
+                            val tvAuthor = continueReadingView.findViewById<TextView>(R.id.txtContinueAuthor)
+
+                            val tvLevel = continueReadingView.findViewById<TextView>(R.id.tvContinueLevel)
+                            val tvGenre = continueReadingView.findViewById<TextView>(R.id.tvContinueGenre)
+                            val pbProgressHorizontal = continueReadingView.findViewById<com.google.android.material.progressindicator.LinearProgressIndicator>(R.id.pbContinueProgressHorizontal)
+                            val tvProgress = continueReadingView.findViewById<TextView>(R.id.tvContinueProgress)
+
+                            tvTitle?.text = lastReadBook.title
+                            tvAuthor?.text = lastReadBook.author ?: "Bilinmiyor"
+
+                            tvLevel?.text = lastReadBook.level
+                            if (lastReadBook.genre.isNotEmpty()) {
+                                tvGenre?.visibility = View.VISIBLE
+                                tvGenre?.text = lastReadBook.genre
+                            }
+
+                            val currentProgress = lastReadDoc.getLong("progress")?.toInt() ?: 0
+                            pbProgressHorizontal?.progress = currentProgress
+                            tvProgress?.text = "%$currentProgress"
+
+                            if (lastReadBook.imageUrl.isNotEmpty() && ivCover != null) {
+                                Glide.with(requireContext()).load(lastReadBook.imageUrl).into(ivCover)
+                            }
+
+                            continueReadingView.setOnClickListener {
+                                val detailSheet = turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet(lastReadBook)
+                                detailSheet.show(parentFragmentManager, "BookDetailSheet")
+                            }
+
+                            flContinueReadingBook.addView(continueReadingView)
+                        } else {
+                            layoutContinueReading.visibility = View.GONE
                         }
-
-                        singleBookView.setOnClickListener {
-                            val detailSheet = BookDetailBottomSheet(lastReadBook)
-                            detailSheet.show(parentFragmentManager, "BookDetailSheet")
-                        }
-
-                        flContinueReadingBook.addView(singleBookView)
                     } else {
                         layoutContinueReading.visibility = View.GONE
                     }
@@ -191,9 +208,20 @@ class HomeFragment : Fragment() {
                     layoutContinueReading.visibility = View.GONE
                 }
             }
-            .addOnFailureListener {
-                layoutContinueReading.visibility = View.GONE
+    }
+
+    private fun formatReadCount(count: Int): String {
+        return if (count >= 100) {
+            val kValue = count / 1000.0
+            val formatted = String.format(java.util.Locale.US, "%.1f", kValue)
+            if (formatted.endsWith(".0")) {
+                "${formatted.replace(".0", "")}k"
+            } else {
+                "${formatted}k"
             }
+        } else {
+            count.toString()
+        }
     }
 
     // HER BİR SEVİYE İÇİN DÜZ YATAY (HORIZONTAL) LİSTE OLUŞTURUR

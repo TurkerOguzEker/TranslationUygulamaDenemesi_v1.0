@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions // YENİ EKLENDİ
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Question
 
@@ -75,6 +76,23 @@ class BookReaderActivity : AppCompatActivity() {
         initViews()
         prepareFlow()
         checkPreviousProgress()
+
+        // YENİ: KİTAP AÇILDIĞI SANİYE VERİTABANINA ZAMANI KAYDET!
+        saveInitialTimestamp()
+    }
+
+    // YENİ EKLENEN FONKSİYON: Kullanıcı sayfayı ilerletmese bile o kitabı son okunanlara atar.
+    private fun saveInitialTimestamp() {
+        val uid = auth.currentUser?.uid ?: return
+        val bookId = currentBook?.bookId ?: return
+
+        val data = hashMapOf(
+            "lastReadTimestamp" to System.currentTimeMillis()
+        )
+
+        // SetOptions.merge() sayesinde, eğer kitapta daha önce ilerlemesi varsa (örn %40), o silinmez sadece son açılma saati güncellenir.
+        db.collection("users").document(uid).collection("book_progress").document(bookId)
+            .set(data, SetOptions.merge())
     }
 
     private fun initViews() {
@@ -101,19 +119,17 @@ class BookReaderActivity : AppCompatActivity() {
         btnTextIncrease = findViewById(R.id.btnTextIncrease)
         btnTextDecrease = findViewById(R.id.btnTextDecrease)
 
-        // Yazı Boyutunu Başlangıç Değerine Ayarla
         tvChapterContent.textSize = currentTextSize
 
-        // --- BUTON TIKLAMALARI ---
         btnTextIncrease.setOnClickListener {
-            if (currentTextSize < 30f) { // Maksimum büyüklük sınırı
+            if (currentTextSize < 30f) {
                 currentTextSize += 2f
                 tvChapterContent.textSize = currentTextSize
             }
         }
 
         btnTextDecrease.setOnClickListener {
-            if (currentTextSize > 14f) { // Minimum küçüklük sınırı
+            if (currentTextSize > 14f) {
                 currentTextSize -= 2f
                 tvChapterContent.textSize = currentTextSize
             }
@@ -187,7 +203,6 @@ class BookReaderActivity : AppCompatActivity() {
             tvChapterTitle.text = chapter.chapterTitle
             tvChapterContent.text = chapter.chapterText
 
-            // Eğer resim URL'si varsa göster, yoksa gizle
             if (chapter.chapterImageUrl.isNotEmpty()) {
                 ivChapterImage.visibility = View.VISIBLE
                 Glide.with(this).load(chapter.chapterImageUrl).into(ivChapterImage)
@@ -284,7 +299,6 @@ class BookReaderActivity : AppCompatActivity() {
         } else {
             finishBook()
 
-            // Eğer kitap bitmişse sonucu göster ve kapat
             val builder = androidx.appcompat.app.AlertDialog.Builder(this)
             builder.setTitle("Tebrikler! 🎉")
             builder.setMessage("Kitabı tamamladınız!\nDoğru Sayısı: $totalCorrect")
@@ -313,11 +327,12 @@ class BookReaderActivity : AppCompatActivity() {
 
         val progressData = mapOf(
             "progress" to highestProgress,
-            "lastIndex" to currentIndex
+            "lastIndex" to currentIndex,
+            "lastReadTimestamp" to System.currentTimeMillis() // Sayfa değiştikçe de saati güncelliyoruz
         )
 
         db.collection("users").document(uid).collection("book_progress").document(bookId)
-            .set(progressData)
+            .set(progressData, SetOptions.merge())
 
         if (highestProgress == 100 && !isBookFinished) {
             finishBook()
@@ -334,17 +349,15 @@ class BookReaderActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
         val bookId = currentBook!!.bookId
 
-        // 1. KULLANICININ KENDİ "BİTİRİLEN KİTAPLAR" LİSTESİNE EKLE
         db.collection("users").document(uid).collection("finished_books").document(bookId)
             .set(currentBook!!)
             .addOnSuccessListener {
                 Toast.makeText(this, "Kitap bitirilenlere eklendi.", Toast.LENGTH_SHORT).show()
 
-                // 2. KİTABIN GENEL OKUNMA SAYISINI (readCount) 1 ARTTIR
                 db.collection("books").document(bookId)
                     .update("readCount", com.google.firebase.firestore.FieldValue.increment(1))
                     .addOnFailureListener { e ->
-                        e.printStackTrace() // Log the error if increment fails
+                        e.printStackTrace()
                     }
             }
     }
