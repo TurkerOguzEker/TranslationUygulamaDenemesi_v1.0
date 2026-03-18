@@ -79,7 +79,18 @@
                         android:textColor="#1565C0"
                         app:chipBackgroundColor="#E3F2FD"
                         app:chipStrokeWidth="0dp"
-                        android:layout_marginBottom="16dp"/>
+                        android:layout_marginBottom="12dp"/>
+
+                    <TextView
+                        android:id="@+id/tvReadCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0 kişi okudu"
+                        android:textSize="13sp"
+                        android:textColor="#757575"
+                        android:textStyle="bold"
+                        app:drawableStartCompat="@drawable/ic_books"
+                        android:drawablePadding="6dp"/>
 
                 </LinearLayout>
             </LinearLayout>

@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -15,14 +16,13 @@ import turkeroguz.eker.translationuygulamadenemesi_v10.R
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Book
 
 class BookAdapter(
-    private var bookList: List<Book>, // 'val' yerine 'var' yaptık ki güncelleyebilelim
+    private var bookList: List<Book>,
     private val onItemClick: (Book) -> Unit
 ) : RecyclerView.Adapter<BookAdapter.BookViewHolder>() {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
-    // YENİ: Listeyi dışarıdan, adapteri baştan yaratmadan güncellemek için
     fun updateBooks(newBooks: List<Book>) {
         this.bookList = newBooks
         notifyDataSetChanged()
@@ -32,6 +32,9 @@ class BookAdapter(
         val ivCover: ImageView = itemView.findViewById(R.id.imgBookCover)
         val tvTitle: TextView = itemView.findViewById(R.id.txtBookTitle)
         val tvAuthor: TextView = itemView.findViewById(R.id.txtBookAuthor)
+
+        // YENİ: Okunmamışsa gizleyeceğimiz o kapsayıcı
+        val layoutProgress: RelativeLayout = itemView.findViewById(R.id.layoutProgress)
         val pbProgress: CircularProgressIndicator = itemView.findViewById(R.id.pbBookProgress)
         val tvProgress: TextView = itemView.findViewById(R.id.tvBookProgress)
     }
@@ -56,9 +59,10 @@ class BookAdapter(
             holder.ivCover.setImageResource(R.drawable.ic_launcher_background)
         }
 
+        // BAŞLANGIÇTA İLERLEME YÜZDESİNİ GİZLİ TUT
+        holder.layoutProgress.visibility = View.GONE
         holder.pbProgress.progress = 0
         holder.tvProgress.text = "%0"
-        holder.pbProgress.setIndicatorColor(Color.parseColor("#FF9800"))
 
         val uid = auth.currentUser?.uid
         if (uid != null && book.bookId.isNotEmpty()) {
@@ -67,13 +71,30 @@ class BookAdapter(
                 .addOnSuccessListener { doc ->
                     if (doc.exists()) {
                         val progressInt = doc.getLong("progress")?.toInt() ?: 0
-                        holder.pbProgress.progress = progressInt
-                        holder.tvProgress.text = "%$progressInt"
 
-                        if (progressInt == 100) {
-                            holder.pbProgress.setIndicatorColor(Color.parseColor("#4CAF50"))
+                        // SADECE İLERLEME SIFIRDAN BÜYÜKSE (Yani okumaya başlandıysa) GÖSTER
+                        if (progressInt > 0) {
+                            holder.layoutProgress.visibility = View.VISIBLE
+                            holder.pbProgress.progress = progressInt
+                            holder.tvProgress.text = "%$progressInt"
+
+                            if (progressInt == 100) {
+                                holder.pbProgress.setIndicatorColor(Color.parseColor("#4CAF50"))
+                            } else {
+                                holder.pbProgress.setIndicatorColor(Color.parseColor("#FF9800"))
+                            }
+                        } else {
+                            // Okunmamışsa kesin olarak gizle
+                            holder.layoutProgress.visibility = View.GONE
                         }
+                    } else {
+                        // Veritabanında hiç kaydı yoksa (hiç açılmadıysa) gizle
+                        holder.layoutProgress.visibility = View.GONE
                     }
+                }
+                .addOnFailureListener {
+                    // Bir hata olursa yine de gizli tut ki çirkin "%0" gözükmesin
+                    holder.layoutProgress.visibility = View.GONE
                 }
         }
 

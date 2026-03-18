@@ -2,7 +2,6 @@ package turkeroguz.eker.translationuygulamadenemesi_v10.model
 
 import java.io.Serializable
 
-// İŞTE HATA VEREN CHAPTER SINIFI BURADA! (Hikaye metinlerini tutacak)
 data class Chapter(
     val chapterTitle: String = "",
     val chapterText: String = "",
@@ -20,5 +19,8 @@ data class Book(
     // PDF linkleri gitti, yerine metin bölümleri (Chapter) geldi
     val chapters: List<Chapter> = ArrayList(),
 
-    val questions: List<Question> = ArrayList()
+    val questions: List<Question> = ArrayList(),
+
+    // YENİ EKLENEN: Kitabın kaç kişi tarafından okunduğunu tutacak değişken
+    var readCount: Int = 0
 ) : Serializable

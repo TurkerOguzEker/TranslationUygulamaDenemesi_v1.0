@@ -334,10 +334,18 @@ class BookReaderActivity : AppCompatActivity() {
         val uid = auth.currentUser?.uid ?: return
         val bookId = currentBook!!.bookId
 
+        // 1. KULLANICININ KENDİ "BİTİRİLEN KİTAPLAR" LİSTESİNE EKLE
         db.collection("users").document(uid).collection("finished_books").document(bookId)
             .set(currentBook!!)
             .addOnSuccessListener {
                 Toast.makeText(this, "Kitap bitirilenlere eklendi.", Toast.LENGTH_SHORT).show()
+
+                // 2. KİTABIN GENEL OKUNMA SAYISINI (readCount) 1 ARTTIR
+                db.collection("books").document(bookId)
+                    .update("readCount", com.google.firebase.firestore.FieldValue.increment(1))
+                    .addOnFailureListener { e ->
+                        e.printStackTrace() // Log the error if increment fails
+                    }
             }
     }
 }

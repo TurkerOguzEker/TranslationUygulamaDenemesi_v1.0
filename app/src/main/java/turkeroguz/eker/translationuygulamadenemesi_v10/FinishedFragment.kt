@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager // GÜNCELLENDİ: Grid layout eklendi
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.BookAdapter
@@ -36,8 +36,8 @@ class FinishedFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Liste Tasarımı (Alt alta sıralı)
-        binding.rvFinished.layoutManager = LinearLayoutManager(requireContext())
+        // GÜNCELLENDİ: Liste Tasarımı (Yan yana 2 sütunlu sıralama)
+        binding.rvFinished.layoutManager = GridLayoutManager(requireContext(), 2)
 
         // Adapter Bağlantısı ve Tıklama Olayı
         adapter = BookAdapter(finishedBooksList) { selectedBook ->

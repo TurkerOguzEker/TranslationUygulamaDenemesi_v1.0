@@ -45,6 +45,10 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         val tvAuthor = view.findViewById<TextView>(R.id.tvDetailAuthor)
         val tvDesc = view.findViewById<TextView>(R.id.tvDetailDescription)
         val chipLevel = view.findViewById<Chip>(R.id.chipDetailLevel)
+
+        // YENİ: Okunma sayısını göstereceğimiz TextView
+        val tvReadCount = view.findViewById<TextView>(R.id.tvReadCount)
+
         val btnFavorite = view.findViewById<MaterialButton>(R.id.btnAddToFavorites)
         val btnReadNow = view.findViewById<MaterialButton>(R.id.btnReadNow)
         val btnClose = view.findViewById<Button>(R.id.btnCloseDetail)
@@ -53,6 +57,9 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         tvAuthor.text = book.author ?: "Bilinmeyen Yazar"
         chipLevel.text = if (book.level.isNotEmpty()) book.level else "Genel"
         tvDesc.text = if (!book.description.isNullOrEmpty()) book.description else "Bu kitap için açıklama girilmemiş."
+
+        // YENİ: Okunma sayısını ekrana bas
+        tvReadCount?.text = "${book.readCount} kişi okudu"
 
         if (book.imageUrl.isNotEmpty()) {
             Glide.with(this).load(book.imageUrl).into(ivCover)
@@ -64,8 +71,6 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
             toggleFavorite(btnFavorite)
         }
 
-        // --- İNDİRME MANTIĞINDA DÜZELTME ---
-        // Sadece dosyanın adının olup olmadığına değil, GERÇEKTEN listeye girip giremediğine bakıyoruz.
         val downloadedBooks = LocalLibraryManager.getDownloadedBooks(requireContext())
         val isDownloaded = downloadedBooks.any { it.bookId == book.bookId }
 
@@ -103,7 +108,6 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
     }
 
     private fun openDownloadedBook() {
-        // İndirilen kitaplardan güncel veriyi bul, yoksa mevcut kitabı kullan
         val downloadedBooks = LocalLibraryManager.getDownloadedBooks(requireContext())
         val localBook = downloadedBooks.find { it.bookId == book.bookId } ?: book
 
@@ -111,7 +115,6 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         intent.putExtra("BOOK_DATA", localBook)
         startActivity(intent)
 
-        // Okuma ekranından geri çıkıldığında doğrudan "İndirilenler" sekmesine atsın
         navigateToMyBooks(0)
         dismiss()
     }
@@ -165,7 +168,7 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
                 btn.isEnabled = true
 
                 dismiss()
-                navigateToMyBooks(2) // Favoriler sekmesi
+                navigateToMyBooks(2)
             }.addOnFailureListener { e ->
                 showModernToast("Kayıt Hatası: ${e.message}", R.drawable.ic_close, "#F44336")
                 btn.isEnabled = true
