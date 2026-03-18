@@ -2,10 +2,9 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="180dp" android:layout_height="260dp" android:layout_marginStart="4dp"
-    android:layout_marginEnd="12dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginBottom="8dp"
+    android:layout_width="160dp"
+    android:layout_height="260dp"
+    android:layout_margin="12dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="4dp"
     app:cardBackgroundColor="@android:color/white">
@@ -15,67 +14,39 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/imgBookCover"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_background"
-            android:background="#E0E0E0" />
+            android:layout_weight="1">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="10dp"
-            android:gravity="center_vertical"
-            android:background="#FFFFFF">
+            <ImageView
+                android:id="@+id/imgBookCover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_launcher_background"
+                android:background="#E0E0E0" />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/txtBookTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Kitap Adı"
-                    android:textSize="15sp" android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:maxLines="2"
-                    android:ellipsize="end" />
-
-                <TextView
-                    android:id="@+id/txtBookAuthor"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="Kategori"
-                    android:textSize="12sp"
-                    android:textColor="#757575"
-                    android:maxLines="1"
-                    android:ellipsize="end"/>
-            </LinearLayout>
-
-            <RelativeLayout
+            <FrameLayout
                 android:id="@+id/layoutProgress"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
-                android:layout_marginStart="6dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_gravity="top|end"
+                android:background="@drawable/bg_white_circle"
+                android:elevation="6dp"
                 android:visibility="gone">
 
                 <com.google.android.material.progressindicator.CircularProgressIndicator
                     android:id="@+id/pbBookProgress"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
+                    android:layout_gravity="center"
                     app:indicatorColor="#FF9800"
                     app:trackColor="#E0E0E0"
-                    app:indicatorSize="30dp"
-                    app:trackThickness="3dp"
+                    app:indicatorSize="42dp"
+                    app:trackThickness="4dp"
                     android:max="100"
                     android:progress="0"/>
 
@@ -83,13 +54,85 @@
                     android:id="@+id/tvBookProgress"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
+                    android:layout_gravity="center"
                     android:text="%0"
-                    android:textSize="9sp"
+                    android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textColor="#424242"/>
-            </RelativeLayout>
+                    android:textColor="#333"/>
+            </FrameLayout>
+        </FrameLayout>
 
-        </LinearLayout>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layoutBottomSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:background="#FFFFFF">
+
+            <FrameLayout
+                android:id="@+id/layoutReadCountCircle"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_gray_circle_light"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_gravity="center">
+
+                    <ImageView
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:src="@drawable/ic_eye"
+                        app:tint="#757575"/>
+
+                    <TextView
+                        android:id="@+id/tvCardReadCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0.1k"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:textColor="#757575"/>
+                </LinearLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/txtBookTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Kitap Adı"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:maxLines="2"
+                android:ellipsize="end"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/layoutReadCountCircle"
+                android:layout_marginEnd="8dp"/>
+
+            <TextView
+                android:id="@+id/txtBookAuthor"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Kategori"
+                android:textSize="11sp"
+                android:textColor="#757575"
+                android:maxLines="1"
+                android:ellipsize="end"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/txtBookTitle"
+                app:layout_constraintEnd_toStartOf="@id/layoutReadCountCircle"
+                android:layout_marginEnd="8dp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -13,14 +13,10 @@ data class Book(
     val title: String = "",
     val author: String? = "",
     val level: String = "",
+    val genre: String = "", // YENİ EKLENEN: Kitabın Türü (Kategorisi)
     val imageUrl: String = "",
     val description: String? = "",
-
-    // PDF linkleri gitti, yerine metin bölümleri (Chapter) geldi
     val chapters: List<Chapter> = ArrayList(),
-
     val questions: List<Question> = ArrayList(),
-
-    // YENİ EKLENEN: Kitabın kaç kişi tarafından okunduğunu tutacak değişken
     var readCount: Int = 0
 ) : Serializable

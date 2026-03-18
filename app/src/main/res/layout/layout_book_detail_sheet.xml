@@ -71,26 +71,29 @@
                         android:textColor="#757575"
                         android:layout_marginBottom="12dp"/>
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipDetailLevel"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="A1 Seviye"
-                        android:textColor="#1565C0"
-                        app:chipBackgroundColor="#E3F2FD"
-                        app:chipStrokeWidth="0dp"
-                        android:layout_marginBottom="12dp"/>
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp">
 
-                    <TextView
-                        android:id="@+id/tvReadCount"
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipDetailLevel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="A1 Seviye"
+                            android:textColor="#1565C0"
+                            app:chipBackgroundColor="#E3F2FD"
+                            app:chipStrokeWidth="0dp"
+                            android:layout_marginEnd="8dp"/> <com.google.android.material.chip.Chip
+                        android:id="@+id/chipDetailGenre"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="0 kişi okudu"
-                        android:textSize="13sp"
-                        android:textColor="#757575"
-                        android:textStyle="bold"
-                        app:drawableStartCompat="@drawable/ic_books"
-                        android:drawablePadding="6dp"/>
+                        android:text="Roman"
+                        android:textColor="#2E7D32"
+                        app:chipBackgroundColor="#E8F5E9"
+                        app:chipStrokeWidth="0dp"
+                        android:visibility="gone" /> </LinearLayout>
 
                 </LinearLayout>
             </LinearLayout>

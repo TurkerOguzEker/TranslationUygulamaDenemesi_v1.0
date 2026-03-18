@@ -4,8 +4,8 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -33,10 +33,13 @@ class BookAdapter(
         val tvTitle: TextView = itemView.findViewById(R.id.txtBookTitle)
         val tvAuthor: TextView = itemView.findViewById(R.id.txtBookAuthor)
 
-        // YENİ: Okunmamışsa gizleyeceğimiz o kapsayıcı
-        val layoutProgress: RelativeLayout = itemView.findViewById(R.id.layoutProgress)
+        // Sağ üst köşedeki ilerleme grubu (FrameLayout)
+        val layoutProgress: FrameLayout = itemView.findViewById(R.id.layoutProgress)
         val pbProgress: CircularProgressIndicator = itemView.findViewById(R.id.pbBookProgress)
         val tvProgress: TextView = itemView.findViewById(R.id.tvBookProgress)
+
+        // GÜNCELLENDİ: Kartın başlık alanındaki okunma sayısı dairesi içindeki yazı
+        val tvReadCount: TextView = itemView.findViewById(R.id.tvCardReadCount)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookViewHolder {
@@ -51,18 +54,16 @@ class BookAdapter(
         holder.tvAuthor.text = book.author ?: "Yazar Bilinmiyor"
 
         if (book.imageUrl.isNotEmpty()) {
-            Glide.with(holder.itemView.context)
-                .load(book.imageUrl)
-                .placeholder(R.drawable.ic_launcher_background)
-                .into(holder.ivCover)
+            Glide.with(holder.itemView.context).load(book.imageUrl).into(holder.ivCover)
         } else {
             holder.ivCover.setImageResource(R.drawable.ic_launcher_background)
         }
 
-        // BAŞLANGIÇTA İLERLEME YÜZDESİNİ GİZLİ TUT
+        // --- OKUNMA SAYISINI FORMATLAMA (0.1k, 1k vs.) ---
+        holder.tvReadCount.text = formatReadCount(book.readCount)
+
+        // BAŞLANGIÇTA YÜZDELİK VE ÇEMBER GİZLİ (Okunmadıysa tertemiz durur)
         holder.layoutProgress.visibility = View.GONE
-        holder.pbProgress.progress = 0
-        holder.tvProgress.text = "%0"
 
         val uid = auth.currentUser?.uid
         if (uid != null && book.bookId.isNotEmpty()) {
@@ -72,29 +73,20 @@ class BookAdapter(
                     if (doc.exists()) {
                         val progressInt = doc.getLong("progress")?.toInt() ?: 0
 
-                        // SADECE İLERLEME SIFIRDAN BÜYÜKSE (Yani okumaya başlandıysa) GÖSTER
+                        // Sadece okumaya başlandıysa ilerleme dairesini ve yüzdeyi göster
                         if (progressInt > 0) {
                             holder.layoutProgress.visibility = View.VISIBLE
+
                             holder.pbProgress.progress = progressInt
                             holder.tvProgress.text = "%$progressInt"
 
                             if (progressInt == 100) {
-                                holder.pbProgress.setIndicatorColor(Color.parseColor("#4CAF50"))
+                                holder.pbProgress.setIndicatorColor(Color.parseColor("#4CAF50")) // Bitenler yeşil
                             } else {
-                                holder.pbProgress.setIndicatorColor(Color.parseColor("#FF9800"))
+                                holder.pbProgress.setIndicatorColor(Color.parseColor("#FF9800")) // Devam edenler turuncu
                             }
-                        } else {
-                            // Okunmamışsa kesin olarak gizle
-                            holder.layoutProgress.visibility = View.GONE
                         }
-                    } else {
-                        // Veritabanında hiç kaydı yoksa (hiç açılmadıysa) gizle
-                        holder.layoutProgress.visibility = View.GONE
                     }
-                }
-                .addOnFailureListener {
-                    // Bir hata olursa yine de gizli tut ki çirkin "%0" gözükmesin
-                    holder.layoutProgress.visibility = View.GONE
                 }
         }
 
@@ -105,5 +97,24 @@ class BookAdapter(
 
     override fun getItemCount(): Int {
         return bookList.size
+    }
+
+    // SAYIYI "k" FORMATINA ÇEVİREN FONKSİYON (Örn: 900 -> 0.9k)
+    private fun formatReadCount(count: Int): String {
+        return if (count >= 100) {
+            val kValue = count / 1000.0
+            // Noktadan sonra 1 basamak göster (0.1, 0.9, 1.5 gibi)
+            val formatted = String.format(java.util.Locale.US, "%.1f", kValue)
+
+            // Eğer "1.0k" çıkarsa, onu "1k" yapalım
+            if (formatted.endsWith(".0")) {
+                "${formatted.replace(".0", "")}k"
+            } else {
+                "${formatted}k"
+            }
+        } else {
+            // 100'den küçükse direkt sayıyı yaz (Örn: 45)
+            count.toString()
+        }
     }
 }

@@ -18,6 +18,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,10 +45,9 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         val tvTitle = view.findViewById<TextView>(R.id.tvDetailTitle)
         val tvAuthor = view.findViewById<TextView>(R.id.tvDetailAuthor)
         val tvDesc = view.findViewById<TextView>(R.id.tvDetailDescription)
-        val chipLevel = view.findViewById<Chip>(R.id.chipDetailLevel)
 
-        // YENİ: Okunma sayısını göstereceğimiz TextView
-        val tvReadCount = view.findViewById<TextView>(R.id.tvReadCount)
+        val chipLevel = view.findViewById<Chip>(R.id.chipDetailLevel)
+        val chipGenre = view.findViewById<Chip>(R.id.chipDetailGenre) // YENİ EKLENDİ
 
         val btnFavorite = view.findViewById<MaterialButton>(R.id.btnAddToFavorites)
         val btnReadNow = view.findViewById<MaterialButton>(R.id.btnReadNow)
@@ -58,8 +58,13 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         chipLevel.text = if (book.level.isNotEmpty()) book.level else "Genel"
         tvDesc.text = if (!book.description.isNullOrEmpty()) book.description else "Bu kitap için açıklama girilmemiş."
 
-        // YENİ: Okunma sayısını ekrana bas
-        tvReadCount?.text = "${book.readCount} kişi okudu"
+        // YENİ EKLENDİ: Tür bilgisini ekrana bas, yoksa çipi gizle
+        if (book.genre.isNotEmpty()) {
+            chipGenre.visibility = View.VISIBLE
+            chipGenre.text = book.genre
+        } else {
+            chipGenre.visibility = View.GONE
+        }
 
         if (book.imageUrl.isNotEmpty()) {
             Glide.with(this).load(book.imageUrl).into(ivCover)
@@ -83,6 +88,8 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         }
 
         btnReadNow.setOnClickListener {
+            incrementReadCount()
+
             if (isDownloaded) {
                 openDownloadedBook()
             } else {
@@ -105,6 +112,16 @@ class BookDetailBottomSheet(private val book: Book) : BottomSheetDialogFragment(
         }
 
         btnClose.setOnClickListener { dismiss() }
+    }
+
+    private fun incrementReadCount() {
+        if (book.bookId.isNotEmpty()) {
+            db.collection("books").document(book.bookId)
+                .update("readCount", FieldValue.increment(1))
+                .addOnFailureListener { e ->
+                    e.printStackTrace()
+                }
+        }
     }
 
     private fun openDownloadedBook() {
