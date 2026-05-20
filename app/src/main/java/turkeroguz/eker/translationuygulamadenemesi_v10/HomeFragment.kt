@@ -1,5 +1,6 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -31,6 +32,7 @@ class HomeFragment : Fragment() {
 
     private var userListener: ListenerRegistration? = null
     private var booksListener: ListenerRegistration? = null
+    private var progressListener: ListenerRegistration? = null // YENİ: Üst üste binmeyi engellemek için eklendi
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_home, container, false)
@@ -106,17 +108,11 @@ class HomeFragment : Fragment() {
                     if (levelsContainer != null) {
                         levelsContainer.removeAllViews()
 
-                        // Kitapları seviyelerine göre grupla
                         val groupedBooks = allBooksList.groupBy { it.level }
-
-                        // Görünmesini istediğimiz Seviye sırası
                         val orderedLevels = listOf("A1", "A2", "B1", "B1+", "B2", "C1", "C2")
 
-                        // Her seviye için bir şerit (level_section_layout) oluştur
                         for (levelCode in orderedLevels) {
                             val booksInLevel = groupedBooks[levelCode]
-
-                            // Eğer bu seviyede kitap varsa şeridi oluştur
                             if (!booksInLevel.isNullOrEmpty()) {
                                 createLevelSectionView(levelsContainer, levelCode, booksInLevel)
                             }
@@ -134,8 +130,10 @@ class HomeFragment : Fragment() {
 
         if (layoutContinueReading == null || flContinueReadingBook == null) return
 
-        // 1. .get() YERİNE .addSnapshotListener() KULLANIYORUZ! (Anlık canlı güncelleme için)
-        db.collection("users").document(uid).collection("book_progress")
+        // YENİ: Eski dinleyiciyi sil ki çoklu dinleme hatası (çökme/donma) yapmasın!
+        progressListener?.remove()
+
+        progressListener = db.collection("users").document(uid).collection("book_progress")
             .addSnapshotListener { querySnapshot, error ->
                 if (error != null) {
                     layoutContinueReading.visibility = View.GONE
@@ -144,13 +142,13 @@ class HomeFragment : Fragment() {
 
                 if (querySnapshot != null && !querySnapshot.isEmpty) {
 
-                    // 2. Yüzdesi 100'den küçük olanları al (%0 olanlar da dahil, çünkü yeni başlanmış olabilir)
+                    // Yüzdesi 100'den küçük olanları al (%0 olanlar da dahil)
                     val inProgressBooks = querySnapshot.documents.filter { doc ->
                         val prog = doc.getLong("progress")?.toInt() ?: 0
                         prog < 100
                     }
 
-                    // 3. En güncel (son okunan / lastReadTimestamp) kitabı bul
+                    // En güncel (son okunan) kitabı bul
                     val lastReadDoc = inProgressBooks.maxByOrNull { doc ->
                         doc.getLong("lastReadTimestamp") ?: 0L
                     }
@@ -164,40 +162,32 @@ class HomeFragment : Fragment() {
                             flContinueReadingBook.removeAllViews()
 
                             val inflater = LayoutInflater.from(context)
-                            val continueReadingView = inflater.inflate(R.layout.item_continue_reading_card, flContinueReadingBook, false)
+                            val cardView = inflater.inflate(R.layout.item_continue_reading_card, flContinueReadingBook, false)
 
-                            val ivCover = continueReadingView.findViewById<android.widget.ImageView>(R.id.imgContinueCover)
-                            val tvTitle = continueReadingView.findViewById<TextView>(R.id.txtContinueTitle)
-                            val tvAuthor = continueReadingView.findViewById<TextView>(R.id.txtContinueAuthor)
+                            val ivCover = cardView.findViewById<android.widget.ImageView>(R.id.imgContinueCover)
+                            val tvTitle = cardView.findViewById<TextView>(R.id.txtContinueTitle)
+                            val tvAuthor = cardView.findViewById<TextView>(R.id.txtContinueAuthor)
+                            val pbProgress = cardView.findViewById<com.google.android.material.progressindicator.LinearProgressIndicator>(R.id.pbContinueProgressHorizontal)
+                            val tvProgress = cardView.findViewById<TextView>(R.id.tvContinueProgress)
 
-                            val tvLevel = continueReadingView.findViewById<TextView>(R.id.tvContinueLevel)
-                            val tvGenre = continueReadingView.findViewById<TextView>(R.id.tvContinueGenre)
-                            val pbProgressHorizontal = continueReadingView.findViewById<com.google.android.material.progressindicator.LinearProgressIndicator>(R.id.pbContinueProgressHorizontal)
-                            val tvProgress = continueReadingView.findViewById<TextView>(R.id.tvContinueProgress)
+                            val currentProgress = lastReadDoc.getLong("progress")?.toInt() ?: 0
 
                             tvTitle?.text = lastReadBook.title
                             tvAuthor?.text = lastReadBook.author ?: "Bilinmiyor"
-
-                            tvLevel?.text = lastReadBook.level
-                            if (lastReadBook.genre.isNotEmpty()) {
-                                tvGenre?.visibility = View.VISIBLE
-                                tvGenre?.text = lastReadBook.genre
-                            }
-
-                            val currentProgress = lastReadDoc.getLong("progress")?.toInt() ?: 0
-                            pbProgressHorizontal?.progress = currentProgress
+                            pbProgress?.progress = currentProgress
                             tvProgress?.text = "%$currentProgress"
 
-                            if (lastReadBook.imageUrl.isNotEmpty() && ivCover != null) {
+                            if (lastReadBook.imageUrl.isNotEmpty() && ivCover != null && context != null) {
                                 Glide.with(requireContext()).load(lastReadBook.imageUrl).into(ivCover)
                             }
 
-                            continueReadingView.setOnClickListener {
-                                val detailSheet = turkeroguz.eker.translationuygulamadenemesi_v10.ui.BookDetailBottomSheet(lastReadBook)
-                                detailSheet.show(parentFragmentManager, "BookDetailSheet")
+                            cardView.setOnClickListener {
+                                val intent = Intent(requireContext(), BookReaderActivity::class.java)
+                                intent.putExtra("BOOK_DATA", lastReadBook)
+                                startActivity(intent)
                             }
 
-                            flContinueReadingBook.addView(continueReadingView)
+                            flContinueReadingBook.addView(cardView)
                         } else {
                             layoutContinueReading.visibility = View.GONE
                         }
@@ -224,7 +214,6 @@ class HomeFragment : Fragment() {
         }
     }
 
-    // HER BİR SEVİYE İÇİN DÜZ YATAY (HORIZONTAL) LİSTE OLUŞTURUR
     private fun createLevelSectionView(parent: LinearLayout, levelCode: String, books: List<Book>) {
         val inflater = LayoutInflater.from(context)
         val sectionView = inflater.inflate(R.layout.level_section_layout, parent, false)
@@ -234,22 +223,18 @@ class HomeFragment : Fragment() {
 
         val rvLevelBooks = sectionView.findViewById<RecyclerView>(R.id.rvBookList)
 
-        // 1. SORUNSUZ VE %100 ÇALIŞAN YATAY LİSTELEME
         val layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         rvLevelBooks.layoutManager = layoutManager
 
-        // 2. KAYDIRIRKEN KİTABIN ORTADA DURMASI (SNAP) İÇİN EKLENTİ
         val snapHelper = androidx.recyclerview.widget.LinearSnapHelper()
         if (rvLevelBooks.onFlingListener == null) {
             snapHelper.attachToRecyclerView(rvLevelBooks)
         }
 
-        // Sağdan ve soldan boşluk bırakarak ilk ve son öğenin ortalanmasına yardımcı olur
         val paddingInPx = (16 * resources.displayMetrics.density).toInt()
         rvLevelBooks.setPadding(paddingInPx, 0, paddingInPx, 0)
         rvLevelBooks.clipToPadding = false
 
-        // Adaptörü bağla
         val adapter = BookAdapter(books) { selectedBook ->
             val detailSheet = BookDetailBottomSheet(selectedBook)
             detailSheet.show(parentFragmentManager, "BookDetailSheet")
@@ -313,5 +298,6 @@ class HomeFragment : Fragment() {
         super.onDestroyView()
         userListener?.remove()
         booksListener?.remove()
+        progressListener?.remove()
     }
 }

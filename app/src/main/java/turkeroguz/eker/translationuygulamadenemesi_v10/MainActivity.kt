@@ -1,5 +1,6 @@
 package turkeroguz.eker.translationuygulamadenemesi_v10
 
+import turkeroguz.eker.translationuygulamadenemesi_v10.ui.LoginFragment
 import turkeroguz.eker.translationuygulamadenemesi_v10.ui.MyBooksFragment
 import android.content.Context
 import android.content.res.Configuration
@@ -28,7 +29,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import turkeroguz.eker.translationuygulamadenemesi_v10.adapter.LanguageAdapter
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.Language
 import turkeroguz.eker.translationuygulamadenemesi_v10.model.User
-import turkeroguz.eker.translationuygulamadenemesi_v10.ui.LoginFragment
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -73,34 +73,48 @@ class MainActivity : AppCompatActivity() {
         val userRef = db.collection("users").document(currentUser.uid)
 
         userRef.get().addOnSuccessListener { document ->
-            if (document.exists()) {
-                val user = document.toObject(User::class.java) ?: return@addOnSuccessListener
-                val now = System.currentTimeMillis()
-
-                val updates = hashMapOf<String, Any>("lastLoginDate" to now)
-
-                val lastDate = java.util.Calendar.getInstance().apply { timeInMillis = if(user.lastLoginDate > 0) user.lastLoginDate else 0 }
-                val today = java.util.Calendar.getInstance()
-
-                val isSameDay = lastDate.get(java.util.Calendar.DAY_OF_YEAR) == today.get(java.util.Calendar.DAY_OF_YEAR) &&
-                        lastDate.get(java.util.Calendar.YEAR) == today.get(java.util.Calendar.YEAR)
-
-                if (!isSameDay) {
-                    val yesterday = java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, -1) }
-                    val isConsecutive = lastDate.get(java.util.Calendar.DAY_OF_YEAR) == yesterday.get(java.util.Calendar.DAY_OF_YEAR)
-
-                    var newStreak = user.streakDays
-                    if (isConsecutive || user.lastLoginDate == 0L) {
-                        newStreak += 1
-                        logActivity(currentUser.uid, "GÜNLÜK SERİ", "Tebrikler! Seri $newStreak gün oldu. 🔥", "success")
-                    } else {
-                        newStreak = 1
-                        logActivity(currentUser.uid, "SERİ BOZULDU", "Dün girmediğiniz için seri sıfırlandı.", "warning")
-                    }
-                    updates["streakDays"] = newStreak
-                }
-                userRef.update(updates)
+            // Firestore dökümanı yoksa (admin tarafından silindiyse) kullanıcıyı çıkar
+            if (!document.exists()) {
+                auth.signOut()
+                replaceFragment(LoginFragment())
+                setBottomNavVisibility(false)
+                Toast.makeText(this, "Hesabınız silinmiştir.", Toast.LENGTH_LONG).show()
+                return@addOnSuccessListener
             }
+
+            // isBanned kontrolü
+            val isBanned = document.getBoolean("isBanned") ?: false
+            if (isBanned) {
+                auth.signOut()
+                replaceFragment(LoginFragment())
+                setBottomNavVisibility(false)
+                Toast.makeText(this, "Hesabınız askıya alınmıştır.", Toast.LENGTH_LONG).show()
+                return@addOnSuccessListener
+            }
+
+            val user = document.toObject(User::class.java) ?: return@addOnSuccessListener
+            val now = System.currentTimeMillis()
+            val updates = hashMapOf<String, Any>("lastLoginDate" to now)
+
+            val lastDate = java.util.Calendar.getInstance().apply { timeInMillis = if (user.lastLoginDate > 0) user.lastLoginDate else 0 }
+            val today = java.util.Calendar.getInstance()
+            val isSameDay = lastDate.get(java.util.Calendar.DAY_OF_YEAR) == today.get(java.util.Calendar.DAY_OF_YEAR) &&
+                    lastDate.get(java.util.Calendar.YEAR) == today.get(java.util.Calendar.YEAR)
+
+            if (!isSameDay) {
+                val yesterday = java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, -1) }
+                val isConsecutive = lastDate.get(java.util.Calendar.DAY_OF_YEAR) == yesterday.get(java.util.Calendar.DAY_OF_YEAR)
+                var newStreak = user.streakDays
+                if (isConsecutive || user.lastLoginDate == 0L) {
+                    newStreak += 1
+                    logActivity(currentUser.uid, "GÜNLÜK SERİ", "Tebrikler! Seri $newStreak gün oldu. 🔥", "success")
+                } else {
+                    newStreak = 1
+                    logActivity(currentUser.uid, "SERİ BOZULDU", "Dün girmediğiniz için seri sıfırlandı.", "warning")
+                }
+                updates["streakDays"] = newStreak
+            }
+            userRef.update(updates)
         }
     }
 

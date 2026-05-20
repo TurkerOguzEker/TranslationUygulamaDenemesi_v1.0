@@ -164,18 +164,47 @@ class AdminPanelFragment : Fragment() {
             return
         }
 
-        // --- DAHA GÜVENLİ VE MODERN SİLME ONAYI ---
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Kullanıcıyı Sil")
-            .setMessage("${user.name} (${user.email}) isimli kullanıcıyı kalıcı olarak silmek istediğinize emin misiniz? \n\nBu işlem geri alınamaz ve kullanıcının tüm ilerlemesi kaybolur.")
-            .setIcon(R.drawable.ic_delete) // Çöp kutusu ikonu
+            .setMessage("${user.name} (${user.email}) isimli kullanıcıyı kalıcı olarak silmek istediğinize emin misiniz?\n\nTüm veriler (kelimeler, geçmiş, favoriler) silinecek. Bu işlem geri alınamaz.")
+            .setIcon(R.drawable.ic_delete)
             .setPositiveButton("Evet, Sil") { _, _ ->
-                db.collection("users").document(user.uid).delete().addOnSuccessListener {
-                    Toast.makeText(context, "Kullanıcı başarıyla silindi.", Toast.LENGTH_SHORT).show()
-                }
+                deleteAllUserData(user.uid)
             }
             .setNegativeButton("İptal", null)
             .show()
+    }
+
+    private fun deleteAllUserData(uid: String) {
+        val subcollections = listOf("words", "book_progress", "favorites", "finished_books", "logs")
+        var completedCount = 0
+
+        fun onSubcollectionDone() {
+            completedCount++
+            if (completedCount < subcollections.size) return
+
+            db.collection("users").document(uid).delete()
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Kullanıcı ve tüm verileri silindi.", Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener {
+                    Toast.makeText(context, "Kullanıcı verisi silinirken hata oluştu.", Toast.LENGTH_SHORT).show()
+                }
+        }
+
+        for (collection in subcollections) {
+            db.collection("users").document(uid).collection(collection).get()
+                .addOnSuccessListener { docs ->
+                    if (docs.isEmpty) {
+                        onSubcollectionDone()
+                        return@addOnSuccessListener
+                    }
+                    val batch = db.batch()
+                    docs.forEach { batch.delete(it.reference) }
+                    batch.commit().addOnCompleteListener { onSubcollectionDone() }
+                }
+                .addOnFailureListener { onSubcollectionDone() }
+        }
     }
 
     private fun updatePieChart(premium: Int, standard: Int) {
