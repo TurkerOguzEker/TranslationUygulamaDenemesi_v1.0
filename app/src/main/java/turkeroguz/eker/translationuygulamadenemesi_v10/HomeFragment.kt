@@ -169,6 +169,10 @@ class HomeFragment : Fragment() {
                             val tvAuthor = cardView.findViewById<TextView>(R.id.txtContinueAuthor)
                             val pbProgress = cardView.findViewById<com.google.android.material.progressindicator.LinearProgressIndicator>(R.id.pbContinueProgressHorizontal)
                             val tvProgress = cardView.findViewById<TextView>(R.id.tvContinueProgress)
+                            
+                            val tvLevel = cardView.findViewById<TextView>(R.id.tvContinueLevel)
+                            val tvGenre = cardView.findViewById<TextView>(R.id.tvContinueGenre)
+                            val tvReadCount = cardView.findViewById<TextView>(R.id.tvContinueReadCount)
 
                             val currentProgress = lastReadDoc.getLong("progress")?.toInt() ?: 0
 
@@ -176,6 +180,10 @@ class HomeFragment : Fragment() {
                             tvAuthor?.text = lastReadBook.author ?: "Bilinmiyor"
                             pbProgress?.progress = currentProgress
                             tvProgress?.text = "%$currentProgress"
+                            
+                            tvLevel?.text = lastReadBook.level.ifEmpty { "A1" }
+                            tvGenre?.text = lastReadBook.genre.ifEmpty { "Genel" }
+                            tvReadCount?.text = "${formatReadCount(lastReadBook.readCount)} Okunma"
 
                             if (lastReadBook.imageUrl.isNotEmpty() && ivCover != null && context != null) {
                                 Glide.with(requireContext()).load(lastReadBook.imageUrl).into(ivCover)
@@ -236,6 +244,19 @@ class HomeFragment : Fragment() {
         rvLevelBooks.clipToPadding = false
 
         val adapter = BookAdapter(books) { selectedBook ->
+            val uid = auth.currentUser?.uid
+            if (uid != null) {
+                val progressRef = db.collection("users").document(uid).collection("book_progress").document(selectedBook.bookId)
+                progressRef.get().addOnSuccessListener { doc ->
+                    val currentProgress = if (doc.exists()) doc.getLong("progress")?.toInt() ?: 0 else 0
+                    val data = hashMapOf(
+                        "progress" to currentProgress,
+                        "lastReadTimestamp" to System.currentTimeMillis()
+                    )
+                    progressRef.set(data, com.google.firebase.firestore.SetOptions.merge())
+                }
+            }
+
             val detailSheet = BookDetailBottomSheet(selectedBook)
             detailSheet.show(parentFragmentManager, "BookDetailSheet")
         }

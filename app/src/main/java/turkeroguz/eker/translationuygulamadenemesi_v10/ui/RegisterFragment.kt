@@ -105,20 +105,9 @@ class RegisterFragment : Fragment() {
     }
 
     private fun checkEmailAndSendCode(email: String, name: String) {
-        showModernMessage("🔍 E-posta kontrol ediliyor...", false)
+        showModernMessage("🔍 E-posta hazırlanıyor...", false)
         btnRegister.isEnabled = false
-        auth.fetchSignInMethodsForEmail(email).addOnSuccessListener { result ->
-            btnRegister.isEnabled = true
-            val methods = result.signInMethods
-            if (methods != null && methods.isNotEmpty()) {
-                showModernMessage("🚫 Bu e-posta zaten kullanımda! Giriş yapın.", true)
-            } else {
-                startVerificationProcess(email, name)
-            }
-        }.addOnFailureListener {
-            btnRegister.isEnabled = true
-            showModernMessage("⚠️ Bağlantı hatası: ${it.message}", true)
-        }
+        startVerificationProcess(email, name)
     }
 
     private fun startVerificationProcess(email: String, name: String) {
@@ -130,8 +119,10 @@ class RegisterFragment : Fragment() {
                 layoutVerification.visibility = View.VISIBLE
                 tvInfoText.text = "$email adresine gelen kodu giriniz."
                 showModernMessage("✅ Kod gönderildi!", false)
+                btnRegister.isEnabled = true
             } else {
                 showModernMessage("❌ Kod gönderilemedi! E-postayı kontrol edin.", true)
+                btnRegister.isEnabled = true
             }
         }
     }

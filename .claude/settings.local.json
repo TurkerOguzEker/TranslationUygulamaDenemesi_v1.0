@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew assembleDebug --no-daemon)",
+      "Bash(claude doctor *)",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(adb devices *)",
+      "Bash(cmd.exe *)",
+      "Bash(/c/Users/Turker/AppData/Local/Android/Sdk/platform-tools/adb.exe install *)"
+    ]
+  }
+}

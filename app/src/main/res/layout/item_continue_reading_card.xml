@@ -6,104 +6,174 @@
     android:layout_height="wrap_content"
     android:layout_marginStart="16dp"
     android:layout_marginEnd="16dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="4dp">
+    android:layout_marginTop="8dp"
+    android:layout_marginBottom="16dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="6dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="#FFFFFF">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="12dp">
+        android:padding="16dp">
 
-        <!-- Kitap Kapağı -->
-        <ImageView
-            android:id="@+id/imgContinueCover"
-            android:layout_width="64dp"
-            android:layout_height="88dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_background"
-            android:background="#E0E0E0"
-            android:layout_marginEnd="14dp"/>
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cvCoverContainer"
+            android:layout_width="80dp"
+            android:layout_height="115dp"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="2dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
-        <!-- Bilgi Alanı -->
-        <LinearLayout
+            <ImageView
+                android:id="@+id/imgContinueCover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:background="#E0E0E0" />
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:id="@+id/lblContinueReading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="OKUMAYA DEVAM ET"
+            android:textSize="10sp"
+            android:textColor="#5C6BC0"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:layout_marginStart="16dp"
+            app:layout_constraintStart_toEndOf="@id/cvCoverContainer"
+            app:layout_constraintTop_toTopOf="@id/cvCoverContainer" />
+
+        <TextView
+            android:id="@+id/txtContinueTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:text="Kitap Adı"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="#212121"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintStart_toEndOf="@id/cvCoverContainer"
+            app:layout_constraintTop_toBottomOf="@id/lblContinueReading"
+            app:layout_constraintEnd_toEndOf="parent" />
 
+        <TextView
+            android:id="@+id/txtContinueAuthor"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Yazar"
+            android:textSize="13sp"
+            android:textColor="#757575"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginStart="16dp"
+            app:layout_constraintStart_toEndOf="@id/cvCoverContainer"
+            app:layout_constraintTop_toBottomOf="@id/txtContinueTitle"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/layoutBookInfoRow"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintStart_toEndOf="@id/cvCoverContainer"
+            app:layout_constraintTop_toBottomOf="@id/txtContinueAuthor"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                app:cardBackgroundColor="#E8EAF6"
+                app:cardCornerRadius="6dp"
+                app:cardElevation="0dp">
+                <TextView
+                    android:id="@+id/tvContinueLevel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#3949AB"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="3dp"
+                    android:text="A1" />
+            </androidx.cardview.widget.CardView>
+
+            <TextView
+                android:id="@+id/tvContinueGenre"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tür"
+                android:textSize="12sp"
+                android:textColor="#9E9E9E"
+                android:layout_marginEnd="8dp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+                
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="OKUMAYA DEVAM ET"
-                android:textSize="10sp"
-                android:textColor="#9E9E9E"
-                android:letterSpacing="0.08"
-                android:layout_marginBottom="4dp" />
-
-            <TextView
-                android:id="@+id/txtContinueTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Kitap Adı"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="?android:attr/textColorPrimary"
-                android:maxLines="2"
-                android:ellipsize="end" />
-
-            <TextView
-                android:id="@+id/txtContinueAuthor"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Yazar"
+                android:text="•"
                 android:textSize="12sp"
-                android:textColor="#757575"
-                android:maxLines="1"
-                android:ellipsize="end" />
+                android:textColor="#9E9E9E"
+                android:layout_marginEnd="8dp" />
 
-            <!-- Progress -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/tvContinueReadCount"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="10dp">
-
-                <com.google.android.material.progressindicator.LinearProgressIndicator
-                    android:id="@+id/pbContinueProgressHorizontal"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:max="100"
-                    android:progress="0"
-                    app:indicatorColor="#FF9800"
-                    app:trackColor="#E0E0E0"
-                    app:trackThickness="6dp"
-                    app:trackCornerRadius="3dp" />
-
-                <TextView
-                    android:id="@+id/tvContinueProgress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:text="%0"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:textColor="#FF9800" />
-            </LinearLayout>
-
+                android:text="1.2k Okunma"
+                android:textSize="12sp"
+                android:textColor="#9E9E9E"
+                android:maxLines="1" />
         </LinearLayout>
 
-        <!-- Ok ikonu -->
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="8dp"
-            android:src="@android:drawable/ic_media_play"
-            app:tint="#BDBDBD" />
+        <LinearLayout
+            android:id="@+id/layoutProgress"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
+            app:layout_constraintStart_toEndOf="@id/cvCoverContainer"
+            app:layout_constraintTop_toBottomOf="@id/layoutBookInfoRow"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/cvCoverContainer">
 
-    </LinearLayout>
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/pbContinueProgressHorizontal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="45"
+                app:indicatorColor="#5C6BC0"
+                app:trackColor="#E8EAF6"
+                app:trackThickness="8dp"
+                app:trackCornerRadius="4dp" />
+
+            <TextView
+                android:id="@+id/tvContinueProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="%45"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#5C6BC0" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

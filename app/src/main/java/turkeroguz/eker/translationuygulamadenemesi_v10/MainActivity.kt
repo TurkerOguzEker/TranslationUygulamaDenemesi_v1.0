@@ -303,11 +303,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setLocale(languageCode: String) {
-        val locale = Locale(languageCode)
-        Locale.setDefault(locale)
-        val config = Configuration()
-        config.setLocale(locale)
-        baseContext.resources.updateConfiguration(config, baseContext.resources.displayMetrics)
-        recreate()
+        val localeList = androidx.core.os.LocaleListCompat.create(Locale(languageCode))
+        AppCompatDelegate.setApplicationLocales(localeList)
     }
 }

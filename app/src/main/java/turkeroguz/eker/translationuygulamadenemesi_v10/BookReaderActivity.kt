@@ -66,7 +66,12 @@ class BookReaderActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_book_reader_split)
 
-        currentBook = intent.getSerializableExtra("BOOK_DATA") as? Book
+        currentBook = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            intent.getSerializableExtra("BOOK_DATA", Book::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getSerializableExtra("BOOK_DATA") as? Book
+        }
         if (currentBook == null) {
             Toast.makeText(this, "Hata: Kitap verisi yok!", Toast.LENGTH_SHORT).show()
             finish()
